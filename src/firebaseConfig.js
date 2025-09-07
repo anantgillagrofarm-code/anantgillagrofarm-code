@@ -1,5 +1,5 @@
-// Paste your Firebase config here OR set these values as environment variables in Vercel.
-// Example (replace the values with your project's settings):
+// Replace these values with your Firebase project's web config,
+// OR add the matching environment variables on Vercel.
 export const firebaseConfig = {
   apiKey: process.env.REACT_APP_FIREBASE_API_KEY || 'REPLACE_API_KEY',
   authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || 'REPLACE_AUTH_DOMAIN',
@@ -7,4 +7,4 @@ export const firebaseConfig = {
   storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || 'REPLACE_BUCKET',
   messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || 'REPLACE_SENDER_ID',
   appId: process.env.REACT_APP_FIREBASE_APP_ID || 'REPLACE_APP_ID'
-};
+}
