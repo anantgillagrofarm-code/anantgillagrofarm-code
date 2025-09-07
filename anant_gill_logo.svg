@@ -1,17 +1,1 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<svg width="1200" height="1200" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100%" height="100%" fill="#0f3a1f"/>
-  <!-- mushroom cap (white) -->
-  <path d="M300,330 C300,200 900,200 900,330 C900,420 760,460 600,460 C440,460 300,420 300,330 Z" fill="#ffffff"/>
-  <!-- A-shaped stem (beige) -->
-  <path d="M490,460 L710,460 L670,860 L530,860 Z" fill="#e6c79a"/>
-  <!-- Fields (greens) -->
-  <path d="M300,860 C460,740 740,740 900,860 L900,960 C740,840 460,840 300,960 Z" fill="#67994f"/>
-  <path d="M320,900 C440,820 760,820 880,900 L880,940 C760,860 440,860 320,940 Z" fill="#3b7a36"/>
-  <!-- Text -->
-  <g font-family="Helvetica, Arial, sans-serif" fill="#e6c79a" font-weight="700">
-    <text x="720" y="520" font-size="120">ANANT</text>
-    <text x="720" y="660" font-size="120">GILL</text>
-    <text x="720" y="820" font-size="70" font-weight="600">AGRO FARM</text>
-  </g>
-</svg>
+
