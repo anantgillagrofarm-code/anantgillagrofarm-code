@@ -6,7 +6,7 @@ export default function App() {
       
       {/* Header with Logo */}
       <header style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <img src="/logo.png" alt="Anant Gill Agro Farm" style={{ height: "60px" }} />
+        <img src="/anant_gill_logo.png" alt="Anant Gill Agro Farm" style={{ height: "60px" }} />
         <h1 style={{ color: '#e6c79a', margin: 0 }}>ANANT GILL AGRO FARM</h1>
       </header>
 
