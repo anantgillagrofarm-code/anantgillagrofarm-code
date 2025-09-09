@@ -4,7 +4,7 @@ export default function App(){
   return (
     <div style={{minHeight:'100vh', background:'#0f3a1f', color:'#f4efe5', padding:20, fontFamily:'sans-serif'}}>
       <header style={{display:'flex', alignItems:'center', gap:16}}>
-        <img src="/logo.png" alt="Anant Gill Agro Farm" className="h-12 mr-3" />
+        <img src="/logo.png" alt="Anant Gill Agro Farm" style={{ height: "60px" }} />
         <h1 style={{color:'#e6c79a', margin:0}}>ANANT GILL AGRO FARM</h1>
       </header>
 
