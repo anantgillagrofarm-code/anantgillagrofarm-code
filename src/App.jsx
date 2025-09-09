@@ -11,7 +11,24 @@ export default function App(){
       <main style={{marginTop:30}}>
         <h2>Fresh Organic Mushrooms &amp; Products</h2>
         <p>Welcome to Anant Gill Agro Farm. We sell fresh mushrooms, pickles, dry mushrooms, and mushroom powder.</p>
-
+  {/* WhatsApp Order Button */}   
+  <a
+  href="https://wa.me/918837554747?text=Hi%20Anant%20Gill%20Agro%20Farm%2C%20I%20want%20to%20order%20fresh%20mushrooms."
+  target="_blank"
+  rel="noopener noreferrer"
+  style={{
+    display: "inline-block",
+    background: "#25D366",
+    color: "white",
+    padding: "10px 16px",
+    borderRadius: "8px",
+    textDecoration: "none",
+    fontWeight: "700",
+    marginTop: "12px"
+  }}
+>
+  📲 Order on WhatsApp
+</a>
         <section style={{marginTop:20, background:'rgba(255,255,255,0.05)', padding:16, borderRadius:8}}>
           <h3>Sample Products</h3>
           <ul>
