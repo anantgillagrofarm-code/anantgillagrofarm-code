@@ -1,16 +1,15 @@
 import React from 'react';
-import logo from './assets/anant_gill_logo.png';
 
 export default function App() {
   return (
-    <div style={{ minHeight: '100vh', background: '#0f3b1d', padding: '20px' }}>
+    <div style={{ minHeight: '100vh', background: '#0f3b1d', padding: '20px', fontFamily: 'Arial, sans-serif' }}>
       
       {/* Header with Logo */}
-      <header style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        <img 
-          src={logo} 
-          alt="Anant Gill Agro Farm" 
-          style={{ height: '60px' }} 
+      <header style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <img
+          src="/anant_gill_logo.png"
+          alt="Anant Gill Agro Farm"
+          style={{ width: 80, height: 'auto', objectFit: 'contain' }}
         />
         <h1 style={{ color: '#e6c79a', margin: 0 }}>ANANT GILL AGRO FARM</h1>
       </header>
@@ -19,13 +18,12 @@ export default function App() {
       <main style={{ marginTop: 30 }}>
         <h2 style={{ color: 'white' }}>Fresh Organic Mushrooms & Products</h2>
         <p style={{ color: 'white' }}>
-          Welcome to Anant Gill Agro Farm. We sell fresh mushrooms, pickles, dry mushrooms, 
-          and mushroom powder.
+          Welcome to Anant Gill Agro Farm. We sell fresh mushrooms, pickles, dry mushrooms, and mushroom powder.
         </p>
 
         {/* WhatsApp Order Button */}
         <a
-          href="https://wa.me/918837554747?text=Hi%20Anant%20Gill%20Agro%20Farm,%20I%20would%20like%20to%20place%20an%20order."
+          href="https://wa.me/918837554747?text=Hi%20Anant%20Gill%20Agro%20Farm,%20I%20want%20to%20place%20an%20order."
           target="_blank"
           rel="noopener noreferrer"
           style={{
@@ -36,16 +34,24 @@ export default function App() {
             borderRadius: '8px',
             textDecoration: 'none',
             fontWeight: '700',
-            marginTop: '12px'
+            marginTop: '12px',
           }}
         >
-          📲 Order on WhatsApp
+          📱 Order on WhatsApp
         </a>
 
         {/* Product List */}
-        <section style={{ marginTop: 30, background: '#124d28', padding: '15px', borderRadius: '8px' }}>
-          <h3 style={{ color: 'white' }}>Sample Products</h3>
-          <ul style={{ color: 'white' }}>
+        <section
+          style={{
+            marginTop: 30,
+            background: 'rgba(255,255,255,0.1)',
+            padding: '16px',
+            borderRadius: '8px',
+            color: 'white',
+          }}
+        >
+          <h3>Sample Products</h3>
+          <ul>
             <li>Fresh Mushrooms — ₹200 / kg</li>
             <li>Mushroom Pickle — ₹500 / kg</li>
             <li>Dry Mushrooms — ₹600 / 250g</li>
@@ -55,7 +61,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer style={{ marginTop: 30, color: 'white' }}>
+      <footer style={{ marginTop: 40, color: 'white', fontSize: '14px' }}>
         © 2025 Anant Gill Agro Farm
       </footer>
     </div>
