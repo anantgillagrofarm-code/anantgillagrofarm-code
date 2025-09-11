@@ -1,11 +1,17 @@
 import React, { useState } from "react";
-const logo = "/anant_gill_logo.png"; // file in the public/ folder // correct path now
+import freshMushrooms from "./assets/fresh_mushrooms.jpg";
+import mushroomPickle from "./assets/mushroom_pickle.jpg";
+import dryMushrooms from "./assets/dry_mushrooms.jpg";
+import mushroomPowder from "./assets/mushroom_powder.jpg";
+import mushroomWariyan from "./assets/mushroom_wariyan.jpg";
 
-// Dummy Products – replace later with real data + images
+// Products list
 const products = [
-  { id: 1, name: "Fresh Mushrooms", price: 200, image: "/mushroom1.jpg" },
-  { id: 2, name: "Mango Pickle", price: 500, image: "/pickle1.jpg" },
-  { id: 3, name: "Dry Mushrooms", price: 600, image: "/drymushroom.jpg" },
+  { id: 1, name: "Fresh Mushrooms", price: 200, image: freshMushrooms },
+  { id: 2, name: "Mushroom Pickle", price: 500, image: mushroomPickle },
+  { id: 3, name: "Dry Mushrooms", price: 600, image: dryMushrooms },
+  { id: 4, name: "Mushroom Powder", price: 400, image: mushroomPowder },
+  { id: 5, name: "Mushroom Wariyan", price: 450, image: mushroomWariyan },
 ];
 
 function App() {
@@ -20,80 +26,41 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-green-700 text-white p-4 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <img src={logo} alt="Anant Gill Agro Farm Logo" className="h-10" />
-          <h1 className="text-xl font-bold">Anant Gill Agro Farm</h1>
-        </div>
-        <div className="font-semibold">Cart ({cart.length})</div>
+    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
+      <header style={{ textAlign: "center", marginBottom: "30px" }}>
+        <h1 style={{ color: "green" }}>Welcome to Anant Gill Agro Farm</h1>
+        <p>Best quality fresh organic mushrooms & delicious pickles</p>
       </header>
 
-      {/* Hero Section */}
-      <section className="bg-white py-10 text-center shadow">
-        <h2 className="text-3xl font-bold text-green-700">
-          Welcome to Anant Gill Agro Farm
-        </h2>
-        <p className="mt-2 text-gray-600">
-          Best quality fresh organic mushrooms & delicious pickles
-        </p>
-      </section>
-
-      {/* Products Section */}
-      <section className="p-6">
-        <h3 className="text-2xl font-bold mb-4 text-gray-800">Our Products</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="bg-white rounded-xl shadow hover:shadow-lg p-4 flex flex-col items-center"
+      <h2>Our Products</h2>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "20px" }}>
+        {products.map((product) => (
+          <div key={product.id} style={{ border: "1px solid #ddd", borderRadius: "10px", padding: "15px", textAlign: "center", boxShadow: "0 2px 5px rgba(0,0,0,0.1)" }}>
+            <img src={product.image} alt={product.name} style={{ width: "100%", height: "200px", objectFit: "cover", borderRadius: "8px" }} />
+            <h3>{product.name}</h3>
+            <p>₹{product.price}</p>
+            <button
+              onClick={() => addToCart(product)}
+              style={{ padding: "10px 15px", background: "green", color: "white", border: "none", borderRadius: "5px", cursor: "pointer" }}
             >
-              <img
-                src={product.image}
-                alt={product.name}
-                className="h-32 w-32 object-cover rounded"
-              />
-              <h4 className="mt-2 font-semibold">{product.name}</h4>
-              <p className="text-green-700 font-bold">₹{product.price}</p>
-              <button
-                onClick={() => addToCart(product)}
-                className="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-              >
-                Add to Cart
-              </button>
-            </div>
-          ))}
-        </div>
-      </section>
+              Add to Cart
+            </button>
+          </div>
+        ))}
+      </div>
 
-      {/* About Section */}
-      <section className="bg-gray-100 py-10 px-6">
-        <h3 className="text-2xl font-bold text-gray-800 mb-3">About Us</h3>
-        <p className="text-gray-700 max-w-3xl">
-          At Anant Gill Agro Farm, we take pride in delivering the finest organic
-          mushrooms and mushroom-based products. From fresh harvests to
-          innovative pickles and powders, our mission is to bring natural,
-          chemical-free, and nutritious products directly to your table.
-        </p>
-      </section>
-
-      {/* Cart Section */}
-      <aside className="p-6 bg-white shadow mt-6">
-        <h3 className="text-xl font-bold mb-3">Your Cart</h3>
+      <aside style={{ marginTop: "40px" }}>
+        <h2>Your Cart</h2>
         {cart.length === 0 ? (
-          <p className="text-gray-500">Your cart is empty.</p>
+          <p>No items in cart</p>
         ) : (
-          <ul className="space-y-2">
-            {cart.map((item, index) => (
-              <li
-                key={index}
-                className="flex justify-between items-center border-b pb-2"
-              >
-                <span>{item.name}</span>
+          <ul>
+            {cart.map((item) => (
+              <li key={item.id}>
+                {item.name} - ₹{item.price}{" "}
                 <button
                   onClick={() => removeFromCart(item.id)}
-                  className="text-red-500 hover:underline"
+                  style={{ marginLeft: "10px", color: "red", cursor: "pointer" }}
                 >
                   Remove
                 </button>
@@ -102,11 +69,6 @@ function App() {
           </ul>
         )}
       </aside>
-
-      {/* Footer */}
-      <footer className="bg-green-700 text-white text-center py-4 mt-6">
-        © {new Date().getFullYear()} Anant Gill Agro Farm. All rights reserved.
-      </footer>
     </div>
   );
 }
