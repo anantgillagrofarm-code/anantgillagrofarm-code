@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import logo from "./assets/anant_gill_logo.png"; // correct path now
+const logo = "/anant_gill_logo.png"; // file in the public/ folder // correct path now
 
 // Dummy Products – replace later with real data + images
 const products = [
