@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import logo from "./assets/anant_gill_logo.svg"; // adjust path/name if needed
+import logo from "./anant_gill_logo.svg";; // adjust path/name if needed
 
 // Sample product list (replace or extend as needed)
 const PRODUCTS = [
