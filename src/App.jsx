@@ -1,26 +1,62 @@
 import React, { useState } from "react";
 
-/* ---------- Config ---------- */
-const PHONE_NUMBER = "918837554747"; // replace with your WhatsApp number (countrycode + number)
-const LOGO_PATH = "/anant_gill_logo.png"; // keep this if your logo is in public/
+/* -------- CONFIG -------- */
+const PHONE_NUMBER = "918837554747"; // your WhatsApp number (country code + number)
+const LOGO_PATH = "/anant_gill_logo.png";
 
-/* ---------- Sample product list (change prices/descriptions later) ---------- */
+/* -------- PRODUCTS (with the descriptions you approved) -------- */
 const PRODUCTS = [
-  { id: "p1", title: "Fresh Mushrooms (1 kg)", price: 200, desc: "Locally grown, fresh & organic." },
-  { id: "p2", title: "Mushroom Pickle (500 g)", price: 500, desc: "Tangy, handmade pickle." },
-  { id: "p3", title: "Dry Mushrooms (250 g)", price: 600, desc: "Sun-dried, long shelf life." },
-  { id: "p4", title: "Mushroom Powder (100 g)", price: 400, desc: "Powdered for soups & recipes." }
+  {
+    id: "p1",
+    title: "Fresh Mushrooms (1 kg)",
+    price: 200,
+    desc: "Locally grown, hand-picked mushrooms, delivered fresh daily."
+  },
+  {
+    id: "p2",
+    title: "Mushroom Pickle (500 g)",
+    price: 500,
+    desc: "Tangy, spicy, homemade pickle made with farm-fresh mushrooms."
+  },
+  {
+    id: "p3",
+    title: "Dry Mushrooms (250 g)",
+    price: 600,
+    desc: "Sun-dried naturally for longer shelf life and rich flavor."
+  },
+  {
+    id: "p4",
+    title: "Mushroom Powder (100 g)",
+    price: 400,
+    desc: "Pure powdered mushrooms — perfect for soups, gravies, and health mixes."
+  },
+  {
+    id: "p5",
+    title: "Mushroom Warriyan",
+    price: 350,
+    desc: "Traditional Punjabi-style warriyan, crafted with love and authenticity."
+  }
 ];
 
-/* ---------- Small UI components ---------- */
+/* -------- UI Components -------- */
 function ProductCard({ p, onAdd }) {
   return (
-    <div style={{ border: "1px solid #e6e6e6", borderRadius: 10, padding: 12, background: "#fff", width: 260 }}>
-      <div style={{ fontWeight: 700 }}>{p.title}</div>
-      <div style={{ color: "#555", marginTop: 6 }}>{p.desc}</div>
-      <div style={{ marginTop: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div style={{
+      border: "1px solid #e6e6e6",
+      borderRadius: 10,
+      padding: 14,
+      background: "#fff",
+      width: 280,
+      boxSizing: "border-box"
+    }}>
+      <div style={{ fontWeight: 800 }}>{p.title}</div>
+      <div style={{ color: "#666", marginTop: 8, minHeight: 44 }}>{p.desc}</div>
+      <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <div style={{ fontWeight: 800 }}>₹{p.price}</div>
-        <button onClick={() => onAdd(p)} style={{ background: "#25D366", color: "#083a22", border: "none", padding: "8px 12px", borderRadius: 8, fontWeight: 700 }}>
+        <button
+          onClick={() => onAdd(p)}
+          style={{ background: "#25D366", color: "#083a22", border: "none", padding: "8px 12px", borderRadius: 8, fontWeight: 700 }}
+        >
           Add
         </button>
       </div>
@@ -40,6 +76,7 @@ function Cart({ cart, onInc, onDec, onRemove, onWhatsApp }) {
             <div style={{ fontWeight: 700 }}>{item.title}</div>
             <div style={{ color: "#666" }}>₹{item.price} × {item.qty} = <strong>₹{item.price * item.qty}</strong></div>
           </div>
+
           <div style={{ display: "flex", flexDirection: "column", gap: 6, marginLeft: 8 }}>
             <div style={{ display: "flex", gap: 6 }}>
               <button onClick={() => onDec(item.id)} style={{ padding: "6px 8px" }}>−</button>
@@ -95,7 +132,7 @@ function Cart({ cart, onInc, onDec, onRemove, onWhatsApp }) {
   );
 }
 
-/* ---------- Main App ---------- */
+/* -------- MAIN APP -------- */
 export default function App() {
   const [cart, setCart] = useState([]);
 
@@ -106,19 +143,12 @@ export default function App() {
       return [...prev, { ...product, qty: 1 }];
     });
   }
-  function incQty(id) {
-    setCart(prev => prev.map(p => p.id === id ? { ...p, qty: p.qty + 1 } : p));
-  }
-  function decQty(id) {
-    setCart(prev => prev.map(p => p.id === id ? { ...p, qty: Math.max(1, p.qty - 1) } : p));
-  }
-  function removeItem(id) {
-    setCart(prev => prev.filter(p => p.id !== id));
-  }
+  function incQty(id) { setCart(prev => prev.map(p => p.id === id ? { ...p, qty: p.qty + 1 } : p)); }
+  function decQty(id) { setCart(prev => prev.map(p => p.id === id ? { ...p, qty: Math.max(1, p.qty - 1) } : p)); }
+  function removeItem(id) { setCart(prev => prev.filter(p => p.id !== id)); }
 
   function openWhatsAppWithOrder(cartItems) {
     if (!cartItems || cartItems.length === 0) return;
-    // build message
     const lines = [];
     lines.push("Hi Anant Gill Agro Farm, I would like to place an order:");
     cartItems.forEach(ci => {
@@ -152,8 +182,8 @@ export default function App() {
 
       {/* HERO */}
       <div style={{ textAlign: "center", padding: "28px 18px", background: "linear-gradient(180deg,#0f3b1d, #083a22)", color: "#fff" }}>
-        <h1 style={{ margin: 0 }}>Fresh Mushrooms & Homemade Pickles</h1>
-        <p style={{ color: "#e6e6e6", marginTop: 8 }}>Order fresh from our farm — quick delivery & best quality.</p>
+        <h1 style={{ margin: 0 }}>Fresh, Organic & Wholesome Mushrooms</h1>
+        <p style={{ color: "#e6e6e6", marginTop: 8 }}>From our farm in Punjab to your kitchen — naturally grown, hand-picked, and packed with care.</p>
       </div>
 
       {/* MAIN */}
@@ -171,22 +201,12 @@ export default function App() {
           <section id="about" style={{ marginTop: 28 }}>
             <h3>About</h3>
             <p style={{ color: "#555" }}>
-              Anant Gill Agro Farm is a family-run farm specialising in mushrooms and mushroom products.
-              We use natural methods to grow and prepare our products. Registered under MSME.
+              At <strong>Anant Gill Foods</strong>, we believe healthy food starts with clean farming.
+              We specialize in cultivating fresh, organic mushrooms and crafting natural by-products such as mushroom pickles, dried mushrooms, mushroom powder, and traditional mushroom warriyan.
+              Our products are 100% chemical-free, farm-fresh, and full of goodness.
             </p>
           </section>
         </div>
 
         <aside style={{ width: 380 }}>
-          <Cart cart={cart} onInc={incQty} onDec={decQty} onRemove={removeItem} onWhatsApp={openWhatsAppWithOrder} />
-        </aside>
-      </div>
-
-      {/* CONTACT */}
-      <footer id="contact" style={{ background: "#083a22", color: "#fff", padding: 18, textAlign: "center" }}>
-        <div>© {new Date().getFullYear()} Anant Gill Agro Farm — Anant Foods (Brand)</div>
-        <div style={{ marginTop: 6 }}>Phone: +91 88375 54747 • Email: youremail@example.com</div>
-      </footer>
-    </div>
-  );
-}
+          <Cart cart={cart} onInc={incQty} onDec={decQty}
