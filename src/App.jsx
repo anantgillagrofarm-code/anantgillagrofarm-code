@@ -1,169 +1,114 @@
 import React, { useState } from "react";
-import logo from "./anant_gill_logo.svg";; // adjust path/name if needed
+import logo from "./anant_gill_logo.svg"; // correct path now
 
-// Sample product list (replace or extend as needed)
-const PRODUCTS = [
-  { id: "p1", name: "Fresh Mushrooms", price: 200, unit: "kg" },
-  { id: "p2", name: "Mushroom Pickle", price: 500, unit: "kg" },
-  { id: "p3", name: "Dry Mushrooms", price: 600, unit: "250g" },
-  { id: "p4", name: "Mushroom Powder", price: 400, unit: "100g" },
+// Dummy Products – replace later with real data + images
+const products = [
+  { id: 1, name: "Fresh Mushrooms", price: 200, image: "/mushroom1.jpg" },
+  { id: 2, name: "Mango Pickle", price: 500, image: "/pickle1.jpg" },
+  { id: 3, name: "Dry Mushrooms", price: 600, image: "/drymushroom.jpg" },
 ];
 
-function formatCurrency(n) {
-  // Indian rupee formatting (simple)
-  return `₹${n.toFixed(0)}`;
-}
+function App() {
+  const [cart, setCart] = useState([]);
 
-function Cart({ cartItems, onIncrease, onDecrease, onClear }) {
-  const total = cartItems.reduce((s, it) => s + it.qty * it.price, 0);
-
-  return (
-    <div className="cart p-4 bg-white rounded shadow-md" style={{ minWidth: 280 }}>
-      <h3 className="text-lg font-semibold mb-2">Cart</h3>
-      {cartItems.length === 0 ? (
-        <div className="text-sm text-gray-600">Your cart is empty.</div>
-      ) : (
-        <div>
-          {cartItems.map((it) => (
-            <div key={it.id} className="flex items-center justify-between mb-2">
-              <div>
-                <div className="font-medium">{it.name}</div>
-                <div className="text-sm text-gray-500">
-                  {formatCurrency(it.price)} × {it.qty}
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  aria-label={`decrease ${it.name}`}
-                  className="px-2 py-1 border rounded"
-                  onClick={() => onDecrease(it.id)}
-                >
-                  −
-                </button>
-                <button
-                  aria-label={`increase ${it.name}`}
-                  className="px-2 py-1 border rounded"
-                  onClick={() => onIncrease(it.id)}
-                >
-                  +
-                </button>
-              </div>
-            </div>
-          ))}
-          <div className="mt-3 border-t pt-3">
-            <div className="flex justify-between font-semibold">
-              <span>Total</span>
-              <span>{formatCurrency(total)}</span>
-            </div>
-            <div className="mt-3 flex gap-2">
-              <button className="flex-1 bg-green-500 text-white py-2 rounded" onClick={() => {
-                // simple "checkout" behaviour: open WhatsApp with cart summary
-                const msg = cartItems.map(i => `${i.name} x${i.qty} = ${formatCurrency(i.price * i.qty)}`).join('%0A');
-                const totalMsg = `Total: ${formatCurrency(total)}`;
-                const wa = `https://wa.me/?text=${encodeURIComponent(msg + '%0A' + totalMsg)}`;
-                window.open(wa, "_blank");
-              }}>
-                Order on WhatsApp
-              </button>
-              <button className="px-3 py-2 border rounded" onClick={onClear}>Clear</button>
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default function App() {
-  const [cart, setCart] = useState([]); // {id, name, price, qty}
   const addToCart = (product) => {
-    setCart((prev) => {
-      const idx = prev.findIndex((p) => p.id === product.id);
-      if (idx === -1) {
-        return [...prev, { ...product, qty: 1 }];
-      } else {
-        const copy = [...prev];
-        copy[idx] = { ...copy[idx], qty: copy[idx].qty + 1 };
-        return copy;
-      }
-    });
+    setCart((prev) => [...prev, product]);
   };
-  const increase = (id) => {
-    setCart((prev) => prev.map(p => p.id === id ? { ...p, qty: p.qty + 1 } : p));
+
+  const removeFromCart = (id) => {
+    setCart((prev) => prev.filter((item) => item.id !== id));
   };
-  const decrease = (id) => {
-    setCart((prev) =>
-      prev
-        .map((p) => (p.id === id ? { ...p, qty: Math.max(0, p.qty - 1) } : p))
-        .filter((p) => p.qty > 0)
-    );
-  };
-  const clearCart = () => setCart([]);
 
   return (
-    <div className="min-h-screen bg-green-900 text-white p-6">
-      <header className="max-w-4xl mx-auto flex items-center gap-4 mb-8">
-        <img src={logo} alt="Anant Gill Agro Farm" style={{ width: 72, height: "auto" }} />
-        <div>
-          <h1 className="text-2xl font-semibold">ANANT GILL AGRO FARM</h1>
-          <div className="text-sm text-green-200">Fresh Organic Mushrooms & Products</div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-green-700 text-white p-4 flex justify-between items-center">
+        <div className="flex items-center space-x-2">
+          <img src={logo} alt="Anant Gill Agro Farm Logo" className="h-10" />
+          <h1 className="text-xl font-bold">Anant Gill Agro Farm</h1>
         </div>
+        <div className="font-semibold">Cart ({cart.length})</div>
       </header>
 
-      <main className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-        <section className="md:col-span-2">
-          <div className="bg-green-800 p-6 rounded-lg mb-6">
-            <h2 className="text-xl font-semibold mb-2">Welcome to Anant Gill Agro Farm</h2>
-            <p className="text-green-100 mb-4">
-              We sell fresh mushrooms, pickles, dry mushrooms, and mushroom powder.
-            </p>
-            <a
-              href="https://wa.me/?text=Hi%20I%20want%20to%20order%20mushrooms"
-              className="inline-block bg-green-500 text-white px-4 py-2 rounded"
+      {/* Hero Section */}
+      <section className="bg-white py-10 text-center shadow">
+        <h2 className="text-3xl font-bold text-green-700">
+          Welcome to Anant Gill Agro Farm
+        </h2>
+        <p className="mt-2 text-gray-600">
+          Best quality fresh organic mushrooms & delicious pickles
+        </p>
+      </section>
+
+      {/* Products Section */}
+      <section className="p-6">
+        <h3 className="text-2xl font-bold mb-4 text-gray-800">Our Products</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {products.map((product) => (
+            <div
+              key={product.id}
+              className="bg-white rounded-xl shadow hover:shadow-lg p-4 flex flex-col items-center"
             >
-              📲 Order on WhatsApp
-            </a>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {PRODUCTS.map((p) => (
-              <article key={p.id} className="bg-white text-black rounded p-4 shadow">
-                <h3 className="font-semibold">{p.name}</h3>
-                <p className="text-sm text-gray-600">{p.unit}</p>
-                <div className="mt-2 flex items-center justify-between">
-                  <div className="font-medium">{formatCurrency(p.price)}</div>
-                  <button
-                    className="bg-green-600 text-white px-3 py-1 rounded"
-                    onClick={() => addToCart(p)}
-                  >
-                    Add
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          <div className="mt-6 bg-green-800 p-4 rounded">
-            <h3 className="font-semibold">Sample Products & Prices</h3>
-            <ul className="mt-2 text-green-100">
-              <li>Fresh Mushrooms — ₹200 / kg</li>
-              <li>Mushroom Pickle — ₹500 / kg</li>
-              <li>Dry Mushrooms — ₹600 / 250g</li>
-              <li>Mushroom Powder — ₹400 / 100g</li>
-            </ul>
-          </div>
-        </section>
-
-        <aside className="md:col-span-1">
-          <Cart cartItems={cart} onIncrease={increase} onDecrease={decrease} onClear={clearCart} />
-        </aside>
-      </main>
-
-      <footer className="max-w-4xl mx-auto text-green-100 mt-10">
-        <div className="border-t border-green-700 pt-6">
-          © {new Date().getFullYear()} Anant Gill Agro Farm
+              <img
+                src={product.image}
+                alt={product.name}
+                className="h-32 w-32 object-cover rounded"
+              />
+              <h4 className="mt-2 font-semibold">{product.name}</h4>
+              <p className="text-green-700 font-bold">₹{product.price}</p>
+              <button
+                onClick={() => addToCart(product)}
+                className="mt-2 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+              >
+                Add to Cart
+              </button>
+            </div>
+          ))}
         </div>
+      </section>
+
+      {/* About Section */}
+      <section className="bg-gray-100 py-10 px-6">
+        <h3 className="text-2xl font-bold text-gray-800 mb-3">About Us</h3>
+        <p className="text-gray-700 max-w-3xl">
+          At Anant Gill Agro Farm, we take pride in delivering the finest organic
+          mushrooms and mushroom-based products. From fresh harvests to
+          innovative pickles and powders, our mission is to bring natural,
+          chemical-free, and nutritious products directly to your table.
+        </p>
+      </section>
+
+      {/* Cart Section */}
+      <aside className="p-6 bg-white shadow mt-6">
+        <h3 className="text-xl font-bold mb-3">Your Cart</h3>
+        {cart.length === 0 ? (
+          <p className="text-gray-500">Your cart is empty.</p>
+        ) : (
+          <ul className="space-y-2">
+            {cart.map((item, index) => (
+              <li
+                key={index}
+                className="flex justify-between items-center border-b pb-2"
+              >
+                <span>{item.name}</span>
+                <button
+                  onClick={() => removeFromCart(item.id)}
+                  className="text-red-500 hover:underline"
+                >
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </aside>
+
+      {/* Footer */}
+      <footer className="bg-green-700 text-white text-center py-4 mt-6">
+        © {new Date().getFullYear()} Anant Gill Agro Farm. All rights reserved.
       </footer>
     </div>
   );
 }
+
+export default App;
