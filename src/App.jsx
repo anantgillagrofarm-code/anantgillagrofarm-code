@@ -1,212 +1,169 @@
 import React, { useState } from "react";
+import logo from "./assets/anant_gill_logo.svg"; // adjust path/name if needed
 
-/* -------- CONFIG -------- */
-const PHONE_NUMBER = "918837554747"; // your WhatsApp number (country code + number)
-const LOGO_PATH = "/anant_gill_logo.png";
-
-/* -------- PRODUCTS (with the descriptions you approved) -------- */
+// Sample product list (replace or extend as needed)
 const PRODUCTS = [
-  {
-    id: "p1",
-    title: "Fresh Mushrooms (1 kg)",
-    price: 200,
-    desc: "Locally grown, hand-picked mushrooms, delivered fresh daily."
-  },
-  {
-    id: "p2",
-    title: "Mushroom Pickle (500 g)",
-    price: 500,
-    desc: "Tangy, spicy, homemade pickle made with farm-fresh mushrooms."
-  },
-  {
-    id: "p3",
-    title: "Dry Mushrooms (250 g)",
-    price: 600,
-    desc: "Sun-dried naturally for longer shelf life and rich flavor."
-  },
-  {
-    id: "p4",
-    title: "Mushroom Powder (100 g)",
-    price: 400,
-    desc: "Pure powdered mushrooms — perfect for soups, gravies, and health mixes."
-  },
-  {
-    id: "p5",
-    title: "Mushroom Warriyan",
-    price: 350,
-    desc: "Traditional Punjabi-style warriyan, crafted with love and authenticity."
-  }
+  { id: "p1", name: "Fresh Mushrooms", price: 200, unit: "kg" },
+  { id: "p2", name: "Mushroom Pickle", price: 500, unit: "kg" },
+  { id: "p3", name: "Dry Mushrooms", price: 600, unit: "250g" },
+  { id: "p4", name: "Mushroom Powder", price: 400, unit: "100g" },
 ];
 
-/* -------- UI Components -------- */
-function ProductCard({ p, onAdd }) {
-  return (
-    <div style={{
-      border: "1px solid #e6e6e6",
-      borderRadius: 10,
-      padding: 14,
-      background: "#fff",
-      width: 280,
-      boxSizing: "border-box"
-    }}>
-      <div style={{ fontWeight: 800 }}>{p.title}</div>
-      <div style={{ color: "#666", marginTop: 8, minHeight: 44 }}>{p.desc}</div>
-      <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ fontWeight: 800 }}>₹{p.price}</div>
-        <button
-          onClick={() => onAdd(p)}
-          style={{ background: "#25D366", color: "#083a22", border: "none", padding: "8px 12px", borderRadius: 8, fontWeight: 700 }}
-        >
-          Add
-        </button>
-      </div>
-    </div>
-  );
+function formatCurrency(n) {
+  // Indian rupee formatting (simple)
+  return `₹${n.toFixed(0)}`;
 }
 
-function Cart({ cart, onInc, onDec, onRemove, onWhatsApp }) {
-  const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
-  return (
-    <div style={{ padding: 12, borderRadius: 10, background: "#fff", border: "1px solid #e6e6e6", width: 360 }}>
-      <h3 style={{ marginTop: 0 }}>Your Cart</h3>
-      {cart.length === 0 && <div style={{ color: "#666" }}>Cart is empty</div>}
-      {cart.map(item => (
-        <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 10 }}>
-          <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700 }}>{item.title}</div>
-            <div style={{ color: "#666" }}>₹{item.price} × {item.qty} = <strong>₹{item.price * item.qty}</strong></div>
-          </div>
+function Cart({ cartItems, onIncrease, onDecrease, onClear }) {
+  const total = cartItems.reduce((s, it) => s + it.qty * it.price, 0);
 
-          <div style={{ display: "flex", flexDirection: "column", gap: 6, marginLeft: 8 }}>
-            <div style={{ display: "flex", gap: 6 }}>
-              <button onClick={() => onDec(item.id)} style={{ padding: "6px 8px" }}>−</button>
-              <div style={{ minWidth: 26, textAlign: "center" }}>{item.qty}</div>
-              <button onClick={() => onInc(item.id)} style={{ padding: "6px 8px" }}>+</button>
+  return (
+    <div className="cart p-4 bg-white rounded shadow-md" style={{ minWidth: 280 }}>
+      <h3 className="text-lg font-semibold mb-2">Cart</h3>
+      {cartItems.length === 0 ? (
+        <div className="text-sm text-gray-600">Your cart is empty.</div>
+      ) : (
+        <div>
+          {cartItems.map((it) => (
+            <div key={it.id} className="flex items-center justify-between mb-2">
+              <div>
+                <div className="font-medium">{it.name}</div>
+                <div className="text-sm text-gray-500">
+                  {formatCurrency(it.price)} × {it.qty}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  aria-label={`decrease ${it.name}`}
+                  className="px-2 py-1 border rounded"
+                  onClick={() => onDecrease(it.id)}
+                >
+                  −
+                </button>
+                <button
+                  aria-label={`increase ${it.name}`}
+                  className="px-2 py-1 border rounded"
+                  onClick={() => onIncrease(it.id)}
+                >
+                  +
+                </button>
+              </div>
             </div>
-            <button onClick={() => onRemove(item.id)} style={{ background: "#f44336", color: "#fff", border: "none", padding: "6px 8px", borderRadius: 6 }}>Remove</button>
+          ))}
+          <div className="mt-3 border-t pt-3">
+            <div className="flex justify-between font-semibold">
+              <span>Total</span>
+              <span>{formatCurrency(total)}</span>
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button className="flex-1 bg-green-500 text-white py-2 rounded" onClick={() => {
+                // simple "checkout" behaviour: open WhatsApp with cart summary
+                const msg = cartItems.map(i => `${i.name} x${i.qty} = ${formatCurrency(i.price * i.qty)}`).join('%0A');
+                const totalMsg = `Total: ${formatCurrency(total)}`;
+                const wa = `https://wa.me/?text=${encodeURIComponent(msg + '%0A' + totalMsg)}`;
+                window.open(wa, "_blank");
+              }}>
+                Order on WhatsApp
+              </button>
+              <button className="px-3 py-2 border rounded" onClick={onClear}>Clear</button>
+            </div>
           </div>
         </div>
-      ))}
-
-      <hr style={{ margin: "12px 0", border: "none", borderTop: "1px solid #eee" }} />
-      <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 800, marginBottom: 12 }}>
-        <div>Subtotal</div>
-        <div>₹{subtotal}</div>
-      </div>
-
-      <div style={{ display: "flex", gap: 8 }}>
-        <button
-          disabled={cart.length === 0}
-          onClick={() => onWhatsApp(cart)}
-          style={{
-            background: "#25D366",
-            color: "#083a22",
-            border: "none",
-            padding: "10px 14px",
-            borderRadius: 8,
-            fontWeight: 800,
-            flex: 1
-          }}
-        >
-          Order via WhatsApp
-        </button>
-        <a
-          href="#contact"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            padding: "10px 12px",
-            borderRadius: 8,
-            border: "1px solid #ddd",
-            textDecoration: "none",
-            color: "#333",
-            width: 48
-          }}
-          title="Contact"
-        >
-          ?
-        </a>
-      </div>
+      )}
     </div>
   );
 }
 
-/* -------- MAIN APP -------- */
 export default function App() {
-  const [cart, setCart] = useState([]);
-
-  function addToCart(product) {
-    setCart(prev => {
-      const found = prev.find(p => p.id === product.id);
-      if (found) return prev.map(p => p.id === product.id ? { ...p, qty: p.qty + 1 } : p);
-      return [...prev, { ...product, qty: 1 }];
+  const [cart, setCart] = useState([]); // {id, name, price, qty}
+  const addToCart = (product) => {
+    setCart((prev) => {
+      const idx = prev.findIndex((p) => p.id === product.id);
+      if (idx === -1) {
+        return [...prev, { ...product, qty: 1 }];
+      } else {
+        const copy = [...prev];
+        copy[idx] = { ...copy[idx], qty: copy[idx].qty + 1 };
+        return copy;
+      }
     });
-  }
-  function incQty(id) { setCart(prev => prev.map(p => p.id === id ? { ...p, qty: p.qty + 1 } : p)); }
-  function decQty(id) { setCart(prev => prev.map(p => p.id === id ? { ...p, qty: Math.max(1, p.qty - 1) } : p)); }
-  function removeItem(id) { setCart(prev => prev.filter(p => p.id !== id)); }
-
-  function openWhatsAppWithOrder(cartItems) {
-    if (!cartItems || cartItems.length === 0) return;
-    const lines = [];
-    lines.push("Hi Anant Gill Agro Farm, I would like to place an order:");
-    cartItems.forEach(ci => {
-      lines.push(`${ci.title} — Qty: ${ci.qty} — ₹${ci.price * ci.qty}`);
-    });
-    const total = cartItems.reduce((s, it) => s + it.price * it.qty, 0);
-    lines.push(`Total: ₹${total}`);
-    lines.push("");
-    lines.push("Name: ");
-    lines.push("Phone: ");
-    lines.push("Address: ");
-    const message = encodeURIComponent(lines.join("%0A"));
-    const url = `https://wa.me/${PHONE_NUMBER}?text=${message}`;
-    window.open(url, "_blank");
-  }
+  };
+  const increase = (id) => {
+    setCart((prev) => prev.map(p => p.id === id ? { ...p, qty: p.qty + 1 } : p));
+  };
+  const decrease = (id) => {
+    setCart((prev) =>
+      prev
+        .map((p) => (p.id === id ? { ...p, qty: Math.max(0, p.qty - 1) } : p))
+        .filter((p) => p.qty > 0)
+    );
+  };
+  const clearCart = () => setCart([]);
 
   return (
-    <div style={{ fontFamily: "Arial, sans-serif", background: "#f4f7f6", minHeight: "100vh", color: "#083a22" }}>
-      {/* NAV */}
-      <div style={{ background: "#083a22", color: "#fff", padding: "12px 18px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <img src={LOGO_PATH} alt="logo" style={{ height: 46 }} />
-          <div style={{ fontWeight: 800, fontSize: 18 }}>ANANT GILL AGRO FARM</div>
+    <div className="min-h-screen bg-green-900 text-white p-6">
+      <header className="max-w-4xl mx-auto flex items-center gap-4 mb-8">
+        <img src={logo} alt="Anant Gill Agro Farm" style={{ width: 72, height: "auto" }} />
+        <div>
+          <h1 className="text-2xl font-semibold">ANANT GILL AGRO FARM</h1>
+          <div className="text-sm text-green-200">Fresh Organic Mushrooms & Products</div>
         </div>
-        <div style={{ display: "flex", gap: 12 }}>
-          <a href="#products" style={{ color: "#fff", textDecoration: "none" }}>Products</a>
-          <a href="#about" style={{ color: "#fff", textDecoration: "none" }}>About</a>
-          <a href="#contact" style={{ color: "#fff", textDecoration: "none" }}>Contact</a>
-        </div>
-      </div>
+      </header>
 
-      {/* HERO */}
-      <div style={{ textAlign: "center", padding: "28px 18px", background: "linear-gradient(180deg,#0f3b1d, #083a22)", color: "#fff" }}>
-        <h1 style={{ margin: 0 }}>Fresh, Organic & Wholesome Mushrooms</h1>
-        <p style={{ color: "#e6e6e6", marginTop: 8 }}>From our farm in Punjab to your kitchen — naturally grown, hand-picked, and packed with care.</p>
-      </div>
-
-      {/* MAIN */}
-      <div style={{ display: "flex", gap: 20, maxWidth: 1200, margin: "24px auto", padding: "0 12px", alignItems: "flex-start" }}>
-        <div style={{ flex: 1 }}>
-          <section id="products">
-            <h2 style={{ marginTop: 0 }}>Products</h2>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-              {PRODUCTS.map(p => (
-                <ProductCard key={p.id} p={p} onAdd={addToCart} />
-              ))}
-            </div>
-          </section>
-
-          <section id="about" style={{ marginTop: 28 }}>
-            <h3>About</h3>
-            <p style={{ color: "#555" }}>
-              At <strong>Anant Gill Foods</strong>, we believe healthy food starts with clean farming.
-              We specialize in cultivating fresh, organic mushrooms and crafting natural by-products such as mushroom pickles, dried mushrooms, mushroom powder, and traditional mushroom warriyan.
-              Our products are 100% chemical-free, farm-fresh, and full of goodness.
+      <main className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+        <section className="md:col-span-2">
+          <div className="bg-green-800 p-6 rounded-lg mb-6">
+            <h2 className="text-xl font-semibold mb-2">Welcome to Anant Gill Agro Farm</h2>
+            <p className="text-green-100 mb-4">
+              We sell fresh mushrooms, pickles, dry mushrooms, and mushroom powder.
             </p>
-          </section>
-        </div>
+            <a
+              href="https://wa.me/?text=Hi%20I%20want%20to%20order%20mushrooms"
+              className="inline-block bg-green-500 text-white px-4 py-2 rounded"
+            >
+              📲 Order on WhatsApp
+            </a>
+          </div>
 
-        <aside style={{ width: 380 }}>
-          <Cart cart={cart} onInc={incQty} onDec={decQty}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {PRODUCTS.map((p) => (
+              <article key={p.id} className="bg-white text-black rounded p-4 shadow">
+                <h3 className="font-semibold">{p.name}</h3>
+                <p className="text-sm text-gray-600">{p.unit}</p>
+                <div className="mt-2 flex items-center justify-between">
+                  <div className="font-medium">{formatCurrency(p.price)}</div>
+                  <button
+                    className="bg-green-600 text-white px-3 py-1 rounded"
+                    onClick={() => addToCart(p)}
+                  >
+                    Add
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="mt-6 bg-green-800 p-4 rounded">
+            <h3 className="font-semibold">Sample Products & Prices</h3>
+            <ul className="mt-2 text-green-100">
+              <li>Fresh Mushrooms — ₹200 / kg</li>
+              <li>Mushroom Pickle — ₹500 / kg</li>
+              <li>Dry Mushrooms — ₹600 / 250g</li>
+              <li>Mushroom Powder — ₹400 / 100g</li>
+            </ul>
+          </div>
+        </section>
+
+        <aside className="md:col-span-1">
+          <Cart cartItems={cart} onIncrease={increase} onDecrease={decrease} onClear={clearCart} />
+        </aside>
+      </main>
+
+      <footer className="max-w-4xl mx-auto text-green-100 mt-10">
+        <div className="border-t border-green-700 pt-6">
+          © {new Date().getFullYear()} Anant Gill Agro Farm
+        </div>
+      </footer>
+    </div>
+  );
+}
