@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import freshImg from "./assets/fresh_mushrooms.jpg";
 import pickleImg from "./assets/mushroom_pickle.jpg";
 import dryImg from "./assets/dry_mushrooms.jpg";
@@ -20,7 +20,7 @@ const productsList = [
     id: "p1",
     name: "Fresh Mushrooms",
     img: freshImg,
-    desc: "Hand-picked fresh mushrooms — choose box or kg.",
+    desc: "Hand-picked fresh mushrooms — choose box (200g) or 1 kg.",
     variants: [
       { vid: "p1-box", label: "200g box", price: 40 },
       { vid: "p1-kg", label: "1 kg", price: 200 },
@@ -59,40 +59,77 @@ const productsList = [
   },
 ];
 
+/* Modal that shows variants and quantity selector like food apps */
 function VariantModal({ product, onClose, onAdd }) {
+  const [selectedVid, setSelectedVid] = useState(null);
+  const [qty, setQty] = useState(1);
+
+  useEffect(() => {
+    if (product) {
+      setSelectedVid(product.variants[0].vid);
+      setQty(1);
+    }
+  }, [product]);
+
   if (!product) return null;
+
+  const variant = product.variants.find((v) => v.vid === selectedVid) || product.variants[0];
+  const total = variant.price * qty;
+
+  const inc = () => setQty((q) => q + 1);
+  const dec = () => setQty((q) => Math.max(1, q - 1));
+
   return (
-    <div className="modal-backdrop" onClick={onClose}>
+    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose} aria-label="Close">×</button>
+
         <div className="modal-top">
           <div className="modal-img">
-            <img src={product.img} alt={product.name} onError={(e)=> e.currentTarget.style.objectFit='contain'} />
+            <img src={product.img} alt={product.name} />
           </div>
+
           <div className="modal-info">
             <h2>{product.name}</h2>
             <p className="muted">{product.desc}</p>
 
-            <div style={{ marginTop: 12 }}>
-              <div style={{ fontWeight: 700, marginBottom: 8 }}>Choose size / variant</div>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ marginTop: 14 }}>
+              <div style={{ fontWeight: 700, marginBottom: 10 }}>Choose size</div>
+
+              <div className="variant-list">
                 {product.variants.map((v) => (
-                  <button
-                    key={v.vid}
-                    className="variant-btn"
-                    onClick={() => onAdd(product, v)}
-                  >
-                    <div style={{ fontWeight: 700 }}>{toINR(v.price)}</div>
-                    <div style={{ fontSize: 13, color: "var(--muted)" }}>{v.label}</div>
-                  </button>
+                  <label key={v.vid} className={`variant-row ${v.vid === selectedVid ? "selected" : ""}`}>
+                    <input
+                      type="radio"
+                      name="variant"
+                      checked={v.vid === selectedVid}
+                      onChange={() => setSelectedVid(v.vid)}
+                    />
+                    <div className="variant-content">
+                      <div className="variant-label">{v.label}</div>
+                      <div className="variant-price">{toINR(v.price)}</div>
+                    </div>
+                  </label>
                 ))}
+              </div>
+
+              <div style={{ marginTop: 14 }}>
+                <div style={{ fontWeight: 700, marginBottom: 8 }}>Quantity</div>
+                <div className="qty-row">
+                  <button className="qty-btn" onClick={dec}>−</button>
+                  <div className="qty-num">{qty}</div>
+                  <button className="qty-btn" onClick={inc}>+</button>
+                  <div style={{ marginLeft: 12, color: "var(--muted)" }}>Total: <strong>{toINR(total)}</strong></div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         <div className="modal-footer">
-          <small className="muted">Select a variant to add to cart</small>
+          <button className="btn" onClick={() => onAdd(product, variant, qty)}>
+            Add Item | {toINR(total)}
+          </button>
         </div>
       </div>
     </div>
@@ -106,18 +143,20 @@ export default function App() {
   const openModal = (product) => setModalProduct(product);
   const closeModal = () => setModalProduct(null);
 
-  const addVariantToCart = (product, variant) => {
+  const addVariantToCart = (product, variant, qty) => {
     const itemId = `${product.id}#${variant.vid}`;
     setCart((prev) => {
       const found = prev.find((p) => p.itemId === itemId);
-      if (found) return prev.map((p) => p.itemId === itemId ? { ...p, qty: p.qty + 1 } : p);
+      if (found) {
+        return prev.map((p) => p.itemId === itemId ? { ...p, qty: p.qty + qty } : p);
+      }
       return [...prev, {
         itemId,
         productId: product.id,
         name: product.name,
         variantLabel: variant.label,
         price: variant.price,
-        qty: 1,
+        qty,
         img: product.img
       }];
     });
@@ -150,23 +189,22 @@ export default function App() {
         <section>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h2 className="section-title">Our Products</h2>
-            <div className="muted">Select size → Add to cart</div>
+            <div className="muted">Tap a product → choose size → add to cart</div>
           </div>
 
           <div className="grid">
             {productsList.map((p) => (
               <article key={p.id} className="card">
                 <div className="img-wrap">
-                  <img src={p.img} alt={p.name} style={{ objectFit: "contain" }} />
+                  <img src={p.img} alt={p.name} />
                 </div>
 
                 <div className="body">
                   <h3>{p.name}</h3>
                   <div className="desc">{p.desc}</div>
 
-                  <div className="price-row">
+                  <div className="price-row" style={{ marginTop: 8 }}>
                     <div>
-                      {/* show primary variant price and a short label */}
                       <div className="price-main">{toINR(p.variants[0].price)}</div>
                       <div className="unit">{p.variants[0].label}{p.variants.length > 1 ? " • multiple sizes" : ""}</div>
                     </div>
