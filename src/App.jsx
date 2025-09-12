@@ -5,19 +5,22 @@ import pickleImg from "./assets/mushroom_pickle.jpg";
 import dryImg from "./assets/dry_mushrooms.jpg";
 import powderImg from "./assets/mushroom_powder.jpg";
 import wariyanImg from "./assets/mushroom_wariyan.jpg";
-import logo from "./assets/anant_gill_logo.png"; // if logo is in public/, change to: const logoPublic = "/anant_gill_logo.png";
 import "./index.css";
 
+/* Logo is in public/ so use absolute path (no import) */
+const logoPublic = "/anant_gill_logo.png";
+
 /* currency */
-const toINR = (v) => v.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
+const toINR = (v) =>
+  v.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
 const productsList = [
-  { id: "p1", name: "Fresh Mushrooms", price: 30, unitLabel: "per 200g box", priceNote: "₹200 / kg also available", img: freshImg, desc: "Hand-picked fresh mushrooms, ideal for cooking & salads." },
+  { id: "p1", name: "Fresh Mushrooms", price: 30, unitLabel: "per 200g box", priceNote: "₹200 / kg", img: freshImg, desc: "Hand-picked fresh mushrooms." },
   { id: "p2", name: "Mushroom Pickle (200g)", price: 100, unitLabel: "200g jar", img: pickleImg, desc: "Tangy & spicy mushroom pickle — small jar." },
   { id: "p2b", name: "Mushroom Pickle (400g)", price: 200, unitLabel: "400g jar", img: pickleImg, desc: "Family pack — 400g jar." },
-  { id: "p3", name: "Dry Mushrooms", price: 800, unitLabel: "per kg", img: dryImg, desc: "Premium sun-dried mushrooms — rich flavor." },
-  { id: "p4", name: "Mushroom Powder", price: 450, unitLabel: "per 100g", img: powderImg, desc: "Finely ground powder — seasoning & soups." },
-  { id: "p5", name: "Mushroom Wariyan", price: 120, unitLabel: "per 100g packet", img: wariyanImg, desc: "Traditional mushroom wadiyan — nutritious snack." }
+  { id: "p3", name: "Dry Mushrooms", price: 800, unitLabel: "per kg", img: dryImg, desc: "Premium sun-dried mushrooms." },
+  { id: "p4", name: "Mushroom Powder", price: 450, unitLabel: "per 100g", img: powderImg, desc: "Finely ground powder." },
+  { id: "p5", name: "Mushroom Wariyan", price: 120, unitLabel: "per 100g packet", img: wariyanImg, desc: "Traditional mushroom wadiyan." }
 ];
 
 export default function App() {
@@ -45,7 +48,7 @@ export default function App() {
     <div>
       <header className="header">
         <div className="brand">
-          <img src={logo} alt="Anant Gill Logo" className="logo" />
+          <img src={logoPublic} alt="Anant Gill Logo" className="logo" />
           <div>
             <h1>Anant Gill Agro Farm</h1>
             <p className="muted">Fresh organic mushrooms & homemade pickles</p>
@@ -64,7 +67,7 @@ export default function App() {
             {productsList.map((p) => (
               <article key={p.id} className="card">
                 <div className="img-wrap">
-                  <img src={p.img} alt={p.name} onError={(e)=> e.currentTarget.src = logo} />
+                  <img src={p.img} alt={p.name} onError={(e) => (e.currentTarget.src = logoPublic)} />
                 </div>
 
                 <div className="body">
@@ -119,7 +122,7 @@ export default function App() {
                 <div style={{ color: "var(--accent)", fontWeight: 700 }}>{toINR(subtotal)}</div>
               </div>
 
-              <button className="btn" style={{ width: "100%", marginTop: 12 }} onClick={() => alert("Checkout placeholder — integrate Razorpay later")}>
+              <button className="btn" style={{ width: "100%", marginTop: 12 }} onClick={() => alert("Checkout placeholder")}>
                 Checkout
               </button>
             </>
@@ -127,9 +130,7 @@ export default function App() {
         </aside>
       </div>
 
-      <footer className="footer">
-        © {new Date().getFullYear()} Anant Gill Agro Farm • Contact: +91 88375 54747
-      </footer>
+      <footer className="footer">© {new Date().getFullYear()} Anant Gill Agro Farm • Contact: +91 88375 54747</footer>
     </div>
   );
 }
