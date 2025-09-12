@@ -5,11 +5,14 @@ import pickleImg from "./assets/mushroom_pickle.jpg";
 import dryImg from "./assets/dry_mushrooms.jpg";
 import powderImg from "./assets/mushroom_powder.jpg";
 import wariyanImg from "./assets/mushroom_wariyan.jpg";
-import "./index.css"; // keep your existing styles (tailwind or custom)
+import "./index.css"; // keep your existing CSS file
+
+// fallback image path in case asset fails (public/anant_gill_logo.png)
+const fallbackImg = "/anant_gill_logo.png";
 
 // Simple currency formatter (INR)
 const formatINR = (value) =>
-  value.toLocaleString("en-IN", { style: "currency", currency: "INR" });
+  value.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
 const productsList = [
   {
@@ -17,67 +20,56 @@ const productsList = [
     name: "Fresh Mushrooms",
     price: 200,
     img: freshImg,
-    desc: "Hand-picked fresh button mushrooms — perfect for cooking.",
+    desc: "Hand-picked fresh button mushrooms — ideal for cooking & salads.",
   },
   {
     id: "p2",
     name: "Mushroom Pickle",
     price: 250,
     img: pickleImg,
-    desc: "Tangy & spicy mushroom pickle made with local spices.",
+    desc: "Tangy & spicy mushroom pickle made with traditional spices.",
   },
   {
     id: "p3",
     name: "Dry Mushrooms",
     price: 600,
     img: dryImg,
-    desc: "Premium sun-dried mushrooms — long shelf life, concentrated flavor.",
+    desc: "Sun-dried premium mushrooms — great for storage and soups.",
   },
   {
     id: "p4",
     name: "Mushroom Powder",
     price: 450,
     img: powderImg,
-    desc: "Finely ground mushroom powder — use in soups, gravies, shakes.",
+    desc: "Finely ground mushroom powder — perfect for seasoning & gravies.",
   },
   {
     id: "p5",
     name: "Mushroom Warriyan",
-    price: 180,
+    price: 300,
     img: wariyanImg,
-    desc: "Traditional mushroom wadiyan — savory snack / cooking ingredient.",
+    desc: "Traditional mushroom wadiyan — tasty protein-rich bites.",
   },
 ];
 
 function ProductCard({ product, onAdd }) {
+  const [imgSrc, setImgSrc] = useState(product.img);
+
   return (
-    <div className="card" style={cardStyle}>
-      <div style={imgWrapStyle}>
+    <div className="card">
+      <div className="card-image">
         <img
-          src={product.img}
+          src={imgSrc}
           alt={product.name}
-          style={imgStyle}
-          onError={(e) => {
-            // fallback if image missing
-            e.target.onerror = null;
-            e.target.src =
-              "data:image/svg+xml;charset=UTF-8," +
-              encodeURIComponent(`<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'>
-                <rect width='100%' height='100%' fill='#f3f4f6'/>
-                <text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' fill='#9ca3af' font-family='Arial' font-size='18'>
-                  Image not available
-                </text></svg>`);
-          }}
+          onError={() => setImgSrc(fallbackImg)}
+          style={{ maxHeight: 200, objectFit: "cover", width: "100%" }}
         />
       </div>
-
-      <h3 style={{ margin: "10px 0 6px", textAlign: "center" }}>{product.name}</h3>
-      <p style={{ fontSize: 14, color: "#374151", textAlign: "center", minHeight: 36 }}>
-        {product.desc}
-      </p>
-      <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <strong style={{ color: "#047857" }}>{formatINR(product.price)}</strong>
-        <button style={btnStyle} onClick={() => onAdd(product)}>
+      <div className="card-body">
+        <h3>{product.name}</h3>
+        <p className="desc">{product.desc}</p>
+        <p className="price">{formatINR(product.price)}</p>
+        <button className="btn" onClick={() => onAdd(product)}>
           Add to Cart
         </button>
       </div>
@@ -85,140 +77,77 @@ function ProductCard({ product, onAdd }) {
   );
 }
 
+function Cart({ items, onRemove }) {
+  const total = items.reduce((s, it) => s + it.price, 0);
+
+  return (
+    <aside className="cart">
+      <h3>Cart</h3>
+      {items.length === 0 ? (
+        <p>No items</p>
+      ) : (
+        <>
+          <ul>
+            {items.map((it, idx) => (
+              <li key={idx} className="cart-item">
+                <span>{it.name}</span>
+                <span>{formatINR(it.price)}</span>
+                <button className="small" onClick={() => onRemove(it.id)}>
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="cart-total">
+            <strong>Total:</strong> <span>{formatINR(total)}</span>
+          </div>
+        </>
+      )}
+    </aside>
+  );
+}
+
 export default function App() {
   const [cart, setCart] = useState([]);
 
   const addToCart = (product) => {
-    setCart((prev) => {
-      // increase qty if already exists
-      const exists = prev.find((p) => p.id === product.id);
-      if (exists) {
-        return prev.map((p) => (p.id === product.id ? { ...p, qty: p.qty + 1 } : p));
-      }
-      return [...prev, { ...product, qty: 1 }];
-    });
+    // add product id so remove works correctly
+    setCart((prev) => [...prev, { ...product }]);
   };
 
   const removeFromCart = (id) => {
-    setCart((prev) => prev.filter((p) => p.id !== id));
+    setCart((prev) => {
+      const idx = prev.findIndex((p) => p.id === id);
+      if (idx === -1) return prev;
+      const copy = [...prev];
+      copy.splice(idx, 1);
+      return copy;
+    });
   };
-
-  const changeQty = (id, delta) => {
-    setCart((prev) =>
-      prev
-        .map((p) => (p.id === id ? { ...p, qty: Math.max(1, p.qty + delta) } : p))
-        .filter(Boolean)
-    );
-  };
-
-  const total = cart.reduce((s, item) => s + item.price * item.qty, 0);
 
   return (
-    <div style={{ maxWidth: 1100, margin: "0 auto", padding: 20 }}>
-      <header style={{ textAlign: "center", marginBottom: 28 }}>
-        <h1 style={{ color: "#047857", margin: 0 }}>Welcome to Anant Gill Agro Farm</h1>
-        <p style={{ color: "#6b7280", marginTop: 6 }}>Best quality fresh organic mushrooms & delicious pickles</p>
+    <div className="app">
+      <header className="hero">
+        <h1>Welcome to Anant Gill Agro Farm</h1>
+        <p>Best quality fresh organic mushrooms & delicious pickles</p>
       </header>
 
-      <main style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: 20 }}>
-        <section>
-          <h2 style={{ marginBottom: 12 }}>Our Products</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 18 }}>
+      <main className="container">
+        <section className="products-section">
+          <h2>Our Products</h2>
+          <div className="grid">
             {productsList.map((p) => (
               <ProductCard key={p.id} product={p} onAdd={addToCart} />
             ))}
           </div>
         </section>
 
-        <aside style={{ border: "1px solid #e5e7eb", borderRadius: 8, padding: 12, background: "#fff" }}>
-          <h3 style={{ marginTop: 0 }}>Cart</h3>
-          {cart.length === 0 ? (
-            <p style={{ color: "#6b7280" }}>Your cart is empty.</p>
-          ) : (
-            <div>
-              {cart.map((item) => (
-                <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600 }}>{item.name}</div>
-                    <div style={{ color: "#6b7280", fontSize: 13 }}>{formatINR(item.price)}</div>
-                  </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <button onClick={() => changeQty(item.id, -1)} style={qtyBtnStyle}>-</button>
-                    <div>{item.qty}</div>
-                    <button onClick={() => changeQty(item.id, +1)} style={qtyBtnStyle}>+</button>
-                  </div>
-                  <button onClick={() => removeFromCart(item.id)} style={{ ...smallBtnStyle, marginLeft: 8 }}>Remove</button>
-                </div>
-              ))}
-
-              <hr style={{ margin: "8px 0" }} />
-              <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}>
-                <div>Total</div>
-                <div style={{ color: "#047857" }}>{formatINR(total)}</div>
-              </div>
-
-              <button
-                style={{ marginTop: 12, width: "100%", padding: "10px 12px", background: "#047857", color: "#fff", borderRadius: 6, border: "none" }}
-                onClick={() => alert("Checkout placeholder — integrate Razorpay when ready")}
-              >
-                Checkout
-              </button>
-            </div>
-          )}
-        </aside>
+        <Cart items={cart} onRemove={removeFromCart} />
       </main>
 
-      <footer style={{ textAlign: "center", marginTop: 36, color: "#9ca3af" }}>
-        © {new Date().getFullYear()} Anant Gill Agro Farm
+      <footer className="footer">
+        <p>© {new Date().getFullYear()} Anant Gill Agro Farm</p>
       </footer>
     </div>
   );
 }
-
-/* --- inline styles (simple) --- */
-const cardStyle = {
-  borderRadius: 12,
-  boxShadow: "0 6px 18px rgba(15,23,42,0.06)",
-  padding: 16,
-  background: "#fff",
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "space-between",
-  minHeight: 320,
-};
-
-const imgWrapStyle = {
-  height: 150,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  overflow: "hidden",
-  marginBottom: 8,
-};
-
-const imgStyle = { maxWidth: "100%", maxHeight: "100%", objectFit: "cover", borderRadius: 6 };
-
-const btnStyle = {
-  background: "#059669",
-  color: "#fff",
-  border: "none",
-  padding: "8px 12px",
-  borderRadius: 6,
-  cursor: "pointer",
-};
-
-const qtyBtnStyle = {
-  border: "1px solid #e5e7eb",
-  background: "#fff",
-  padding: "4px 8px",
-  borderRadius: 4,
-  cursor: "pointer",
-};
-
-const smallBtnStyle = {
-  border: "1px solid #e5e7eb",
-  background: "#fff",
-  padding: "6px 8px",
-  borderRadius: 6,
-  cursor: "pointer",
-};
