@@ -7,39 +7,129 @@ import powderImg from "./assets/mushroom_powder.jpg";
 import wariyanImg from "./assets/mushroom_wariyan.jpg";
 import "./index.css";
 
-/* Logo is in public/ so use absolute path (no import) */
+/* logo served from public/ */
 const logoPublic = "/anant_gill_logo.png";
 
-/* currency */
-const toINR = (v) =>
-  v.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
+/* currency helper */
+const toINR = (value) =>
+  value.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
+/* products with variants */
 const productsList = [
-  { id: "p1", name: "Fresh Mushrooms", price: 30, unitLabel: "per 200g box", priceNote: "₹200 / kg", img: freshImg, desc: "Hand-picked fresh mushrooms." },
-  { id: "p2", name: "Mushroom Pickle (200g)", price: 100, unitLabel: "200g jar", img: pickleImg, desc: "Tangy & spicy mushroom pickle — small jar." },
-  { id: "p2b", name: "Mushroom Pickle (400g)", price: 200, unitLabel: "400g jar", img: pickleImg, desc: "Family pack — 400g jar." },
-  { id: "p3", name: "Dry Mushrooms", price: 800, unitLabel: "per kg", img: dryImg, desc: "Premium sun-dried mushrooms." },
-  { id: "p4", name: "Mushroom Powder", price: 450, unitLabel: "per 100g", img: powderImg, desc: "Finely ground powder." },
-  { id: "p5", name: "Mushroom Wariyan", price: 120, unitLabel: "per 100g packet", img: wariyanImg, desc: "Traditional mushroom wadiyan." }
+  {
+    id: "p1",
+    name: "Fresh Mushrooms",
+    img: freshImg,
+    desc: "Hand-picked fresh mushrooms — choose box or kg.",
+    variants: [
+      { vid: "p1-box", label: "200g box", price: 40 },
+      { vid: "p1-kg", label: "1 kg", price: 200 },
+    ],
+  },
+  {
+    id: "p2",
+    name: "Mushroom Pickle",
+    img: pickleImg,
+    desc: "Tangy & spicy mushroom pickle — choose jar size.",
+    variants: [
+      { vid: "p2-200", label: "200g jar", price: 100 },
+      { vid: "p2-400", label: "400g jar", price: 200 },
+    ],
+  },
+  {
+    id: "p3",
+    name: "Dry Mushrooms",
+    img: dryImg,
+    desc: "Premium sun-dried mushrooms — great for soups & long storage.",
+    variants: [{ vid: "p3-kg", label: "per kg", price: 800 }],
+  },
+  {
+    id: "p4",
+    name: "Mushroom Powder",
+    img: powderImg,
+    desc: "Finely ground mushroom powder — perfect for seasoning.",
+    variants: [{ vid: "p4-100", label: "per 100g", price: 450 }],
+  },
+  {
+    id: "p5",
+    name: "Mushroom Wariyan",
+    img: wariyanImg,
+    desc: "Traditional mushroom wadiyan — tasty & nutritious.",
+    variants: [{ vid: "p5-100", label: "per 100g packet", price: 120 }],
+  },
 ];
 
+function VariantModal({ product, onClose, onAdd }) {
+  if (!product) return null;
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose} aria-label="Close">×</button>
+        <div className="modal-top">
+          <div className="modal-img">
+            <img src={product.img} alt={product.name} onError={(e)=> e.currentTarget.style.objectFit='contain'} />
+          </div>
+          <div className="modal-info">
+            <h2>{product.name}</h2>
+            <p className="muted">{product.desc}</p>
+
+            <div style={{ marginTop: 12 }}>
+              <div style={{ fontWeight: 700, marginBottom: 8 }}>Choose size / variant</div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                {product.variants.map((v) => (
+                  <button
+                    key={v.vid}
+                    className="variant-btn"
+                    onClick={() => onAdd(product, v)}
+                  >
+                    <div style={{ fontWeight: 700 }}>{toINR(v.price)}</div>
+                    <div style={{ fontSize: 13, color: "var(--muted)" }}>{v.label}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="modal-footer">
+          <small className="muted">Select a variant to add to cart</small>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
+  const [modalProduct, setModalProduct] = useState(null);
   const [cart, setCart] = useState([]);
 
-  const addToCart = (product, qty = 1) => {
+  const openModal = (product) => setModalProduct(product);
+  const closeModal = () => setModalProduct(null);
+
+  const addVariantToCart = (product, variant) => {
+    const itemId = `${product.id}#${variant.vid}`;
     setCart((prev) => {
-      const found = prev.find((p) => p.id === product.id);
-      if (found) return prev.map((p) => p.id === product.id ? { ...p, qty: p.qty + qty } : p);
-      return [...prev, { ...product, qty }];
+      const found = prev.find((p) => p.itemId === itemId);
+      if (found) return prev.map((p) => p.itemId === itemId ? { ...p, qty: p.qty + 1 } : p);
+      return [...prev, {
+        itemId,
+        productId: product.id,
+        name: product.name,
+        variantLabel: variant.label,
+        price: variant.price,
+        qty: 1,
+        img: product.img
+      }];
     });
+    closeModal();
   };
 
-  const updateQty = (id, qty) => {
+  const updateQty = (itemId, qty) => {
     if (qty <= 0) {
-      setCart((prev) => prev.filter((p) => p.id !== id));
+      setCart((prev) => prev.filter((p) => p.itemId !== itemId));
       return;
     }
-    setCart((prev) => prev.map((p) => p.id === id ? { ...p, qty } : p));
+    setCart((prev) => prev.map((p) => p.itemId === itemId ? { ...p, qty } : p));
   };
 
   const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
@@ -60,28 +150,29 @@ export default function App() {
         <section>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h2 className="section-title">Our Products</h2>
-            <div style={{ color: "var(--muted)" }}>Quality checked • Packaged with care</div>
+            <div className="muted">Select size → Add to cart</div>
           </div>
 
           <div className="grid">
             {productsList.map((p) => (
               <article key={p.id} className="card">
                 <div className="img-wrap">
-                  <img src={p.img} alt={p.name} onError={(e) => (e.currentTarget.src = logoPublic)} />
+                  <img src={p.img} alt={p.name} style={{ objectFit: "contain" }} />
                 </div>
 
                 <div className="body">
                   <h3>{p.name}</h3>
                   <div className="desc">{p.desc}</div>
 
-                  <div className="price-row" style={{ marginTop: 12 }}>
+                  <div className="price-row">
                     <div>
-                      <div className="price-main">{toINR(p.price)}</div>
-                      <div className="unit">{p.unitLabel}{p.priceNote ? ` • ${p.priceNote}` : ""}</div>
+                      {/* show primary variant price and a short label */}
+                      <div className="price-main">{toINR(p.variants[0].price)}</div>
+                      <div className="unit">{p.variants[0].label}{p.variants.length > 1 ? " • multiple sizes" : ""}</div>
                     </div>
 
                     <div>
-                      <button className="btn" onClick={() => addToCart(p, 1)}>Add to Cart</button>
+                      <button className="btn" onClick={() => openModal(p)}>Add to Cart</button>
                     </div>
                   </div>
                 </div>
@@ -92,26 +183,28 @@ export default function App() {
 
         <aside className="cart">
           <h3>Cart</h3>
-
           {cart.length === 0 ? (
-            <p style={{ color: "var(--muted)" }}>Your cart is empty</p>
+            <p className="muted">Your cart is empty</p>
           ) : (
             <>
               <ul className="cart-list">
                 {cart.map((it) => (
-                  <li key={it.id} className="cart-item">
-                    <div style={{ flex: 1 }}>
-                      <div style={{ fontWeight: 700 }}>{it.name}</div>
-                      <div style={{ color: "var(--muted)", fontSize: 13 }}>{toINR(it.price)} • {it.unitLabel}</div>
+                  <li key={it.itemId} className="cart-item">
+                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                      <img src={it.img} alt={it.name} style={{ width: 56, height: 56, objectFit: "contain", borderRadius: 6, background: "#fff" }} />
+                      <div>
+                        <div style={{ fontWeight: 700 }}>{it.name}</div>
+                        <div style={{ fontSize: 13, color: "var(--muted)" }}>{it.variantLabel}</div>
+                      </div>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <div className="qty">
-                        <button onClick={() => updateQty(it.id, it.qty - 1)} className="qty-btn">-</button>
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        <button className="qty-btn" onClick={() => updateQty(it.itemId, it.qty - 1)}>-</button>
                         <div>{it.qty}</div>
-                        <button onClick={() => updateQty(it.id, it.qty + 1)} className="qty-btn">+</button>
+                        <button className="qty-btn" onClick={() => updateQty(it.itemId, it.qty + 1)}>+</button>
                       </div>
-                      <button className="btn secondary" onClick={() => updateQty(it.id, 0)}>Remove</button>
+                      <div style={{ minWidth: 70, textAlign: "right", fontWeight: 700 }}>{toINR(it.price * it.qty)}</div>
                     </div>
                   </li>
                 ))}
@@ -122,7 +215,7 @@ export default function App() {
                 <div style={{ color: "var(--accent)", fontWeight: 700 }}>{toINR(subtotal)}</div>
               </div>
 
-              <button className="btn" style={{ width: "100%", marginTop: 12 }} onClick={() => alert("Checkout placeholder")}>
+              <button className="btn" style={{ width: "100%", marginTop: 12 }} onClick={() => alert("Checkout placeholder — Razorpay later")}>
                 Checkout
               </button>
             </>
@@ -131,6 +224,12 @@ export default function App() {
       </div>
 
       <footer className="footer">© {new Date().getFullYear()} Anant Gill Agro Farm • Contact: +91 88375 54747</footer>
+
+      <VariantModal
+        product={modalProduct}
+        onClose={closeModal}
+        onAdd={addVariantToCart}
+      />
     </div>
   );
 }
