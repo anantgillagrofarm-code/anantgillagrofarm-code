@@ -1,217 +1,175 @@
 // src/App.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import "./index.css";
+
+/**
+ * Images are expected in src/assets/
+ * - fresh_mushrooms.jpg
+ * - mushroom_pickle.jpg
+ * - dry_mushrooms.jpg
+ * - mushroom_powder.jpg
+ * - mushroom_wariyan.jpg
+ *
+ * Logo is expected in public/ as: /anant_gill_logo.png
+ */
+
 import freshImg from "./assets/fresh_mushrooms.jpg";
 import pickleImg from "./assets/mushroom_pickle.jpg";
 import dryImg from "./assets/dry_mushrooms.jpg";
 import powderImg from "./assets/mushroom_powder.jpg";
 import wariyanImg from "./assets/mushroom_wariyan.jpg";
-import "./index.css";
 
-/* logo served from public/ */
-const logoPublic = "/anant_gill_logo.png";
+const formatINR = (value) =>
+  value.toLocaleString("en-IN", { style: "currency", currency: "INR" });
 
-/* currency helper */
-const toINR = (value) =>
-  value.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
-
-/* products with variants */
 const productsList = [
   {
     id: "p1",
     name: "Fresh Mushrooms",
+    // We'll show variant options in modal
     img: freshImg,
-    desc: "Hand-picked fresh mushrooms — choose box (200g) or 1 kg.",
     variants: [
-      { vid: "p1-box", label: "200g box", price: 40 },
-      { vid: "p1-kg", label: "1 kg", price: 200 },
+      { id: "v1", label: "40 / box", price: 40 },
+      { id: "v2", label: "200 / kg", price: 200 },
     ],
+    desc: "Hand-picked fresh button mushrooms — ideal for cooking & salads.",
   },
   {
     id: "p2",
     name: "Mushroom Pickle",
     img: pickleImg,
-    desc: "Tangy & spicy mushroom pickle — choose jar size.",
     variants: [
-      { vid: "p2-200", label: "200g jar", price: 100 },
-      { vid: "p2-400", label: "400g jar", price: 200 },
+      { id: "v1", label: "200 g jar", price: 100 },
+      { id: "v2", label: "400 g jar", price: 200 },
     ],
+    desc: "Tangy & spicy mushroom pickle made with traditional spices.",
   },
   {
     id: "p3",
     name: "Dry Mushrooms",
     img: dryImg,
-    desc: "Premium sun-dried mushrooms — great for soups & long storage.",
-    variants: [{ vid: "p3-kg", label: "per kg", price: 800 }],
+    variants: [{ id: "v1", label: "Per kg", price: 800 }],
+    desc: "Premium sun-dried mushrooms — long shelf life and rich flavour.",
   },
   {
     id: "p4",
     name: "Mushroom Powder",
     img: powderImg,
-    desc: "Finely ground mushroom powder — perfect for seasoning.",
-    variants: [{ vid: "p4-100", label: "per 100g", price: 450 }],
+    variants: [{ id: "v1", label: "Per 100 g", price: 450 }],
+    desc: "Concentrated mushroom powder — great for soups, gravies and marinades.",
   },
   {
     id: "p5",
     name: "Mushroom Wariyan",
     img: wariyanImg,
-    desc: "Traditional mushroom wadiyan — tasty & nutritious.",
-    variants: [{ vid: "p5-100", label: "per 100g packet", price: 120 }],
+    variants: [{ id: "v1", label: "100 g packet", price: 120 }],
+    desc: "Traditional mushroom wadiyan — ready-to-cook flavor-packed pieces.",
   },
 ];
 
-/* Modal that shows variants and quantity selector like food apps */
-function VariantModal({ product, onClose, onAdd }) {
-  const [selectedVid, setSelectedVid] = useState(null);
-  const [qty, setQty] = useState(1);
+function App() {
+  const [cart, setCart] = useState([]); // {productId, variantId, qty}
+  const [modalProduct, setModalProduct] = useState(null); // product object
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [modalQty, setModalQty] = useState(1);
 
-  useEffect(() => {
-    if (product) {
-      setSelectedVid(product.variants[0].vid);
-      setQty(1);
-    }
-  }, [product]);
+  const openModal = (product) => {
+    setModalProduct(product);
+    setSelectedVariant(product.variants[0]?.id || null);
+    setModalQty(1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
-  if (!product) return null;
+  const closeModal = () => {
+    setModalProduct(null);
+    setSelectedVariant(null);
+    setModalQty(1);
+  };
 
-  const variant = product.variants.find((v) => v.vid === selectedVid) || product.variants[0];
-  const total = variant.price * qty;
-
-  const inc = () => setQty((q) => q + 1);
-  const dec = () => setQty((q) => Math.max(1, q - 1));
-
-  return (
-    <div className="modal-backdrop" onClick={onClose} role="dialog" aria-modal="true">
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose} aria-label="Close">×</button>
-
-        <div className="modal-top">
-          <div className="modal-img">
-            <img src={product.img} alt={product.name} />
-          </div>
-
-          <div className="modal-info">
-            <h2>{product.name}</h2>
-            <p className="muted">{product.desc}</p>
-
-            <div style={{ marginTop: 14 }}>
-              <div style={{ fontWeight: 700, marginBottom: 10 }}>Choose size</div>
-
-              <div className="variant-list">
-                {product.variants.map((v) => (
-                  <label key={v.vid} className={`variant-row ${v.vid === selectedVid ? "selected" : ""}`}>
-                    <input
-                      type="radio"
-                      name="variant"
-                      checked={v.vid === selectedVid}
-                      onChange={() => setSelectedVid(v.vid)}
-                    />
-                    <div className="variant-content">
-                      <div className="variant-label">{v.label}</div>
-                      <div className="variant-price">{toINR(v.price)}</div>
-                    </div>
-                  </label>
-                ))}
-              </div>
-
-              <div style={{ marginTop: 14 }}>
-                <div style={{ fontWeight: 700, marginBottom: 8 }}>Quantity</div>
-                <div className="qty-row">
-                  <button className="qty-btn" onClick={dec}>−</button>
-                  <div className="qty-num">{qty}</div>
-                  <button className="qty-btn" onClick={inc}>+</button>
-                  <div style={{ marginLeft: 12, color: "var(--muted)" }}>Total: <strong>{toINR(total)}</strong></div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="modal-footer">
-          <button className="btn" onClick={() => onAdd(product, variant, qty)}>
-            Add Item | {toINR(total)}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function App() {
-  const [modalProduct, setModalProduct] = useState(null);
-  const [cart, setCart] = useState([]);
-
-  const openModal = (product) => setModalProduct(product);
-  const closeModal = () => setModalProduct(null);
-
-  const addVariantToCart = (product, variant, qty) => {
-    const itemId = `${product.id}#${variant.vid}`;
-    setCart((prev) => {
-      const found = prev.find((p) => p.itemId === itemId);
+  const addToCartFromModal = () => {
+    if (!modalProduct || !selectedVariant) return;
+    const item = {
+      productId: modalProduct.id,
+      variantId: selectedVariant,
+      qty: modalQty,
+    };
+    setCart((c) => {
+      // if same product+variant present, increase qty
+      const found = c.find(
+        (x) => x.productId === item.productId && x.variantId === item.variantId
+      );
       if (found) {
-        return prev.map((p) => p.itemId === itemId ? { ...p, qty: p.qty + qty } : p);
+        return c.map((x) =>
+          x.productId === item.productId && x.variantId === item.variantId
+            ? { ...x, qty: x.qty + item.qty }
+            : x
+        );
       }
-      return [...prev, {
-        itemId,
-        productId: product.id,
-        name: product.name,
-        variantLabel: variant.label,
-        price: variant.price,
-        qty,
-        img: product.img
-      }];
+      return [...c, item];
     });
     closeModal();
   };
 
-  const updateQty = (itemId, qty) => {
-    if (qty <= 0) {
-      setCart((prev) => prev.filter((p) => p.itemId !== itemId));
-      return;
-    }
-    setCart((prev) => prev.map((p) => p.itemId === itemId ? { ...p, qty } : p));
+  const removeCartItem = (index) => {
+    setCart((c) => c.filter((_, i) => i !== index));
   };
 
-  const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
+  const updateQty = (index, delta) => {
+    setCart((c) =>
+      c.map((it, i) => (i === index ? { ...it, qty: Math.max(1, it.qty + delta) } : it))
+    );
+  };
+
+  const getProduct = (id) => productsList.find((p) => p.id === id);
+
+  const cartSummary = cart.map((it) => {
+    const product = getProduct(it.productId);
+    const variant = product.variants.find((v) => v.id === it.variantId);
+    const price = variant.price * it.qty;
+    return { product, variant, qty: it.qty, price };
+  });
+
+  const total = cartSummary.reduce((s, it) => s + it.price, 0);
 
   return (
-    <div>
-      <header className="header">
+    <div className="page-root">
+      <header className="topbar">
         <div className="brand">
-          <img src={logoPublic} alt="Anant Gill Logo" className="logo" />
+          <img src="/anant_gill_logo.png" alt="Anant Gill" className="logo" />
           <div>
             <h1>Anant Gill Agro Farm</h1>
-            <p className="muted">Fresh organic mushrooms & homemade pickles</p>
+            <p className="tag">Best quality fresh organic mushrooms & pickles</p>
           </div>
+        </div>
+
+        <div className="cart-box">
+          <button className="cart-btn">
+            Cart ({cart.length}) • {formatINR(total)}
+          </button>
         </div>
       </header>
 
-      <div className="container">
-        <section>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h2 className="section-title">Our Products</h2>
-            <div className="muted">Tap a product → choose size → add to cart</div>
-          </div>
-
+      <main className="container">
+        <section className="products">
+          <h2>Our Products</h2>
           <div className="grid">
             {productsList.map((p) => (
               <article key={p.id} className="card">
-                <div className="img-wrap">
-                  <img src={p.img} alt={p.name} />
+                <div className="media">
+                  <img src={p.img} alt={p.name} className="product-image" />
                 </div>
+                <div className="card-body">
+                  <h3 className="product-title">{p.name}</h3>
+                  <p className="product-desc">{p.desc}</p>
 
-                <div className="body">
-                  <h3>{p.name}</h3>
-                  <div className="desc">{p.desc}</div>
-
-                  <div className="price-row" style={{ marginTop: 8 }}>
-                    <div>
-                      <div className="price-main">{toINR(p.variants[0].price)}</div>
-                      <div className="unit">{p.variants[0].label}{p.variants.length > 1 ? " • multiple sizes" : ""}</div>
-                    </div>
-
-                    <div>
-                      <button className="btn" onClick={() => openModal(p)}>Add to Cart</button>
-                    </div>
+                  <div className="price-row">
+                    <strong className="price">
+                      {formatINR(p.variants[0].price)}{" "}
+                      <span className="muted">({p.variants[0].label})</span>
+                    </strong>
+                    <button className="btn" onClick={() => openModal(p)}>
+                      Add to Cart
+                    </button>
                   </div>
                 </div>
               </article>
@@ -219,55 +177,108 @@ export default function App() {
           </div>
         </section>
 
-        <aside className="cart">
-          <h3>Cart</h3>
+        <section className="cart-section">
+          <h2>Your Cart</h2>
           {cart.length === 0 ? (
-            <p className="muted">Your cart is empty</p>
+            <p className="muted">Your cart is empty.</p>
           ) : (
-            <>
-              <ul className="cart-list">
-                {cart.map((it) => (
-                  <li key={it.itemId} className="cart-item">
-                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                      <img src={it.img} alt={it.name} style={{ width: 56, height: 56, objectFit: "contain", borderRadius: 6, background: "#fff" }} />
-                      <div>
-                        <div style={{ fontWeight: 700 }}>{it.name}</div>
-                        <div style={{ fontSize: 13, color: "var(--muted)" }}>{it.variantLabel}</div>
+            <div className="cart-list">
+              {cartSummary.map((it, idx) => (
+                <div key={idx} className="cart-item">
+                  <div className="cart-left">
+                    <img src={it.product.img} alt="" className="cart-thumb" />
+                    <div>
+                      <div className="cart-title">{it.product.name}</div>
+                      <div className="muted">
+                        {it.variant.label} • {formatINR(it.variant.price)} each
                       </div>
                     </div>
+                  </div>
 
-                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                        <button className="qty-btn" onClick={() => updateQty(it.itemId, it.qty - 1)}>-</button>
-                        <div>{it.qty}</div>
-                        <button className="qty-btn" onClick={() => updateQty(it.itemId, it.qty + 1)}>+</button>
-                      </div>
-                      <div style={{ minWidth: 70, textAlign: "right", fontWeight: 700 }}>{toINR(it.price * it.qty)}</div>
+                  <div className="cart-right">
+                    <div className="qty-control">
+                      <button onClick={() => updateQty(idx, -1)}>-</button>
+                      <span>{it.qty}</span>
+                      <button onClick={() => updateQty(idx, +1)}>+</button>
                     </div>
-                  </li>
-                ))}
-              </ul>
+                    <div className="cart-price">{formatINR(it.price)}</div>
+                    <button className="remove-link" onClick={() => removeCartItem(idx)}>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
 
               <div className="cart-total">
-                <div>Subtotal</div>
-                <div style={{ color: "var(--accent)", fontWeight: 700 }}>{toINR(subtotal)}</div>
+                <div>Total</div>
+                <div className="big">{formatINR(total)}</div>
+              </div>
+            </div>
+          )}
+        </section>
+      </main>
+
+      {/* Modal for variant selection */}
+      {modalProduct && (
+        <div className="modal-backdrop" onClick={closeModal}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-head">
+              <h3>{modalProduct.name}</h3>
+              <button className="close" onClick={closeModal}>
+                ×
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <img src={modalProduct.img} alt="" className="modal-image" />
+              <p className="muted">{modalProduct.desc}</p>
+
+              <div className="variants">
+                {modalProduct.variants.map((v) => (
+                  <label key={v.id} className="variant-row">
+                    <input
+                      type="radio"
+                      name="variant"
+                      checked={selectedVariant === v.id}
+                      onChange={() => setSelectedVariant(v.id)}
+                    />
+                    <div>
+                      <div className="variant-label">{v.label}</div>
+                      <div className="muted">{formatINR(v.price)}</div>
+                    </div>
+                  </label>
+                ))}
               </div>
 
-              <button className="btn" style={{ width: "100%", marginTop: 12 }} onClick={() => alert("Checkout placeholder — Razorpay later")}>
-                Checkout
-              </button>
-            </>
-          )}
-        </aside>
-      </div>
+              <div className="qty-bottom">
+                <div className="qty-selector">
+                  <button onClick={() => setModalQty((q) => Math.max(1, q - 1))}>-</button>
+                  <span>{modalQty}</span>
+                  <button onClick={() => setModalQty((q) => q + 1)}>+</button>
+                </div>
 
-      <footer className="footer">© {new Date().getFullYear()} Anant Gill Agro Farm • Contact: +91 88375 54747</footer>
+                <div className="actions">
+                  <button className="btn ghost" onClick={closeModal}>
+                    Cancel
+                  </button>
+                  <button className="btn primary" onClick={addToCartFromModal}>
+                    Add Item •{" "}
+                    {formatINR(
+                      modalProduct.variants.find((v) => v.id === selectedVariant).price * modalQty
+                    )}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
-      <VariantModal
-        product={modalProduct}
-        onClose={closeModal}
-        onAdd={addVariantToCart}
-      />
+      <footer className="site-footer">
+        <p>© {new Date().getFullYear()} Anant Gill Agro Farm</p>
+      </footer>
     </div>
   );
 }
+
+export default App;
