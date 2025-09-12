@@ -5,129 +5,36 @@ import pickleImg from "./assets/mushroom_pickle.jpg";
 import dryImg from "./assets/dry_mushrooms.jpg";
 import powderImg from "./assets/mushroom_powder.jpg";
 import wariyanImg from "./assets/mushroom_wariyan.jpg";
-import "./index.css"; // keep your existing CSS file
+import logo from "./assets/anant_gill_logo.png";
+import "./index.css";
 
-// fallback image path in case asset fails (public/anant_gill_logo.png)
-const fallbackImg = "/anant_gill_logo.png";
-
-// Simple currency formatter (INR)
+/* format rupee */
 const formatINR = (value) =>
   value.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
 
 const productsList = [
-  {
-    id: "p1",
-    name: "Fresh Mushrooms",
-    price: 200,
-    img: freshImg,
-    desc: "Hand-picked fresh button mushrooms — ideal for cooking & salads.",
-  },
-  {
-    id: "p2",
-    name: "Mushroom Pickle",
-    price: 250,
-    img: pickleImg,
-    desc: "Tangy & spicy mushroom pickle made with traditional spices.",
-  },
-  {
-    id: "p3",
-    name: "Dry Mushrooms",
-    price: 600,
-    img: dryImg,
-    desc: "Sun-dried premium mushrooms — great for storage and soups.",
-  },
-  {
-    id: "p4",
-    name: "Mushroom Powder",
-    price: 450,
-    img: powderImg,
-    desc: "Finely ground mushroom powder — perfect for seasoning & gravies.",
-  },
-  {
-    id: "p5",
-    name: "Mushroom Warriyan",
-    price: 300,
-    img: wariyanImg,
-    desc: "Traditional mushroom wadiyan — tasty protein-rich bites.",
-  },
+  { id: "p1", name: "Fresh Mushrooms", price: 200, img: freshImg, desc: "Hand-picked fresh button mushrooms — ideal for cooking & salads." },
+  { id: "p2", name: "Mushroom Pickle", price: 250, img: pickleImg, desc: "Tangy & spicy mushroom pickle made with traditional spices." },
+  { id: "p3", name: "Dry Mushrooms", price: 600, img: dryImg, desc: "Carefully sun-dried mushrooms for long shelf-life and rich flavor." },
+  { id: "p4", name: "Mushroom Powder", price: 450, img: powderImg, desc: "Fine mushroom powder — great as seasoning or in soups." },
+  { id: "p5", name: "Mushroom Wariyan", price: 120, img: wariyanImg, desc: "Traditional mushroom wariyan — tasty and ready-to-cook." }
 ];
 
-function ProductCard({ product, onAdd }) {
-  const [imgSrc, setImgSrc] = useState(product.img);
-
-  return (
-    <div className="card">
-      <div className="card-image">
-        <img
-          src={imgSrc}
-          alt={product.name}
-          onError={() => setImgSrc(fallbackImg)}
-          style={{ maxHeight: 200, objectFit: "cover", width: "100%" }}
-        />
-      </div>
-      <div className="card-body">
-        <h3>{product.name}</h3>
-        <p className="desc">{product.desc}</p>
-        <p className="price">{formatINR(product.price)}</p>
-        <button className="btn" onClick={() => onAdd(product)}>
-          Add to Cart
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function Cart({ items, onRemove }) {
-  const total = items.reduce((s, it) => s + it.price, 0);
-
-  return (
-    <aside className="cart">
-      <h3>Cart</h3>
-      {items.length === 0 ? (
-        <p>No items</p>
-      ) : (
-        <>
-          <ul>
-            {items.map((it, idx) => (
-              <li key={idx} className="cart-item">
-                <span>{it.name}</span>
-                <span>{formatINR(it.price)}</span>
-                <button className="small" onClick={() => onRemove(it.id)}>
-                  Remove
-                </button>
-              </li>
-            ))}
-          </ul>
-          <div className="cart-total">
-            <strong>Total:</strong> <span>{formatINR(total)}</span>
-          </div>
-        </>
-      )}
-    </aside>
-  );
-}
-
-export default function App() {
+function App() {
   const [cart, setCart] = useState([]);
 
   const addToCart = (product) => {
-    // add product id so remove works correctly
-    setCart((prev) => [...prev, { ...product }]);
+    setCart((p) => [...p, product]);
   };
-
-  const removeFromCart = (id) => {
-    setCart((prev) => {
-      const idx = prev.findIndex((p) => p.id === id);
-      if (idx === -1) return prev;
-      const copy = [...prev];
-      copy.splice(idx, 1);
-      return copy;
-    });
+  const removeFromCart = (index) => {
+    setCart((p) => p.filter((_, i) => i !== index));
   };
+  const total = cart.reduce((s, it) => s + it.price, 0);
 
   return (
-    <div className="app">
+    <div>
       <header className="hero">
+        <img src={logo} alt="Anant Gill Logo" style={{ maxWidth: 140, display: "block", margin: "0 auto 8px" }} />
         <h1>Welcome to Anant Gill Agro Farm</h1>
         <p>Best quality fresh organic mushrooms & delicious pickles</p>
       </header>
@@ -137,17 +44,53 @@ export default function App() {
           <h2>Our Products</h2>
           <div className="grid">
             {productsList.map((p) => (
-              <ProductCard key={p.id} product={p} onAdd={addToCart} />
+              <article key={p.id} className="card">
+                <div className="card-image">
+                  <img src={p.img} alt={p.name} />
+                </div>
+                <div className="card-body">
+                  <h3>{p.name}</h3>
+                  <div className="desc">{p.desc}</div>
+                  <div className="price">{formatINR(p.price)}</div>
+                  <button className="btn" onClick={() => addToCart(p)}>Add to Cart</button>
+                </div>
+              </article>
             ))}
           </div>
         </section>
 
-        <Cart items={cart} onRemove={removeFromCart} />
+        <aside className="cart">
+          <h3>Cart</h3>
+          {cart.length === 0 ? <p style={{ color: "#666" }}>Your cart is empty</p> : (
+            <>
+              <ul>
+                {cart.map((it, idx) => (
+                  <li key={idx} className="cart-item">
+                    <div>
+                      <strong>{it.name}</strong>
+                      <div style={{ color: "#666", fontSize: 13 }}>{formatINR(it.price)}</div>
+                    </div>
+                    <div>
+                      <button className="btn small" onClick={() => removeFromCart(idx)}>Remove</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <div className="cart-total">
+                <div>Total</div>
+                <div>{formatINR(total)}</div>
+              </div>
+              <div style={{ marginTop: 12 }}>
+                <button className="btn">Checkout</button>
+              </div>
+            </>
+          )}
+        </aside>
       </main>
 
-      <footer className="footer">
-        <p>© {new Date().getFullYear()} Anant Gill Agro Farm</p>
-      </footer>
+      <footer className="footer">© {new Date().getFullYear()} Anant Gill Agro Farm</footer>
     </div>
   );
 }
+
+export default App;
