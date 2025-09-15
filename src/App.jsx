@@ -7,7 +7,7 @@ import powderImg from "./assets/mushroom_powder.jpg";
 import wariyanImg from "./assets/mushroom_wariyan.jpg";
 import "./index.css";
 
-/* Product data */
+/* ---------- data ---------- */
 const PRODUCTS = [
   {
     id: "p1",
@@ -33,14 +33,14 @@ const PRODUCTS = [
     id: "p3",
     name: "Dry Mushrooms",
     desc: "Premium sun-dried mushrooms — great for soups & long storage.",
-    sizes: [{ key: "kg", label: "per kg", price: 800 }],
+    sizes: [{ key: "kg", label: "per kg", price: 600 }],
     img: dryImg,
   },
   {
     id: "p4",
     name: "Mushroom Powder",
     desc: "Finely ground mushroom powder for seasoning and soups.",
-    sizes: [{ key: "100g", label: "per 100g", price: 450 }],
+    sizes: [{ key: "100g", label: "per 100g", price: 250 }],
     img: powderImg,
   },
   {
@@ -52,49 +52,51 @@ const PRODUCTS = [
   },
 ];
 
-function formatINR(value) {
-  return value.toLocaleString("en-IN", { style: "currency", currency: "INR" });
+function formatINR(v) {
+  return v.toLocaleString("en-IN", { style: "currency", currency: "INR" });
 }
 
-/* Add to cart bottom-sheet modal */
+/* ---------- AddToCart modal (bottom sheet) ---------- */
 function AddToCartModal({ product, onClose, onConfirm }) {
-  const [selectedKey, setSelectedKey] = useState(product?.sizes?.[0]?.key || null);
+  const [selected, setSelected] = useState(null);
   const [qty, setQty] = useState(1);
 
   useEffect(() => {
-    setSelectedKey(product?.sizes?.[0]?.key || null);
-    setQty(1);
+    if (product) {
+      setSelected(product.sizes[0]?.key || null);
+      setQty(1);
+    }
   }, [product]);
 
   if (!product) return null;
-
-  const sizeObj = product.sizes.find((s) => s.key === selectedKey) || {};
-  const total = (sizeObj.price || 0) * qty;
+  const sizeObj = product.sizes.find((s) => s.key === selected) || product.sizes[0];
+  const total = (sizeObj?.price || 0) * qty;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <img className="sheet-thumb" src={product.img} alt={product.name} />
-          <div>
+          <img src={product.img} alt={product.name} className="sheet-thumb" />
+          <div className="sheet-info">
             <h3>{product.name}</h3>
             <p className="muted">{product.desc}</p>
+            <div className="muted small">Choose size & quantity</div>
           </div>
           <button className="close-x" onClick={onClose}>×</button>
         </div>
 
         <div className="modal-body">
           <div className="section">
-            <div className="section-title">Choose size</div>
+            <div className="section-title">Sizes</div>
             {product.sizes.map((s) => (
               <label key={s.key} className="variant-row">
                 <input
                   type="radio"
                   name="size"
-                  checked={selectedKey === s.key}
-                  onChange={() => setSelectedKey(s.key)}
+                  checked={selected === s.key}
+                  onChange={() => setSelected(s.key)}
                 />
-                <div>
+                <div style={{ marginLeft: 10 }}>
                   <div className="variant-label">{s.label}</div>
                   <div className="muted small">{formatINR(s.price)}</div>
                 </div>
@@ -114,12 +116,12 @@ function AddToCartModal({ product, onClose, onConfirm }) {
 
           <div className="sheet-actions">
             <button
-              className="btn btn-primary"
+              className="btn btn-primary full"
               onClick={() => {
                 onConfirm({
                   productId: product.id,
                   name: product.name,
-                  sizeKey: selectedKey,
+                  sizeKey: sizeObj.key,
                   sizeLabel: sizeObj.label,
                   unitPrice: sizeObj.price,
                   qty,
@@ -138,7 +140,7 @@ function AddToCartModal({ product, onClose, onConfirm }) {
   );
 }
 
-/* Cart Drawer */
+/* ---------- Cart drawer ---------- */
 function CartDrawer({ open, onClose, items, onUpdateQty, onRemove }) {
   const subtotal = items.reduce((s, it) => s + it.unitPrice * it.qty, 0);
 
@@ -149,6 +151,7 @@ function CartDrawer({ open, onClose, items, onUpdateQty, onRemove }) {
           <h3>Cart</h3>
           <button className="close-x" onClick={onClose}>×</button>
         </div>
+
         <div className="cart-body">
           {items.length === 0 && <div className="muted">Your cart is empty</div>}
           {items.map((it, idx) => (
@@ -183,6 +186,7 @@ function CartDrawer({ open, onClose, items, onUpdateQty, onRemove }) {
   );
 }
 
+/* ---------- App ---------- */
 export default function App() {
   const [modalProduct, setModalProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -198,16 +202,16 @@ export default function App() {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  function onConfirmAdd(item) {
+  const addToCartConfirmed = (item) => {
     setCart((prev) => {
       const copy = [...prev];
-      const found = copy.find((x) => x.productId === item.productId && x.sizeKey === item.sizeKey);
-      if (found) found.qty += item.qty;
+      const existing = copy.find((x) => x.productId === item.productId && x.sizeKey === item.sizeKey);
+      if (existing) existing.qty += item.qty;
       else copy.push(item);
       return copy;
     });
     setCartOpen(true);
-  }
+  };
 
   function updateQty(idx, qty) {
     setCart((c) => {
@@ -241,8 +245,9 @@ export default function App() {
           </div>
 
           <div className="header-actions">
-            <button className="cart-btn" onClick={() => setCartOpen(true)}>Cart {itemCount > 0 && <span className="badge">{itemCount}</span>}</button>
-            <div className="subtotal">{itemCount ? formatINR(subtotal) : ""}</div>
+            <button className="cart-btn" onClick={() => setCartOpen(true)}>
+              Cart {itemCount > 0 && <span className="badge">{itemCount}</span>}
+            </button>
           </div>
         </div>
       </header>
@@ -254,17 +259,23 @@ export default function App() {
           {PRODUCTS.map((p) => (
             <div className="card" key={p.id}>
               <div className="image-wrap">
-                <img className="product-img" src={p.img} alt={p.name} />
+                <img src={p.img} alt={p.name} className="product-img" />
               </div>
+
               <div className="card-body">
                 <h3 className="product-title">{p.name}</h3>
                 <p className="muted">{p.desc}</p>
+
                 <div className="price-row">
-                  <div className="price">{formatINR(p.sizes[0].price)}</div>
-                  <div className="price-meta muted">{p.sizes[0].label} • multiple sizes</div>
-                </div>
-                <div className="card-actions">
-                  <button className="btn btn-primary" onClick={() => setModalProduct(p)}>Add to Cart</button>
+                  <div>
+                    <div className="price">{formatINR(p.sizes[0].price)}</div>
+                    <div className="price-meta muted">{p.sizes[0].label} • multiple sizes</div>
+                  </div>
+                  <div>
+                    <button className="btn btn-primary" onClick={() => setModalProduct(p)}>
+                      Add to Cart
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -272,6 +283,7 @@ export default function App() {
         </div>
 
         <div style={{ height: 18 }} />
+
         <div className="bottom-area">
           <div className="cart-summary-card">
             <h4>Cart</h4>
@@ -311,8 +323,7 @@ export default function App() {
         <div className="copyright">© 2025 Anant Gill Agro Farm · Contact: +91 88375 54747</div>
       </footer>
 
-      <AddToCartModal product={modalProduct} onClose={() => setModalProduct(null)} onConfirm={onConfirmAdd} />
-
+      <AddToCartModal product={modalProduct} onClose={() => setModalProduct(null)} onConfirm={addToCartConfirmed} />
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} items={cart} onUpdateQty={updateQty} onRemove={removeItem} />
     </div>
   );
