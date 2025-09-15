@@ -2,21 +2,16 @@
 import React, { useState, useEffect } from "react";
 import "./index.css";
 
-/* Images (place these files in src/assets/) */
+/* Product image imports (ensure these files exist in src/assets/) */
 import freshImg from "./assets/fresh_mushrooms.jpg";
 import pickleImg from "./assets/mushroom_pickle.jpg";
 import dryImg from "./assets/dry_mushrooms.jpg";
 import powderImg from "./assets/mushroom_powder.jpg";
 import wariyanImg from "./assets/mushroom_wariyan.jpg";
 
-/* Logo served from public/ to avoid bundle path issues */
+/* logo placed in public/anant_gill_agro.png (or anant_gill_logo.png) */
 const LOGO = "/anant_gill_logo.png";
 
-/* Helper to format INR */
-const toINR = (v) =>
-  v.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
-
-/* Product data */
 const PRODUCTS = [
   {
     id: "p1",
@@ -49,18 +44,22 @@ const PRODUCTS = [
     id: "p4",
     name: "Mushroom Powder",
     img: powderImg,
-    desc: "Fine mushroom powder — perfect for soups, gravies and marinades.",
+    desc: "Fine mushroom powder — ideal for gravies & soups.",
     sizes: [{ id: "p4-100", label: "100 g pack", price: 450 }],
   },
   {
     id: "p5",
     name: "Mushroom Wariyan",
     img: wariyanImg,
-    desc: "Traditional mushroom wariyan — ready-to-cook flavor-packed pieces.",
+    desc: "Traditional mushroom wariyan — ready-to-cook pieces.",
     sizes: [{ id: "p5-100", label: "100 g pack", price: 120 }],
   },
 ];
 
+const toINR = (v) =>
+  v.toLocaleString("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 });
+
+/* Bottom-sheet variant picker (ensures small thumbnail only) */
 function VariantSheet({ product, open, onClose, onAdd }) {
   const [selectedId, setSelectedId] = useState(null);
   const [qty, setQty] = useState(1);
@@ -73,14 +72,16 @@ function VariantSheet({ product, open, onClose, onAdd }) {
   }, [product]);
 
   if (!open || !product) return null;
+
   const variant = product.sizes.find((s) => s.id === selectedId) || product.sizes[0];
-  const total = variant.price * qty;
+  const total = (variant.price || 0) * qty;
 
   return (
     <div className="sheet-backdrop" onClick={onClose}>
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-handle" />
         <div className="sheet-top">
+          {/* Small thumbnail: constrained by CSS .sheet-thumb */}
           <img className="sheet-thumb" src={product.img} alt={product.name} />
           <div className="sheet-info">
             <h3>{product.name}</h3>
@@ -111,35 +112,17 @@ function VariantSheet({ product, open, onClose, onAdd }) {
         <div className="sheet-section">
           <div className="sheet-section-title">Quantity</div>
           <div className="qty-controls">
-            <button className="qty-btn" onClick={() => setQty((q) => Math.max(1, q - 1))}>
-              −
-            </button>
+            <button className="qty-btn" onClick={() => setQty((q) => Math.max(1, q - 1))}>−</button>
             <div className="qty-value">{qty}</div>
-            <button className="qty-btn" onClick={() => setQty((q) => q + 1)}>
-              +
-            </button>
+            <button className="qty-btn" onClick={() => setQty((q) => q + 1)}>+</button>
             <div className="qty-total muted">Total: <strong>{toINR(total)}</strong></div>
           </div>
         </div>
 
         <div className="sheet-footer">
           <button className="btn ghost" onClick={onClose}>Cancel</button>
-          <button
-            className="btn primary"
-            onClick={() => {
-              onAdd({
-                productId: product.id,
-                name: product.name,
-                variantId: variant.id,
-                variantLabel: variant.label,
-                price: variant.price,
-                qty,
-                img: product.img,
-                lineTotal: total,
-              });
-            }}
-          >
-            Add Item • {toINR(total)}
+          <button className="btn primary" onClick={() => onAdd({ product, variant, qty, total })}>
+            Add • {toINR(total)}
           </button>
         </div>
       </div>
@@ -156,14 +139,14 @@ export default function App() {
   const openSheet = (p) => { setSheetProduct(p); setSheetOpen(true); };
   const closeSheet = () => setSheetOpen(false);
 
-  const addToCart = (item) => {
+  const addToCart = ({ product, variant, qty, total }) => {
+    const key = `${product.id}::${variant.id}`;
     setCart((prev) => {
-      const key = `${item.productId}::${item.variantId}`;
-      const found = prev.find((x) => x.key === key);
+      const found = prev.find((it) => it.key === key);
       if (found) {
-        return prev.map((x) => x.key === key ? { ...x, qty: x.qty + item.qty, lineTotal: x.lineTotal + item.lineTotal } : x);
+        return prev.map((it) => it.key === key ? { ...it, qty: it.qty + qty, lineTotal: it.lineTotal + total } : it);
       }
-      return [...prev, { key: `${item.productId}::${item.variantId}`, ...item }];
+      return [...prev, { key, name: product.name, variantLabel: variant.label, price: variant.price, qty, lineTotal: total, img: product.img }];
     });
     setSheetOpen(false);
     setDrawerOpen(true);
@@ -172,7 +155,7 @@ export default function App() {
   const updateQty = (key, delta) => {
     setCart((prev) =>
       prev
-        .map((it) => (it.key === key ? { ...it, qty: Math.max(1, it.qty + delta), lineTotal: (it.qty + delta <= 0 ? it.qty : (it.qty + delta)) * it.price } : it))
+        .map((it) => it.key === key ? { ...it, qty: Math.max(1, it.qty + delta), lineTotal: (Math.max(1, it.qty + delta)) * it.price } : it)
         .filter(Boolean)
     );
   };
@@ -183,18 +166,18 @@ export default function App() {
   const itemCount = cart.reduce((s, it) => s + it.qty, 0);
 
   return (
-    <div>
+    <div className="app-root">
       <header className="header">
         <div className="brand">
-          <img src={LOGO} alt="Anant Gill Agro Farm" className="logo" />
+          <img src={LOGO} alt="logo" className="logo" />
           <div>
             <h1 className="brand-title">Anant Gill Agro Farm</h1>
-            <p className="brand-sub">Fresh organic mushrooms & homemade pickles</p>
+            <p className="muted">Fresh organic mushrooms & homemade pickles</p>
           </div>
         </div>
 
         <div className="header-actions">
-          <button className="cart-fab" onClick={() => setDrawerOpen(true)} aria-label="Open cart">
+          <button className="cart-fab" onClick={() => setDrawerOpen(true)}>
             🛒 <span className="cart-badge">{itemCount}</span>
             <div className="cart-sub">{toINR(subtotal)}</div>
           </button>
@@ -208,7 +191,7 @@ export default function App() {
             <p className="muted">Hand-harvested, minimally processed — flavors you can trust.</p>
           </div>
           <div className="hero-right">
-            <img src={freshImg} alt="Fresh mushrooms hero" className="hero-img" />
+            <img src={freshImg} alt="fresh" className="hero-img" />
           </div>
         </section>
 
@@ -217,9 +200,7 @@ export default function App() {
           <div className="grid">
             {PRODUCTS.map((p) => (
               <article className="card" key={p.id}>
-                <div className="image-wrap">
-                  <img src={p.img} alt={p.name} className="product-img" />
-                </div>
+                <div className="image-wrap"><img src={p.img} alt={p.name} className="product-img" /></div>
                 <div className="card-body">
                   <h4>{p.name}</h4>
                   <p className="muted small">{p.desc}</p>
@@ -237,5 +218,48 @@ export default function App() {
         </section>
       </main>
 
-      {/* Cart Drawer */}
-      <aside className={`cart-drawer ${drawerOpen ? "open" : ""}`} aria-hidden
+      {/* drawer */}
+      <aside className={`cart-drawer ${drawerOpen ? "open" : ""}`}>
+        <div className="drawer-header">
+          <h4>Your Cart</h4>
+          <button className="drawer-close" onClick={() => setDrawerOpen(false)}>✕</button>
+        </div>
+        <div className="drawer-body">
+          {cart.length === 0 ? <div className="empty">Your cart is empty.</div> : (
+            <ul className="drawer-list">
+              {cart.map((it) => (
+                <li className="drawer-item" key={it.key}>
+                  <div className="left">
+                    <img src={it.img} alt={it.name} className="thumb" />
+                    <div>
+                      <div className="fw">{it.name}</div>
+                      <div className="muted small">{it.variantLabel}</div>
+                    </div>
+                  </div>
+                  <div className="right">
+                    <div className="qty-row">
+                      <button onClick={() => updateQty(it.key, -1)}>-</button>
+                      <div>{it.qty}</div>
+                      <button onClick={() => updateQty(it.key, +1)}>+</button>
+                    </div>
+                    <div className="fw">{toINR(it.price * it.qty)}</div>
+                    <button className="remove" onClick={() => removeItem(it.key)}>Remove</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+        <div className="drawer-footer">
+          <div className="drawer-total"><div>Subtotal</div><div className="fw">{toINR(subtotal)}</div></div>
+          <div className="drawer-actions">
+            <button className="btn ghost" onClick={() => setDrawerOpen(false)}>Continue</button>
+            <button className="btn primary" onClick={() => alert("Checkout placeholder")}>Checkout • {toINR(subtotal)}</button>
+          </div>
+        </div>
+      </aside>
+
+      <VariantSheet product={sheetProduct} open={sheetOpen} onClose={closeSheet} onAdd={addToCart} />
+
+      {/* Footer */}
+      <footer className="site-footer footer-rich">
