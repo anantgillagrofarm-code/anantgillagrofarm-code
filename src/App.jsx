@@ -134,4 +134,186 @@ function AddToCartModal({ product, onClose, onConfirm }) {
           </div>
         </div>
       </div>
-    </div
+    </div>
+  );
+}
+
+/* Cart Drawer */
+function CartDrawer({ open, onClose, items, onUpdateQty, onRemove }) {
+  const subtotal = items.reduce((s, it) => s + it.unitPrice * it.qty, 0);
+
+  return (
+    <div className={`cart-drawer ${open ? "open" : ""}`} onClick={onClose}>
+      <div className="cart-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="cart-header">
+          <h3>Cart</h3>
+          <button className="close-x" onClick={onClose}>×</button>
+        </div>
+        <div className="cart-body">
+          {items.length === 0 && <div className="muted">Your cart is empty</div>}
+          {items.map((it, idx) => (
+            <div className="cart-item" key={idx}>
+              <img src={it.img} alt={it.name} />
+              <div className="cart-item-body">
+                <div className="cart-item-title">{it.name}</div>
+                <div className="muted small">{it.sizeLabel}</div>
+                <div className="cart-item-controls">
+                  <div className="qty-controls small">
+                    <button onClick={() => onUpdateQty(idx, Math.max(1, it.qty - 1))}>−</button>
+                    <div className="qty-value">{it.qty}</div>
+                    <button onClick={() => onUpdateQty(idx, it.qty + 1)}>+</button>
+                  </div>
+                  <div className="cart-item-price">{formatINR(it.unitPrice * it.qty)}</div>
+                </div>
+              </div>
+              <button className="remove-link" onClick={() => onRemove(idx)}>Remove</button>
+            </div>
+          ))}
+        </div>
+
+        <div className="cart-footer">
+          <div className="cart-sub">
+            <div>Subtotal</div>
+            <div>{formatINR(subtotal)}</div>
+          </div>
+          <button className="btn btn-primary full">Checkout (placeholder)</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function App() {
+  const [modalProduct, setModalProduct] = useState(null);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cart, setCart] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("cart") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
+
+  function onConfirmAdd(item) {
+    setCart((prev) => {
+      const copy = [...prev];
+      const found = copy.find((x) => x.productId === item.productId && x.sizeKey === item.sizeKey);
+      if (found) found.qty += item.qty;
+      else copy.push(item);
+      return copy;
+    });
+    setCartOpen(true);
+  }
+
+  function updateQty(idx, qty) {
+    setCart((c) => {
+      const copy = [...c];
+      copy[idx].qty = qty;
+      return copy;
+    });
+  }
+
+  function removeItem(idx) {
+    setCart((c) => {
+      const copy = [...c];
+      copy.splice(idx, 1);
+      return copy;
+    });
+  }
+
+  const itemCount = cart.reduce((s, it) => s + it.qty, 0);
+  const subtotal = cart.reduce((s, it) => s + it.unitPrice * it.qty, 0);
+
+  return (
+    <div className="app-root">
+      <header className="site-header">
+        <div className="header-inner">
+          <div className="title-wrap">
+            <img src="/anant_gill_logo.png" alt="logo" className="logo" />
+            <div>
+              <h1 className="brand">Anant Gill Agro Farm</h1>
+              <div className="subtitle">Best quality fresh organic mushrooms & delicious pickles</div>
+            </div>
+          </div>
+
+          <div className="header-actions">
+            <button className="cart-btn" onClick={() => setCartOpen(true)}>Cart {itemCount > 0 && <span className="badge">{itemCount}</span>}</button>
+            <div className="subtotal">{itemCount ? formatINR(subtotal) : ""}</div>
+          </div>
+        </div>
+      </header>
+
+      <main className="container">
+        <h2 className="section-title">Our Products</h2>
+
+        <div className="grid">
+          {PRODUCTS.map((p) => (
+            <div className="card" key={p.id}>
+              <div className="image-wrap">
+                <img className="product-img" src={p.img} alt={p.name} />
+              </div>
+              <div className="card-body">
+                <h3 className="product-title">{p.name}</h3>
+                <p className="muted">{p.desc}</p>
+                <div className="price-row">
+                  <div className="price">{formatINR(p.sizes[0].price)}</div>
+                  <div className="price-meta muted">{p.sizes[0].label} • multiple sizes</div>
+                </div>
+                <div className="card-actions">
+                  <button className="btn btn-primary" onClick={() => setModalProduct(p)}>Add to Cart</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ height: 18 }} />
+        <div className="bottom-area">
+          <div className="cart-summary-card">
+            <h4>Cart</h4>
+            {cart.length === 0 ? (
+              <p className="muted">Your cart is empty</p>
+            ) : (
+              <>
+                <div className="muted small">Items: {itemCount}</div>
+                <div style={{ marginTop: 8 }}>{formatINR(subtotal)}</div>
+              </>
+            )}
+          </div>
+        </div>
+      </main>
+
+      <footer className="site-footer">
+        <div className="footer-inner">
+          <div className="footer-left">
+            <img src="/anant_gill_logo.png" alt="logo" className="footer-logo" />
+            <div className="footer-brand">Anant Gill Agro Farm</div>
+            <div className="muted small">Best quality fresh organic mushrooms & delicious pickles</div>
+          </div>
+
+          <div className="footer-mid">
+            <div className="footer-title">Contact</div>
+            <div>Phone: +91 88375 54747</div>
+            <div>Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a></div>
+            <div className="muted small">VPO Bhore Saidan, Pehowa Road, Kurukshetra-136118, Haryana, INDIA</div>
+          </div>
+
+          <div className="footer-right">
+            <div className="footer-title">Follow</div>
+            <a href="https://www.instagram.com/anant.gill.agro.farm" target="_blank" rel="noreferrer">Instagram</a>
+          </div>
+        </div>
+
+        <div className="copyright">© 2025 Anant Gill Agro Farm · Contact: +91 88375 54747</div>
+      </footer>
+
+      <AddToCartModal product={modalProduct} onClose={() => setModalProduct(null)} onConfirm={onConfirmAdd} />
+
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} items={cart} onUpdateQty={updateQty} onRemove={removeItem} />
+    </div>
+  );
+}
