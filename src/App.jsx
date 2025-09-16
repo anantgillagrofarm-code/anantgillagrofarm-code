@@ -7,7 +7,7 @@ import powderImg from "./assets/mushroom_powder.jpg";
 import wariyanImg from "./assets/mushroom_wariyan.jpg";
 import "./index.css";
 
-/* ---------- data ---------- */
+/* ==== PRODUCTS ==== */
 const PRODUCTS = [
   {
     id: "p1",
@@ -33,70 +33,67 @@ const PRODUCTS = [
     id: "p3",
     name: "Dry Mushrooms",
     desc: "Premium sun-dried mushrooms — great for soups & long storage.",
-    sizes: [{ key: "kg", label: "per kg", price: 600 }],
+    sizes: [{ key: "kg", label: "per kg", price: 800 }],
     img: dryImg,
   },
   {
     id: "p4",
     name: "Mushroom Powder",
     desc: "Finely ground mushroom powder for seasoning and soups.",
-    sizes: [{ key: "100g", label: "per 100g", price: 250 }],
+    sizes: [{ key: "100g", label: "100g pack", price: 450 }],
     img: powderImg,
   },
   {
     id: "p5",
     name: "Mushroom Wariyan",
     desc: "Traditional mushroom wadiyan — tasty & nutritious.",
-    sizes: [{ key: "100g", label: "per 100g packet", price: 120 }],
+    sizes: [{ key: "100g", label: "100g pack", price: 120 }],
     img: wariyanImg,
   },
 ];
 
-function formatINR(v) {
-  return v.toLocaleString("en-IN", { style: "currency", currency: "INR" });
+function formatINR(value) {
+  return value.toLocaleString("en-IN", { style: "currency", currency: "INR" });
 }
 
-/* ---------- AddToCart modal (bottom sheet) ---------- */
+/* ==== Bottom-sheet add-to-cart modal ==== */
 function AddToCartModal({ product, onClose, onConfirm }) {
-  const [selected, setSelected] = useState(null);
+  const [selectedKey, setSelectedKey] = useState(null);
   const [qty, setQty] = useState(1);
 
   useEffect(() => {
-    if (product) {
-      setSelected(product.sizes[0]?.key || null);
-      setQty(1);
-    }
+    setSelectedKey(product?.sizes?.[0]?.key || null);
+    setQty(1);
   }, [product]);
 
   if (!product) return null;
-  const sizeObj = product.sizes.find((s) => s.key === selected) || product.sizes[0];
-  const total = (sizeObj?.price || 0) * qty;
+  const sizeObj = product.sizes.find((s) => s.key === selectedKey) || {};
+  const total = (sizeObj.price || 0) * qty;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <img src={product.img} alt={product.name} className="sheet-thumb" />
-          <div className="sheet-info">
+          <div style={{ flex: 1 }}>
             <h3>{product.name}</h3>
             <p className="muted">{product.desc}</p>
-            <div className="muted small">Choose size & quantity</div>
           </div>
           <button className="close-x" onClick={onClose}>×</button>
         </div>
 
         <div className="modal-body">
           <div className="section">
-            <div className="section-title">Sizes</div>
+            <div className="section-title">Choose size</div>
             {product.sizes.map((s) => (
-              <label key={s.key} className="variant-row">
+              <label key={s.key} className="variant-row" onClick={() => setSelectedKey(s.key)}>
                 <input
                   type="radio"
                   name="size"
-                  checked={selected === s.key}
-                  onChange={() => setSelected(s.key)}
+                  checked={selectedKey === s.key}
+                  onChange={() => setSelectedKey(s.key)}
                 />
-                <div style={{ marginLeft: 10 }}>
+                <div style={{ marginLeft: 8 }}>
                   <div className="variant-label">{s.label}</div>
                   <div className="muted small">{formatINR(s.price)}</div>
                 </div>
@@ -105,13 +102,18 @@ function AddToCartModal({ product, onClose, onConfirm }) {
           </div>
 
           <div className="section qty-row">
-            <div className="section-title">Quantity</div>
-            <div className="qty-controls">
-              <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
-              <div className="qty-value">{qty}</div>
-              <button onClick={() => setQty(qty + 1)}>+</button>
+            <div>
+              <div className="section-title">Quantity</div>
+              <div className="qty-controls">
+                <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
+                <div className="qty-value">{qty}</div>
+                <button onClick={() => setQty(qty + 1)}>+</button>
+              </div>
             </div>
-            <div className="total-text">Total: {formatINR(total)}</div>
+            <div style={{ marginLeft: 12, textAlign: "right" }}>
+              <div className="muted small">Total</div>
+              <div style={{ fontWeight: 700 }}>{formatINR(total)}</div>
+            </div>
           </div>
 
           <div className="sheet-actions">
@@ -121,7 +123,7 @@ function AddToCartModal({ product, onClose, onConfirm }) {
                 onConfirm({
                   productId: product.id,
                   name: product.name,
-                  sizeKey: sizeObj.key,
+                  sizeKey: selectedKey,
                   sizeLabel: sizeObj.label,
                   unitPrice: sizeObj.price,
                   qty,
@@ -140,7 +142,7 @@ function AddToCartModal({ product, onClose, onConfirm }) {
   );
 }
 
-/* ---------- Cart drawer ---------- */
+/* ==== Cart drawer ==== */
 function CartDrawer({ open, onClose, items, onUpdateQty, onRemove }) {
   const subtotal = items.reduce((s, it) => s + it.unitPrice * it.qty, 0);
 
@@ -186,7 +188,7 @@ function CartDrawer({ open, onClose, items, onUpdateQty, onRemove }) {
   );
 }
 
-/* ---------- App ---------- */
+/* ==== App ==== */
 export default function App() {
   const [modalProduct, setModalProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
@@ -202,16 +204,16 @@ export default function App() {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCartConfirmed = (item) => {
+  function onConfirmAdd(item) {
     setCart((prev) => {
       const copy = [...prev];
-      const existing = copy.find((x) => x.productId === item.productId && x.sizeKey === item.sizeKey);
-      if (existing) existing.qty += item.qty;
+      const same = copy.find((x) => x.productId === item.productId && x.sizeKey === item.sizeKey);
+      if (same) same.qty += item.qty;
       else copy.push(item);
       return copy;
     });
     setCartOpen(true);
-  };
+  }
 
   function updateQty(idx, qty) {
     setCart((c) => {
@@ -248,6 +250,7 @@ export default function App() {
             <button className="cart-btn" onClick={() => setCartOpen(true)}>
               Cart {itemCount > 0 && <span className="badge">{itemCount}</span>}
             </button>
+            <div className="subtotal">{itemCount ? formatINR(subtotal) : ""}</div>
           </div>
         </div>
       </header>
@@ -259,7 +262,7 @@ export default function App() {
           {PRODUCTS.map((p) => (
             <div className="card" key={p.id}>
               <div className="image-wrap">
-                <img src={p.img} alt={p.name} className="product-img" />
+                <img className="product-img" src={p.img} alt={p.name} />
               </div>
 
               <div className="card-body">
@@ -271,10 +274,8 @@ export default function App() {
                     <div className="price">{formatINR(p.sizes[0].price)}</div>
                     <div className="price-meta muted">{p.sizes[0].label} • multiple sizes</div>
                   </div>
-                  <div>
-                    <button className="btn btn-primary" onClick={() => setModalProduct(p)}>
-                      Add to Cart
-                    </button>
+                  <div className="card-actions">
+                    <button className="btn btn-primary" onClick={() => setModalProduct(p)}>Add to Cart</button>
                   </div>
                 </div>
               </div>
@@ -283,7 +284,6 @@ export default function App() {
         </div>
 
         <div style={{ height: 18 }} />
-
         <div className="bottom-area">
           <div className="cart-summary-card">
             <h4>Cart</h4>
@@ -307,24 +307,4 @@ export default function App() {
             <div className="muted small">Best quality fresh organic mushrooms & delicious pickles</div>
           </div>
 
-          <div className="footer-mid">
-            <div className="footer-title">Contact</div>
-            <div>Phone: +91 88375 54747</div>
-            <div>Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a></div>
-            <div className="muted small">VPO Bhore Saidan, Pehowa Road, Kurukshetra-136118, Haryana, INDIA</div>
-          </div>
-
-          <div className="footer-right">
-            <div className="footer-title">Follow</div>
-            <a href="https://www.instagram.com/anant.gill.agro.farm" target="_blank" rel="noreferrer">Instagram</a>
-          </div>
-        </div>
-
-        <div className="copyright">© 2025 Anant Gill Agro Farm · Contact: +91 88375 54747</div>
-      </footer>
-
-      <AddToCartModal product={modalProduct} onClose={() => setModalProduct(null)} onConfirm={addToCartConfirmed} />
-      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} items={cart} onUpdateQty={updateQty} onRemove={removeItem} />
-    </div>
-  );
-}
+          <div className="footer-mid
