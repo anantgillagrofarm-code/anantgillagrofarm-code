@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import freshImg from "./assets/fresh_mushrooms.jpg";
 import pickleImg from "./assets/mushroom_pickle.jpg";
 import dryImg from "./assets/dry_mushrooms.jpg";
@@ -7,7 +7,6 @@ import powderImg from "./assets/mushroom_powder.jpg";
 import wariyanImg from "./assets/mushroom_wariyan.jpg";
 import "./index.css";
 
-/* ---------- data ---------- */
 const PRODUCTS = [
   {
     id: "p1",
@@ -32,7 +31,7 @@ const PRODUCTS = [
   {
     id: "p3",
     name: "Dry Mushrooms",
-    desc: "Premium sun-dried mushrooms — great for soups & long storage.",
+    desc: "Premium sun-dried mushrooms — great for soups & storage.",
     sizes: [{ key: "kg", label: "per kg", price: 800 }],
     img: dryImg,
   },
@@ -52,137 +51,131 @@ const PRODUCTS = [
   },
 ];
 
-function formatINR(v) {
-  return v.toLocaleString("en-IN", { style: "currency", currency: "INR" });
+function formatINR(value) {
+  return value.toLocaleString("en-IN", { style: "currency", currency: "INR" });
 }
 
-/* ---------- AddToCart modal (bottom sheet) ---------- */
+/* Modal for choosing size/qty */
 function AddToCartModal({ product, onClose, onConfirm }) {
-  const [selected, setSelected] = useState(null);
+  const [selectedKey, setSelectedKey] = useState(null);
   const [qty, setQty] = useState(1);
 
   useEffect(() => {
     if (product) {
-      setSelected(product.sizes[0]?.key || null);
+      setSelectedKey(product.sizes[0].key);
       setQty(1);
     }
   }, [product]);
 
   if (!product) return null;
-  const sizeObj = product.sizes.find((s) => s.key === selected) || product.sizes[0];
-  const total = (sizeObj?.price || 0) * qty;
+
+  const sizeObj = product.sizes.find((s) => s.key === selectedKey) || {};
+  const total = (sizeObj.price || 0) * qty;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <img src={product.img} alt={product.name} style={{ width: 96, height: 96, objectFit: "cover", borderRadius: 8 }} />
-          <div style={{ flex: 1 }}>
-            <h3 style={{ margin: 0 }}>{product.name}</h3>
-            <div className="muted" style={{ marginTop: 4 }}>{product.desc}</div>
-            <div className="muted small" style={{ marginTop: 8 }}>Choose size & quantity</div>
+        <div className="modal-header">
+          <img src={product.img} alt={product.name} className="sheet-thumb" />
+          <div>
+            <h3>{product.name}</h3>
+            <p className="muted">{product.desc}</p>
           </div>
           <button className="close-x" onClick={onClose}>×</button>
         </div>
 
-        <div style={{ marginTop: 14 }}>
-          <div className="section-title">Sizes</div>
-          {product.sizes.map((s) => (
-            <label key={s.key} style={{ display: "flex", alignItems: "center", marginBottom: 8 }}>
-              <input
-                type="radio"
-                name="size"
-                checked={selected === s.key}
-                onChange={() => setSelected(s.key)}
-              />
-              <div style={{ marginLeft: 10 }}>
-                <div style={{ fontWeight: 600 }}>{s.label}</div>
-                <div className="muted small">{formatINR(s.price)}</div>
-              </div>
-            </label>
-          ))}
-        </div>
+        <div className="modal-body">
+          <div className="section">
+            <div className="section-title">Choose size</div>
+            {product.sizes.map((s) => (
+              <label key={s.key} className="variant-row">
+                <input
+                  type="radio"
+                  name="size"
+                  checked={selectedKey === s.key}
+                  onChange={() => setSelectedKey(s.key)}
+                />
+                <div>
+                  <div className="variant-label">{s.label}</div>
+                  <div className="muted small">{formatINR(s.price)}</div>
+                </div>
+              </label>
+            ))}
+          </div>
 
-        <div style={{ marginTop: 12, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div>
+          <div className="section qty-row">
             <div className="section-title">Quantity</div>
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-              <button onClick={() => setQty(Math.max(1, qty - 1))} className="btn">−</button>
-              <div style={{ minWidth: 28, textAlign: "center" }}>{qty}</div>
-              <button onClick={() => setQty(qty + 1)} className="btn">+</button>
+            <div className="qty-controls">
+              <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
+              <div className="qty-value">{qty}</div>
+              <button onClick={() => setQty(qty + 1)}>+</button>
             </div>
+            <div className="total-text">Total: {formatINR(total)}</div>
           </div>
 
-          <div style={{ textAlign: "right" }}>
-            <div className="muted small">Total</div>
-            <div style={{ fontWeight: 700 }}>{formatINR(total)}</div>
+          <div className="sheet-actions">
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                onConfirm({
+                  productId: product.id,
+                  name: product.name,
+                  sizeKey: selectedKey,
+                  sizeLabel: sizeObj.label,
+                  unitPrice: sizeObj.price,
+                  qty,
+                  img: product.img,
+                });
+                onClose();
+              }}
+            >
+              Add • {formatINR(total)}
+            </button>
+            <button className="btn btn-outline" onClick={onClose}>Cancel</button>
           </div>
-        </div>
-
-        <div style={{ marginTop: 16, display: "flex", gap: 10 }}>
-          <button
-            className="btn btn-primary full"
-            onClick={() => {
-              onConfirm({
-                productId: product.id,
-                name: product.name,
-                sizeKey: sizeObj.key,
-                sizeLabel: sizeObj.label,
-                unitPrice: sizeObj.price,
-                qty,
-                img: product.img,
-              });
-              onClose();
-            }}
-          >
-            Add • {formatINR(total)}
-          </button>
-          <button className="btn btn-outline" onClick={onClose}>Cancel</button>
         </div>
       </div>
     </div>
   );
 }
 
-/* ---------- Cart drawer ---------- */
+/* Cart Drawer */
 function CartDrawer({ open, onClose, items, onUpdateQty, onRemove }) {
-  if (!open) return null;
   const subtotal = items.reduce((s, it) => s + it.unitPrice * it.qty, 0);
 
   return (
-    <div className="cart-drawer" onClick={onClose}>
+    <div className={`cart-drawer ${open ? "open" : ""}`} onClick={onClose}>
       <div className="cart-panel" onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-          <h3 style={{ margin: 0 }}>Cart</h3>
+        <div className="cart-header">
+          <h3>Cart</h3>
           <button className="close-x" onClick={onClose}>×</button>
         </div>
-
-        <div style={{ marginBottom: 18 }}>
+        <div className="cart-body">
           {items.length === 0 && <div className="muted">Your cart is empty</div>}
           {items.map((it, idx) => (
             <div className="cart-item" key={idx}>
               <img src={it.img} alt={it.name} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 700 }}>{it.name}</div>
+              <div className="cart-item-body">
+                <div className="cart-item-title">{it.name}</div>
                 <div className="muted small">{it.sizeLabel}</div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, alignItems: "center" }}>
-                  <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                    <button onClick={() => onUpdateQty(idx, Math.max(1, it.qty - 1))} className="btn">−</button>
-                    <div style={{ minWidth: 26, textAlign: "center" }}>{it.qty}</div>
-                    <button onClick={() => onUpdateQty(idx, it.qty + 1)} className="btn">+</button>
+                <div className="cart-item-controls">
+                  <div className="qty-controls small">
+                    <button onClick={() => onUpdateQty(idx, Math.max(1, it.qty - 1))}>−</button>
+                    <div className="qty-value">{it.qty}</div>
+                    <button onClick={() => onUpdateQty(idx, it.qty + 1)}>+</button>
                   </div>
-                  <div style={{ fontWeight: 700 }}>{formatINR(it.unitPrice * it.qty)}</div>
+                  <div className="cart-item-price">{formatINR(it.unitPrice * it.qty)}</div>
                 </div>
               </div>
-              <button className="btn" style={{ color: "#b00" }} onClick={() => onRemove(idx)}>Remove</button>
+              <button className="remove-link" onClick={() => onRemove(idx)}>Remove</button>
             </div>
           ))}
         </div>
 
-        <div style={{ borderTop: "1px solid rgba(0,0,0,0.06)", paddingTop: 12 }}>
-          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+        <div className="cart-footer">
+          <div className="cart-sub">
             <div>Subtotal</div>
-            <div style={{ fontWeight: 700 }}>{formatINR(subtotal)}</div>
+            <div>{formatINR(subtotal)}</div>
           </div>
           <button className="btn btn-primary full">Checkout (placeholder)</button>
         </div>
@@ -191,9 +184,8 @@ function CartDrawer({ open, onClose, items, onUpdateQty, onRemove }) {
   );
 }
 
-/* ---------- App ---------- */
 export default function App() {
-  const [sheetProduct, setSheetProduct] = useState(null); // bottom-sheet product
+  const [modalProduct, setModalProduct] = useState(null);
   const [cartOpen, setCartOpen] = useState(false);
   const [cart, setCart] = useState(() => {
     try {
@@ -203,29 +195,20 @@ export default function App() {
     }
   });
 
-  /* ----- LOCK BODY SCROLL WHEN SHEET OR CART OPEN ----- */
-  useEffect(() => {
-    const shouldLock = !!sheetProduct || !!cartOpen;
-    if (shouldLock) document.body.classList.add("no-scroll");
-    else document.body.classList.remove("no-scroll");
-
-    return () => document.body.classList.remove("no-scroll");
-  }, [sheetProduct, cartOpen]);
-
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCartConfirmed = (item) => {
+  function onConfirmAdd(item) {
     setCart((prev) => {
       const copy = [...prev];
-      const existing = copy.find((x) => x.productId === item.productId && x.sizeKey === item.sizeKey);
-      if (existing) existing.qty += item.qty;
+      const found = copy.find((x) => x.productId === item.productId && x.sizeKey === item.sizeKey);
+      if (found) found.qty += item.qty;
       else copy.push(item);
       return copy;
     });
     setCartOpen(true);
-  };
+  }
 
   function updateQty(idx, qty) {
     setCart((c) => {
@@ -250,7 +233,7 @@ export default function App() {
     <div className="app-root">
       <header className="site-header">
         <div className="header-inner">
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <div className="title-wrap">
             <img src="/anant_gill_logo.png" alt="logo" className="logo" />
             <div>
               <h1 className="brand">Anant Gill Agro Farm</h1>
@@ -258,10 +241,9 @@ export default function App() {
             </div>
           </div>
 
-          <div>
-            <button className="cart-btn" onClick={() => setCartOpen(true)}>
-              Cart {itemCount > 0 && <span className="badge">{itemCount}</span>}
-            </button>
+          <div className="header-actions">
+            <button className="cart-btn" onClick={() => setCartOpen(true)}>Cart {itemCount > 0 && <span className="badge">{itemCount}</span>}</button>
+            <div className="subtotal">{itemCount ? formatINR(subtotal) : ""}</div>
           </div>
         </div>
       </header>
@@ -273,23 +255,17 @@ export default function App() {
           {PRODUCTS.map((p) => (
             <div className="card" key={p.id}>
               <div className="image-wrap">
-                <img src={p.img} alt={p.name} className="product-img" />
+                <img className="product-img" src={p.img} alt={p.name} />
               </div>
-
-              <div style={{ marginTop: 10 }}>
-                <h3 style={{ margin: 0 }}>{p.name}</h3>
+              <div className="card-body">
+                <h3 className="product-title">{p.name}</h3>
                 <p className="muted">{p.desc}</p>
-
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8 }}>
-                  <div>
-                    <div style={{ fontWeight: 700 }}>{formatINR(p.sizes[0].price)}</div>
-                    <div className="muted small">{p.sizes[0].label} • multiple sizes</div>
-                  </div>
-                  <div>
-                    <button className="btn btn-primary" onClick={() => setSheetProduct(p)}>
-                      Add to Cart
-                    </button>
-                  </div>
+                <div className="price-row">
+                  <div className="price">{formatINR(p.sizes[0].price)}</div>
+                  <div className="price-meta muted">{p.sizes[0].label} • multiple sizes</div>
+                </div>
+                <div className="card-actions">
+                  <button className="btn btn-primary" onClick={() => setModalProduct(p)}>Add to Cart</button>
                 </div>
               </div>
             </div>
@@ -297,10 +273,9 @@ export default function App() {
         </div>
 
         <div style={{ height: 18 }} />
-
         <div className="bottom-area">
-          <div className="card" style={{ padding: 14 }}>
-            <h4 style={{ margin: 0 }}>Cart</h4>
+          <div className="cart-summary-card">
+            <h4>Cart</h4>
             {cart.length === 0 ? (
               <p className="muted">Your cart is empty</p>
             ) : (
@@ -315,39 +290,30 @@ export default function App() {
 
       <footer className="site-footer">
         <div className="footer-inner">
-          <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          <div className="footer-left">
             <img src="/anant_gill_logo.png" alt="logo" className="footer-logo" />
-            <div>
-              <div style={{ fontWeight: 800 }}>Anant Gill Agro Farm</div>
-              <div className="muted small">Best quality fresh organic mushrooms & delicious pickles</div>
-            </div>
+            <div className="footer-brand">Anant Gill Agro Farm</div>
+            <div className="muted small">Best quality fresh organic mushrooms & delicious pickles</div>
           </div>
 
-          <div style={{ flex: 1 }}>
+          <div className="footer-mid">
             <div className="footer-title">Contact</div>
             <div>Phone: +91 88375 54747</div>
-            <div>Email: <a style={{ color: "#f2f6f0" }} href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a></div>
-            <div className="muted small" style={{ marginTop: 8 }}>
-              Gali No. 1, Baba Deep Singh Avenue,<br/> Village Nangli Bhatha, Amritsar 143001
-            </div>
+            <div>Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a></div>
+            <div className="muted small">VPO Bhore Saidan, Pehowa Road, Kurukshetra-136118, Haryana, INDIA</div>
           </div>
 
-          <div>
+          <div className="footer-right">
             <div className="footer-title">Follow</div>
-            <div className="social-icons">
-              <a href="https://www.instagram.com/anant.gill.agro.farm" target="_blank" rel="noreferrer">Instagram</a>
-              <span style={{ marginLeft: 8 }}>|</span>
-              <a href="#" style={{ marginLeft: 8 }}>Facebook</a>
-            </div>
+            <a href="https://www.instagram.com/anant.gill.agro.farm" target="_blank" rel="noreferrer">Instagram</a>
           </div>
         </div>
 
-        <div style={{ textAlign: "center", marginTop: 12, color: "rgba(242,246,240,0.85)" }}>
-          © 2025 Anant Gill Agro Farm · Contact: +91 88375 54747
-        </div>
+        <div className="copyright">© 2025 Anant Gill Agro Farm · Contact: +91 88375 54747</div>
       </footer>
 
-      <AddToCartModal product={sheetProduct} onClose={() => setSheetProduct(null)} onConfirm={addToCartConfirmed} />
+      <AddToCartModal product={modalProduct} onClose={() => setModalProduct(null)} onConfirm={onConfirmAdd} />
+
       <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} items={cart} onUpdateQty={updateQty} onRemove={removeItem} />
     </div>
   );
