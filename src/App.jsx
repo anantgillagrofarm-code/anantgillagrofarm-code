@@ -1,79 +1,79 @@
 // src/App.jsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import "./index.css";
 
 /*
-  IMPORTANT:
-  - Put product images in src/assets and import them below (or use public/ paths).
-  - Put logo and footer image in public/ if you prefer (this code uses public for logo).
+  PRODUCT data (prices/variants as requested)
+  Images must be placed in public/ with exact filenames:
+    /fresh_mushrooms.jpg
+    /mushroom_pickle.jpg
+    /dry_mushrooms.jpg
+    /mushroom_powder.jpg
+    /mushroom_wariyan.jpg
+    /footer-mushrooms.jpg
 */
-
-// If you kept images in src/assets, import them, e.g.:
-// import imgFresh from "./assets/fresh_mushrooms.jpg";
-// For simplicity here we reference product images from src/assets via imports:
-import imgFresh from "./assets/fresh_mushrooms.jpg";
-import imgPickle from "./assets/mushroom_pickle.jpg";
-import imgDry from "./assets/dry_mushrooms.jpg";
-import imgPowder from "./assets/mushroom_powder.jpg";
-import imgWariyan from "./assets/mushroom_wariyan.jpg";
 
 const PRODUCTS = [
   {
     id: "fresh",
     title: "Fresh Mushrooms",
-    image: imgFresh,
-    description: "Hand-picked fresh button mushrooms — ideal for cooking & salads.",
+    description:
+      "Hand-picked fresh button mushrooms — ideal for cooking & salads.",
+    image: "/fresh_mushrooms.jpg",
     variants: [
-      { id: "box200", label: "1 box (200 g)", price: 40 },
-      { id: "kg", label: "1 kg", price: 200 }
+      { id: "fresh-200g", name: "1 box (200 g)", price: 30, unit: "per 200g box" },
+      { id: "fresh-1kg", name: "1 kg", price: 200, unit: "per kg" }
     ]
   },
   {
     id: "pickle",
     title: "Mushroom Pickle",
-    image: imgPickle,
     description: "Tangy & spicy mushroom pickle made with traditional spices.",
+    image: "/mushroom_pickle.jpg",
     variants: [
-      { id: "jar200", label: "200 g jar", price: 100 },
-      { id: "jar500", label: "500 g jar", price: 180 }
+      { id: "pickle-200", name: "200 g jar", price: 100, unit: "per 200g jar" },
+      { id: "pickle-400", name: "400 g jar", price: 200, unit: "per 400g jar" }
     ]
   },
   {
     id: "dry",
     title: "Dry Mushrooms",
-    image: imgDry,
-    description: "Sun-dried mushrooms — great for soups and long-term storage.",
-    price: 300,
-    unit: "per 100g"
+    description: "Sun-dried button mushrooms — great for long storage & cooking.",
+    image: "/dry_mushrooms.jpg",
+    variants: [{ id: "dry-100", name: "per 100 g", price: 300, unit: "per 100g" }]
   },
   {
     id: "powder",
     title: "Mushroom Powder",
-    image: imgPowder,
     description: "Finely ground mushroom powder — perfect for seasoning.",
-    price: 450,
-    unit: "per 100g"
+    image: "/mushroom_powder.jpg",
+    variants: [{ id: "powder-100", name: "per 100 g", price: 450, unit: "per 100g" }]
   },
   {
     id: "wariyan",
     title: "Mushroom Wariyan",
-    image: imgWariyan,
     description: "Traditional mushroom wadiyan — tasty & nutritious.",
-    price: 120,
-    unit: "per 100g packet"
+    image: "/mushroom_wariyan.jpg",
+    variants: [{ id: "wariyan-100", name: "per 100g packet", price: 120, unit: "per 100g packet" }]
   }
 ];
 
-const currency = (n) => `₹${Number(n).toFixed(2)}`;
+// Helper to format rupee
+const formatRupee = (n) => `₹${n.toFixed ? n.toFixed(2) : n}`;
 
 export default function App() {
+  // Cart items: [{ productId, variantId, qty }]
   const [cart, setCart] = useState([]);
-  const [cartOpen, setCartOpen] = useState(false);
+  // sheetProduct: product object for variant sheet modal
   const [sheetProduct, setSheetProduct] = useState(null);
+  // selected variant id in sheet
   const [selectedVariant, setSelectedVariant] = useState(null);
-  const [animatingId, setAnimatingId] = useState(null);
+  // Mini-cart visible when cart has items
+  const [miniCartVisible, setMiniCartVisible] = useState(false);
+  // cart drawer open (full cart)
+  const [cartOpen, setCartOpen] = useState(false);
 
-  // Lock scrolling when sheet or cart drawer open
+  // lock body scroll when either sheet or cart drawer open
   useEffect(() => {
     const shouldLock = !!sheetProduct || !!cartOpen;
     if (shouldLock) document.body.classList.add("no-scroll");
@@ -81,258 +81,279 @@ export default function App() {
     return () => document.body.classList.remove("no-scroll");
   }, [sheetProduct, cartOpen]);
 
-  // Add item to cart. variantId optional.
-  function addItemToCart({ productId, variantId = null, qty = 1 }) {
-    setCart(prev => {
-      const key = variantId ? `${productId}::${variantId}` : productId;
-      const found = prev.find(i => i.key === key);
-      if (found) {
-        return prev.map(i => (i.key === key ? { ...i, qty: i.qty + qty } : i));
+  // subtotal and total items
+  const cartTotals = cart.reduce(
+    (acc, it) => {
+      const prod = PRODUCTS.find((p) => p.id === it.productId);
+      const variant = prod && prod.variants.find((v) => v.id === it.variantId);
+      const price = variant ? variant.price : 0;
+      acc.items += it.qty;
+      acc.subtotal += price * it.qty;
+      return acc;
+    },
+    { items: 0, subtotal: 0 }
+  );
+
+  useEffect(() => {
+    setMiniCartVisible(cartTotals.items > 0);
+  }, [cartTotals.items]);
+
+  // Adds product with chosen variant ID (if single variant, use that)
+  function addToCartImmediate(product, variantId = null, qty = 1) {
+    const vId = variantId || (product.variants && product.variants[0] && product.variants[0].id);
+    if (!vId) return;
+    setCart((prev) => {
+      const existing = prev.find((i) => i.productId === product.id && i.variantId === vId);
+      if (existing) {
+        return prev.map((i) =>
+          i.productId === product.id && i.variantId === vId ? { ...i, qty: i.qty + qty } : i
+        );
+      } else {
+        return [...prev, { productId: product.id, variantId: vId, qty }];
       }
-      const prod = PRODUCTS.find(p => p.id === productId);
-      let title = prod.title;
-      let price = prod.price ?? 0;
-      if (variantId && prod.variants) {
-        const v = prod.variants.find(x => x.id === variantId);
-        if (v) { price = v.price; title = `${prod.title} • ${v.label}`; }
-      }
-      return [...prev, { key, productId, variantId, title, price, qty }];
     });
-    // ensure mini-cart visible; small animation handled by caller
+    // show mini cart briefly
+    setMiniCartVisible(true);
+    // small animation could be done by adding a class; we just ensure visible
   }
 
-  // Called by product card "Add to Cart"
-  function onAddClick(product) {
-    if (product.variants && product.variants.length) {
-      // open sheet to choose variant
+  // "Add to Cart" button behavior:
+  // - If product has >1 variant: open sheet to choose
+  // - If only one variant: add immediately
+  function handleAddClick(product) {
+    if (product.variants.length > 1) {
+      setSelectedVariant(product.variants[0].id); // default
       setSheetProduct(product);
-      setSelectedVariant(product.variants[0].id);
-      return;
+    } else {
+      addToCartImmediate(product, product.variants[0].id);
     }
-    // immediate add
-    addItemToCart({ productId: product.id, variantId: null, qty: 1 });
-    triggerClickAnimation(product.id);
   }
 
-  function triggerClickAnimation(id) {
-    setAnimatingId(id);
-    setTimeout(() => setAnimatingId(null), 220);
-  }
-
-  function sheetAddToCart() {
-    if (!sheetProduct) return;
-    const variantId = sheetProduct.variants && sheetProduct.variants.length ? selectedVariant : null;
-    addItemToCart({ productId: sheetProduct.id, variantId, qty: 1 });
-    triggerClickAnimation(sheetProduct.id);
+  function confirmAddFromSheet() {
+    if (!sheetProduct || !selectedVariant) return;
+    addToCartImmediate(sheetProduct, selectedVariant);
     setSheetProduct(null);
     setSelectedVariant(null);
   }
 
-  function changeQty(key, delta) {
-    setCart(prev => prev.map(i => (i.key === key ? { ...i, qty: Math.max(0, i.qty + delta) } : i)).filter(i => i.qty > 0));
+  function changeQty(productId, variantId, delta) {
+    setCart((prev) =>
+      prev
+        .map((i) => (i.productId === productId && i.variantId === variantId ? { ...i, qty: Math.max(0, i.qty + delta) } : i))
+        .filter((i) => i.qty > 0)
+    );
   }
-  function removeItem(key) { setCart(prev => prev.filter(i => i.key !== key)); }
 
-  const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
-  const itemCount = cart.reduce((c, it) => c + it.qty, 0);
+  function removeItem(productId, variantId) {
+    setCart((prev) => prev.filter((i) => !(i.productId === productId && i.variantId === variantId)));
+  }
+
+  function openCartDrawer() {
+    setCartOpen(true);
+  }
+
+  function closeCartDrawer() {
+    setCartOpen(false);
+  }
+
+  // Get product+variant details helper
+  function findProductAndVariant(productId, variantId) {
+    const product = PRODUCTS.find((p) => p.id === productId);
+    const variant = product && product.variants.find((v) => v.id === variantId);
+    return { product, variant };
+  }
+
+  // Footer contact/address values (as you requested)
+  const FOOTER = {
+    phone: "+91 88375 54747",
+    email: "anantgillagrofarm@gmail.com",
+    address: "Gali No. 1, Baba Deep Singh Avenue, village Nangli bhatha, Amritsar 143001",
+    fb: "https://www.facebook.com/share/177NfwxRKr/",
+    ig: "#" // add instagram link if you want
+  };
 
   return (
     <div className="app-root">
       <header className="site-header">
         <div className="brand">
-          {/* logo in public/ - ensure /anant_gill_logo.png exists in public folder */}
-          <img src="/anant_gill_logo.png" alt="logo" className="logo-small" />
+          <img src="/anant_gill_logo.png" alt="logo" className="logo" onError={(e)=>{e.target.style.display='none'}}/>
           <div>
             <h1>Anant Gill Agro Farm</h1>
-            <p className="tagline">Best quality fresh organic mushrooms & delicious pickles</p>
+            <p className="tag">Best quality fresh organic mushrooms &amp; delicious pickles</p>
           </div>
         </div>
-
-        <div className="cart-button-wrap">
-          <button className="cart-toggle" onClick={() => setCartOpen(true)}>Cart {itemCount ? `(${itemCount})` : ""}</button>
-        </div>
+        <button className="cart-button" onClick={openCartDrawer}>
+          Cart {cartTotals.items > 0 ? `(${cartTotals.items})` : ""}
+        </button>
       </header>
 
-      <main className="content">
-        <h2 className="section-title">Our Products</h2>
-        <section className="products-grid">
-          {PRODUCTS.map(p => (
-            <article className="product-card" key={p.id}>
-              <div className="product-image">
-                <img src={p.image} alt={p.title} />
-              </div>
-
-              <div className="product-body">
-                <h3>{p.title}</h3>
-                {p.description && <p className="product-description">{p.description}</p>}
-                {p.unit && <p className="unit">{p.unit}</p>}
-
-                <div className="price-row">
-                  <div className="price">
-                    {p.price ? currency(p.price) : (p.variants && p.variants.length ? currency(p.variants[0].price) : "")}
-                  </div>
-
-                  <div className="actions">
-                    <button
-                      className={`add-to-cart ${animatingId === p.id ? "clicked" : ""}`}
-                      onClick={() => onAddClick(p)}
-                    >
-                      Add to Cart
-                    </button>
+      <main>
+        <section className="products">
+          <h2>Our Products</h2>
+          <div className="product-grid">
+            {PRODUCTS.map((p) => (
+              <article className="card" key={p.id}>
+                <div className="card-image">
+                  <img src={p.image} alt={p.title} />
+                </div>
+                <div className="card-body">
+                  <h3>{p.title}</h3>
+                  <p className="muted">{p.variants[0].unit}</p>
+                  <div className="price-row">
+                    <div className="price">{formatRupee(p.variants[0].price)}</div>
+                    <div className="actions">
+                      <button className="btn btn-primary" onClick={() => handleAddClick(p)}>
+                        Add to Cart
+                      </button>
+                      <button className="btn btn-ghost" onClick={() => { setSelectedVariant(p.variants[0].id); setSheetProduct(p); }}>
+                        Details
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </article>
-          ))}
+              </article>
+            ))}
+          </div>
         </section>
 
-        <section className="cart-card">
+        {/* Cart card inside main content (keeps for desktop) */}
+        <aside className="cart-card">
           <h3>Cart</h3>
-          {cart.length === 0 ? <div className="empty">Your cart is empty</div> : (
+          {cart.length === 0 ? (
+            <p className="muted">Your cart is empty</p>
+          ) : (
             <>
-              {cart.map(it => (
-                <div className="cart-item" key={it.key}>
-                  <div className="cart-left">{it.title} × {it.qty}</div>
-                  <div className="cart-right">
-                    <button onClick={() => changeQty(it.key, -1)}>-</button>
-                    <span className="cart-price">{currency(it.price * it.qty)}</span>
-                    <button onClick={() => changeQty(it.key, +1)}>+</button>
-                    <button className="remove" onClick={() => removeItem(it.key)}>Remove</button>
+              {cart.map((it) => {
+                const { product, variant } = findProductAndVariant(it.productId, it.variantId);
+                return (
+                  <div key={`${it.productId}-${it.variantId}`} className="cart-item">
+                    <div>
+                      <strong>{product.title}</strong> × {it.qty}
+                    </div>
+                    <div className="cart-controls">
+                      <button onClick={() => changeQty(it.productId, it.variantId, -1)}>-</button>
+                      <span>{formatRupee(variant.price)}</span>
+                      <button onClick={() => changeQty(it.productId, it.variantId, +1)}>+</button>
+                      <button onClick={() => removeItem(it.productId, it.variantId)}>Remove</button>
+                    </div>
                   </div>
-                </div>
-              ))}
-              <div className="cart-footer">
-                <div>Subtotal</div>
-                <div className="subtotal">{currency(subtotal)}</div>
-              </div>
+                );
+              })}
+              <div className="subtotal">Subtotal<br/>{formatRupee(cartTotals.subtotal)}</div>
             </>
           )}
-        </section>
+        </aside>
       </main>
 
-      {/* Footer */}
-      <footer className="site-footer">
-        <div className="footer-inner">
-          <div className="footer-left">
-            <img src="/anant_gill_logo.png" alt="logo" className="footer-logo" />
-            <h4>Anant Gill Agro Farm</h4>
-            <p><strong>Phone:</strong> <a href="tel:+918837554747">+91 88375 54747</a></p>
-            <p><strong>Email:</strong> <a className="footer-email" href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a></p>
-            <p>Gali No. 1, Baba Deep Singh Avenue, village Nangli bhatha, Amritsar 143001</p>
-          </div>
+      {/* Sheet Modal for selecting variants */}
+      {sheetProduct && (
+        <div className="sheet-overlay" onClick={() => setSheetProduct(null)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <button className="sheet-close" onClick={() => setSheetProduct(null)}>✕</button>
+            <img className="sheet-image" src={sheetProduct.image} alt={sheetProduct.title} />
+            <h3>{sheetProduct.title}</h3>
+            <p className="muted">{sheetProduct.description}</p>
 
-          <div className="footer-right">
-            <h4>Follow</h4>
-            <div className="socials">
-              <a className="social-btn" href="https://www.facebook.com/share/177NfwxRKr/" target="_blank" rel="noreferrer" aria-label="Facebook">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path d="M22 12.07C22 6.48 17.52 2 11.93 2S2 6.48 2 12.07C2 17.09 5.66 21.17 10.44 21.95v-6.88h-3.15v-2.99h3.15V9.4c0-3.12 1.86-4.84 4.7-4.84 1.36 0 2.78.24 2.78.24v3.05h-1.56c-1.54 0-2.02.96-2.02 1.94v2.32h3.44l-.55 2.99h-2.89V21.95C18.34 21.17 22 17.09 22 12.07z" fill="#fff"/>
-                </svg>
-              </a>
-
-              <a className="social-btn" href="https://instagram.com/" target="_blank" rel="noreferrer" aria-label="Instagram">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-                  <path d="M7 2h10a5 5 0 015 5v10a5 5 0 01-5 5H7a5 5 0 01-5-5V7a5 5 0 015-5zm5 6.2a4.8 4.8 0 100 9.6 4.8 4.8 0 000-9.6zm6.5-.7a1.1 1.1 0 11-2.2 0 1.1 1.1 0 012.2 0z" fill="#fff"/>
-                  <circle cx="12" cy="14.2" r="3.2" fill="#fff"/>
-                </svg>
-              </a>
+            <div className="variants">
+              <p className="muted">Choose size / variant</p>
+              {sheetProduct.variants.map((v) => (
+                <label
+                  key={v.id}
+                  className={`variant-card ${selectedVariant === v.id ? "selected" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="variant"
+                    checked={selectedVariant === v.id}
+                    onChange={() => setSelectedVariant(v.id)}
+                  />
+                  <div className="variant-info">
+                    <div className="variant-name">{v.name}</div>
+                    <div className="variant-price">{formatRupee(v.price)}</div>
+                  </div>
+                </label>
+              ))}
             </div>
 
-            <div className="copyright">© 2025 Anant Gill Agro Farm</div>
-          </div>
-        </div>
-      </footer>
-
-      {/* Mini sticky cart bar */}
-      {cart.length > 0 && (
-        <div className="mini-cart-bar" onClick={() => setCartOpen(true)} role="button">
-          <div className="mini-left">
-            <div className="mini-count">{itemCount} item{itemCount > 1 ? "s" : ""}</div>
-            <div className="mini-sub">Subtotal {currency(subtotal)}</div>
-          </div>
-          <div className="mini-right">
-            <button className="mini-view">View Cart</button>
+            <div className="sheet-actions">
+              <button className="btn btn-primary" onClick={confirmAddFromSheet}>
+                Add to Cart
+              </button>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Right-side cart drawer */}
-      <div className={`cart-drawer ${cartOpen ? "open" : ""}`} role="dialog" aria-hidden={!cartOpen}>
+      {/* Cart Drawer (full) */}
+      <div className={`cart-drawer ${cartOpen ? "open" : ""}`}>
         <div className="drawer-header">
           <h3>Cart</h3>
-          <button className="close-drawer" onClick={() => setCartOpen(false)}>✕</button>
+          <button className="drawer-close" onClick={closeCartDrawer}>✕</button>
         </div>
-
         <div className="drawer-body">
-          {cart.length === 0 ? <div className="empty">Your cart is empty</div> : (
+          {cart.length === 0 ? (
+            <p className="muted">Your cart is empty</p>
+          ) : (
             <>
-              {cart.map(it => (
-                <div className="drawer-item" key={it.key}>
-                  <div>
-                    <div className="drawer-item-title">{it.title}</div>
-                    <div className="drawer-item-qty">Qty: {it.qty}</div>
-                  </div>
-                  <div>
-                    <div className="drawer-item-price">{currency(it.price * it.qty)}</div>
-                    <div className="drawer-item-controls">
-                      <button onClick={() => changeQty(it.key, -1)}>-</button>
-                      <button onClick={() => changeQty(it.key, +1)}>+</button>
-                      <button className="remove" onClick={() => removeItem(it.key)}>Remove</button>
+              {cart.map((it) => {
+                const { product, variant } = findProductAndVariant(it.productId, it.variantId);
+                return (
+                  <div key={`${it.productId}-${it.variantId}`} className="drawer-item">
+                    <div>
+                      <strong>{product.title}</strong> × {it.qty}
+                      <div className="muted">{variant.name}</div>
+                    </div>
+                    <div className="drawer-controls">
+                      <button onClick={() => changeQty(it.productId, it.variantId, -1)}>-</button>
+                      <span>{formatRupee(variant.price)}</span>
+                      <button onClick={() => changeQty(it.productId, it.variantId, +1)}>+</button>
+                      <button onClick={() => removeItem(it.productId, it.variantId)}>Remove</button>
                     </div>
                   </div>
-                </div>
-              ))}
-
-              <div className="drawer-footer">
-                <div className="drawer-subtotal">
-                  <strong>Subtotal</strong>
-                  <div>{currency(subtotal)}</div>
-                </div>
-                <div>
-                  <button className="checkout-btn">Checkout (placeholder)</button>
-                </div>
-              </div>
+                );
+              })}
+              <div className="drawer-subtotal">Subtotal<br/>{formatRupee(cartTotals.subtotal)}</div>
             </>
           )}
         </div>
       </div>
 
-      {/* Product details / variant sheet */}
-      {sheetProduct && (
-        <div className="sheet-overlay" onClick={() => { setSheetProduct(null); setSelectedVariant(null); }}>
-          <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            <button className="sheet-close" onClick={() => { setSheetProduct(null); setSelectedVariant(null); }}>✕</button>
-            <img src={sheetProduct.image} alt={sheetProduct.title} className="sheet-image" />
-            <h3>{sheetProduct.title}</h3>
-            {sheetProduct.description && <p className="product-description">{sheetProduct.description}</p>}
-
-            <div className="variant-section">
-              {sheetProduct.variants ? (
-                <>
-                  <p className="variant-title">Choose size / variant</p>
-                  <div className="variants">
-                    {sheetProduct.variants.map(v => (
-                      <label key={v.id} className={`variant-btn ${selectedVariant === v.id ? "active" : ""}`}>
-                        <input type="radio" name="variant" value={v.id} checked={selectedVariant === v.id} onChange={() => setSelectedVariant(v.id)} />
-                        <div className="variant-label">
-                          <div className="vname">{v.label}</div>
-                          <div className="vprice">{currency(v.price)}</div>
-                        </div>
-                      </label>
-                    ))}
-                  </div>
-                </>
-              ) : (
-                <p className="variant-title">Price: {currency(sheetProduct.price || sheetProduct.variants?.[0]?.price)}</p>
-              )}
-            </div>
-
-            <div className="sheet-actions">
-              <button className="add-to-cart" onClick={sheetAddToCart}>Add to Cart</button>
-            </div>
+      {/* Mini sticky cart bar */}
+      {miniCartVisible && cartTotals.items > 0 && (
+        <div className="mini-cart">
+          <div className="mini-left">
+            <div><strong>{cartTotals.items} item</strong></div>
+            <div className="muted">Subtotal {formatRupee(cartTotals.subtotal)}</div>
+          </div>
+          <div className="mini-right">
+            <button className="btn btn-primary" onClick={() => { openCartDrawer(); }}>
+              View Cart
+            </button>
           </div>
         </div>
       )}
+
+      {/* Footer */}
+      <footer className="site-footer" style={{ backgroundImage: 'url(/footer-mushrooms.jpg)' }}>
+        <div className="footer-inner">
+          <div className="footer-left">
+            <img src="/anant_gill_logo.png" alt="logo" className="footer-logo" onError={(e)=>{e.target.style.display='none'}} />
+            <h4>Anant Gill Agro Farm</h4>
+            <p className="muted"><strong>Phone:</strong> <a href={`tel:${FOOTER.phone.replace(/\s+/g,"")}`}>{FOOTER.phone}</a></p>
+            <p className="muted"><strong>Email:</strong> <a className="email-link" href={`mailto:${FOOTER.email}`}>{FOOTER.email}</a></p>
+            <p className="muted address">{FOOTER.address}</p>
+          </div>
+
+          <div className="footer-right">
+            <p>Follow</p>
+            <div className="socials">
+              <a className="social-btn" href={FOOTER.fb} target="_blank" rel="noreferrer">FB</a>
+              <a className="social-btn" href={FOOTER.ig} target="_blank" rel="noreferrer">IG</a>
+            </div>
+            <p className="copyright">© 2025 Anant Gill Agro Farm</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
-}
+                }
