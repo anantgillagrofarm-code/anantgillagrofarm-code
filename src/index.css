@@ -1,220 +1,196 @@
-/* src/index.css */
+/* src/index.css
+   Restores compact product cards, constrains large images, keeps footer background,
+   locks body scroll when sheet/drawer open (body.no-scroll).
+*/
 
-/* basic reset */
+/* reset + base */
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
+body { margin: 0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; color:#183827; background-color:#f3f7f2; }
 body.no-scroll { overflow: hidden; }
 
-/* page background - uses public/bg-mushrooms.jpg */
-body {
-  margin: 0;
-  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  background: url('/bg-mushrooms.jpg') no-repeat center top fixed;
-  background-size: cover;
-  background-color: #f3f7f2; /* fallback */
-  color: #1e4030;
-}
+/* page background: public/bg-mushrooms.jpg used by App */
+.app { min-height:100vh; }
 
-/* top bar */
+/* Topbar (compact) */
 .topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 20px;
-  background: rgba(255,255,255,0.85);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 14px;
+  background: rgba(255,255,255,0.88);
   backdrop-filter: blur(4px);
   border-bottom: 1px solid rgba(0,0,0,0.04);
+  position: sticky;
+  top: 0;
+  z-index: 900;
 }
 .brand { display:flex; gap:12px; align-items:center; }
-.logo { width:64px; height:64px; object-fit:cover; border-radius:8px; box-shadow: 0 4px 10px rgba(0,0,0,0.08);}
-.title { margin:0; color:#14502b; font-size:20px; font-weight:700; }
-.subtitle { color:#7c8c82; font-size:13px; line-height:1; }
+.logo { width:56px; height:56px; object-fit:cover; border-radius:10px; box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
+.title { margin:0; color:#14502b; font-size:18px; font-weight:700; line-height:1; }
+.subtitle { color:#7c8c82; font-size:12px; }
 
+/* cart button small */
 .cart-button {
-  border: 1px solid #dfeee4;
+  border: 1px solid rgba(0,0,0,0.06);
   background: #fff;
-  padding: 10px 14px;
-  border-radius: 16px;
-  cursor: pointer;
+  padding:8px 12px;
+  border-radius:14px;
+  cursor:pointer;
+  font-size:14px;
 }
 
-/* main content */
+/* main container */
 .content {
-  max-width: 900px;
-  margin: 18px auto;
-  padding: 0 18px 80px;
+  max-width: 920px;
+  margin: 14px auto;
+  padding: 0 14px 100px;
 }
 
+/* section title */
 .section-title {
   color: #1b5a36;
-  margin-left: 6px;
-  font-size:28px;
-  margin-top:8px;
+  font-size:26px;
+  margin: 6px 6px 12px;
 }
 
-/* product list */
-.product-list { display:block; gap:18px; margin-top:12px; }
+/* PRODUCT LIST: restore compact card (horizontal on wide, compact column on small) */
+.product-list { display:block; }
 .product-card {
   display:flex;
-  gap:18px;
-  padding:18px;
-  background: #fff;
-  border-radius:14px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-  margin-bottom:18px;
+  gap:16px;
   align-items:center;
+  padding:14px;
+  background:#fff; border-radius:12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  margin-bottom:14px;
+  overflow:hidden;
 }
-.product-media img { width:120px; height:120px; object-fit:cover; border-radius:12px; }
-.product-body { flex:1; }
-.product-body h3 { margin:0 0 6px; color:#14502b; font-size:20px; }
-.unit { color:#859587; margin-bottom:8px; }
-.price-row { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:8px; }
-.price { color:#14502b; font-weight:700; font-size:18px; }
-.actions { display:flex; gap:8px; align-items:center; }
 
-.add-btn {
-  background: #15542e;
-  color:#fff;
-  border: none;
-  padding:12px 14px;
-  border-radius:12px;
-  cursor:pointer;
-  box-shadow: 0 6px 12px rgba(21,84,46,0.12);
-  transform: translateY(0);
-  transition: transform 160ms ease, box-shadow 160ms ease;
-}
-.add-btn:active { transform: translateY(2px); box-shadow: 0 3px 6px rgba(21,84,46,0.08); }
-
-.detail-btn {
-  background: transparent;
-  border: 1px solid rgba(0,0,0,0.08);
-  padding:10px 12px;
+/* Ensure thumbnails are small and consistent */
+.product-media {
+  flex: 0 0 120px;
+  width:120px;
+  height:120px;
   border-radius:10px;
-  cursor:pointer;
+  overflow:hidden;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background: #f7faf6;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.04) inset;
+}
+.product-media img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
 }
 
-/* cart box (inline on page) */
+/* body of card */
+.product-body { flex:1; min-width:0; }
+.product-body h3 { margin:0 0 6px; font-size:18px; color:#14502b; }
+.unit { color:#7c8c82; margin-bottom:8px; font-size:13px; }
+
+/* price / action row aligned right */
+.price-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:6px; }
+.price { color:#14502b; font-weight:700; font-size:18px; }
+.actions { display:flex; gap:10px; align-items:center; }
+
+/* add button style */
+.add-btn {
+  background:#15542e; color:#fff; border: none; padding:10px 12px; border-radius:12px; cursor:pointer;
+  box-shadow: 0 6px 12px rgba(21,84,46,0.1);
+  transition: transform 120ms ease;
+}
+.add-btn:active{ transform: translateY(2px); }
+
+/* detail button */
+.detail-btn {
+  background: transparent; border:1px solid rgba(0,0,0,0.06); padding:8px 10px; border-radius:10px; cursor:pointer;
+}
+
+/* Small screens: keep the card compact but stacked */
+@media (max-width:600px) {
+  .product-card { flex-direction:row; align-items:center; }
+  .product-media { width:96px; height:96px; flex:0 0 96px; }
+  .title { font-size:16px; }
+}
+
+/* Prevent extremely large product images (these caused your big-page issue) */
+/* If any page element inadvertently uses the full product image, constrain them */
+img {
+  max-width:100%;
+  height:auto;
+  display:block;
+}
+
+/* specifically guard against huge images inside main layout areas */
+.content img { max-width: 420px; width: 100%; height: auto; }
+
+/* cart box styling (inline on page) */
 .cart-box {
   margin-top: 12px;
-  padding: 18px;
+  padding: 16px;
   background: rgba(255,255,255,0.95);
   border-radius:12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.04);
 }
-.cart-box h3 { margin:0 0 10px; color:#123; }
+.cart-box h3 { margin:0 0 8px; color:#123; }
 .cart-empty { color:#6f8b80; }
-.cart-summary .cart-item { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
-.cart-item-controls button { margin-right:6px; }
 
-/* footer */
+/* footer - keep your chosen footer image and make text stand out */
 .site-footer {
-  margin-top: 22px;
   color: #fff;
   background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('/footer-mushrooms-v2.jpg') center / cover no-repeat;
-  padding: 28px 20px;
+  padding: 26px 14px;
 }
 .footer-inner {
-  max-width:900px; margin:0 auto; display:flex; gap:24px; justify-content:space-between; align-items:flex-start;
+  max-width:920px; margin:0 auto; display:flex; gap:18px; align-items:flex-start; justify-content:space-between;
+  flex-wrap:wrap;
 }
-.footer-left { flex:1; }
-.footer-right { width:180px; text-align:center; }
-.footer-logo { width:56px; height:56px; border-radius:8px; display:block; margin-bottom:10px; }
-.footer-left h4 { color:#fff; margin:0 0 8px; font-size:20px; }
-.contact-line { color: rgba(255,255,255,0.9); margin-bottom:6px; }
+.footer-left { flex:1 1 320px; }
+.footer-right { flex:0 0 170px; text-align:center; }
+
+.footer-logo { width:56px; height:56px; border-radius:8px; margin-bottom:10px; }
+.footer-left h4 { margin:0 0 8px; color:#fff; font-size:18px; }
+.contact-line { color: rgba(255,255,255,0.95); margin-bottom:6px; font-size:14px; }
 .contact-line a { color: rgba(255,255,255,0.95); text-decoration:underline; }
-.contact-line.address { color: rgba(255,255,255,0.8); font-size:14px; margin-top:6px; }
+.contact-line.address { color: rgba(255,255,255,0.9); font-size:14px; margin-top:8px; }
 
-.follow-title { color:#fff; margin-bottom:8px; font-weight:600; }
-.socials { display:flex; gap:10px; justify-content:center; margin-bottom:14px; }
+/* social buttons look */
+.socials { display:flex; gap:10px; justify-content:center; margin-bottom:8px; }
 .social-btn {
-  display:inline-flex; align-items:center; justify-content:center; width:40px; height:40px;
-  border-radius:50%; background:rgba(255,255,255,0.12); color:#fff; text-decoration:none; font-weight:600;
+  width:40px; height:40px; border-radius:50%; background: rgba(255,255,255,0.12); color:#fff;
+  display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-weight:700;
 }
 
-/* mini cart sticky bottom */
+/* mini-cart sticky bottom */
 .mini-cart {
   position: fixed;
   left: 12px;
   right: 12px;
   bottom: 14px;
   background: #fff;
-  border-radius: 14px;
+  border-radius: 12px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.18);
-  display:flex; align-items:center; justify-content:space-between;
-  padding: 12px 14px;
-  z-index: 1200;
+  display:flex; align-items:center; justify-content:space-between; padding: 10px 12px; z-index:1200;
 }
 .mini-left { color:#144; }
 .mini-sub { color:#6e8d80; font-size:13px; }
-.view-cart {
-  background: #154b2b;
-  color: #fff;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 10px;
-  cursor:pointer;
-}
+.view-cart { background: #154b2b; color:#fff; padding:10px 12px; border-radius:10px; border:none; cursor:pointer; }
 
-/* product sheet overlay */
-.sheet-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.35);
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-  z-index: 1300;
-}
+/* product sheet overlay (keeps current behavior) */
+.sheet-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.35); display:flex; align-items:flex-end; justify-content:center; z-index:1300; }
 .sheet {
-  width: 100%;
-  max-width: 720px;
-  background: #fff;
-  border-radius: 16px 16px 0 0;
-  padding: 12px;
-  max-height: 92vh;
-  overflow:auto;
+  width:100%; max-width:720px; background:#fff; border-radius:16px 16px 0 0; padding:12px; max-height:92vh; overflow:auto;
 }
-.sheet-close {
-  background: #fff; border:1px solid #ddd; padding:6px 8px; border-radius:6px; float:left; cursor:pointer;
-}
-.sheet-image img { width:100%; height:260px; object-fit:cover; border-radius:10px; margin-top:8px;}
-.sheet-body { padding:12px; }
-.variant-title { margin-top:8px; color:#333; font-weight:600; }
-.variants { margin-top:8px; display:flex; flex-direction:column; gap:10px; }
-.variant-item {
-  border:1px solid #e6efe7; border-radius:10px; padding:10px; display:flex; gap:10px; align-items:center;
-}
-.variant-item.selected { background:#f0fbf4; border-color:#cfead6; }
-.variant-info .variant-label { color:#154b2b; font-weight:700; }
-.sheet-actions { margin-top:14px; }
-.sheet-add {
-  background:#154b2b; color:#fff; padding:12px 16px; border-radius:10px; border:none; cursor:pointer;
-}
+.sheet-image img { width:100%; height:260px; object-fit:cover; border-radius:8px; }
 
 /* drawer */
-.drawer-overlay {
-  position:fixed; inset:0; background:rgba(0,0,0,0.18); z-index:1250; display:flex; justify-content:flex-end;
-}
-.drawer {
-  width: 100%;
-  max-width:420px;
-  height:100%;
-  background:#fff;
-  padding:20px;
-  overflow:auto;
-  box-shadow: -6px 0 24px rgba(0,0,0,0.18);
-}
-.drawer-close { border:none; background:#fff; font-size:18px; cursor:pointer; }
-.drawer-item { border-bottom:1px dashed #eee; padding:12px 0; display:flex; justify-content:space-between; align-items:center; }
-.drawer-controls button { margin-right:8px; }
-.drawer-subtotal { display:flex; justify-content:space-between; margin-top:14px; font-weight:700; }
-.checkout { width:100%; background:#154b2b; color:#fff; padding:12px; border-radius:10px; border:none; margin-top:12px; cursor:pointer; }
+.drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.18); z-index:1250; display:flex; justify-content:flex-end; }
+.drawer { width:100%; max-width:420px; height:100%; background:#fff; padding:20px; overflow:auto; box-shadow:-6px 0 24px rgba(0,0,0,0.18); }
 
-/* responsive tweaks */
-@media (max-width: 600px) {
-  .product-card { flex-direction:column; align-items:flex-start; }
-  .product-media img { width:100%; height:200px; }
-  .footer-inner { flex-direction:column; gap:20px; }
-  .drawer { width:100%; max-width:none; }
-  .mini-cart { left:10px; right:10px; }
-}
+/* small finishing touches */
+a { color: #104b2b; }
+button { font-family: inherit; }
