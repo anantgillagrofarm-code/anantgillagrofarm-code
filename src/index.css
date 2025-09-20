@@ -1,134 +1,112 @@
-/* src/index.css
-   Restores compact product cards, constrains large images, keeps footer background,
-   locks body scroll when sheet/drawer open (body.no-scroll).
-*/
+/* src/index.css - full replacement */
 
-/* reset + base */
+/* base reset */
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
-body { margin: 0; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; color:#183827; background-color:#f3f7f2; }
+body {
+  margin: 0;
+  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: #eef6ef;
+  color: #183827;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+}
 body.no-scroll { overflow: hidden; }
 
-/* page background: public/bg-mushrooms.jpg used by App */
-.app { min-height:100vh; }
-
-/* Topbar (compact) */
+/* header / topbar */
 .topbar {
   display:flex;
   align-items:center;
   justify-content:space-between;
-  gap:12px;
-  padding:12px 14px;
-  background: rgba(255,255,255,0.88);
-  backdrop-filter: blur(4px);
-  border-bottom: 1px solid rgba(0,0,0,0.04);
+  padding:12px 16px;
+  background: rgba(255,255,255,0.92);
   position: sticky;
-  top: 0;
+  top:0;
   z-index: 900;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
 }
-.brand { display:flex; gap:12px; align-items:center; }
-.logo { width:56px; height:56px; object-fit:cover; border-radius:10px; box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
-.title { margin:0; color:#14502b; font-size:18px; font-weight:700; line-height:1; }
+.brand { display:flex; gap:14px; align-items:center; }
+.logo { width:56px; height:56px; border-radius:10px; object-fit:cover; box-shadow: 0 6px 14px rgba(0,0,0,0.06); }
+.title { margin:0; color:#14502b; font-weight:700; font-size:18px; }
 .subtitle { color:#7c8c82; font-size:12px; }
 
-/* cart button small */
+/* cart small button */
 .cart-button {
-  border: 1px solid rgba(0,0,0,0.06);
-  background: #fff;
-  padding:8px 12px;
   border-radius:14px;
-  cursor:pointer;
-  font-size:14px;
+  border:1px solid rgba(0,0,0,0.06);
+  padding:8px 12px;
+  background:white;
 }
 
-/* main container */
+/* main content area */
 .content {
-  max-width: 920px;
+  max-width:920px;
   margin: 14px auto;
-  padding: 0 14px 100px;
+  padding: 0 16px 120px;
 }
 
 /* section title */
-.section-title {
-  color: #1b5a36;
-  font-size:26px;
-  margin: 6px 6px 12px;
-}
+.section-title { margin: 6px 6px 12px; color:#15502b; font-size:26px; }
 
-/* PRODUCT LIST: restore compact card (horizontal on wide, compact column on small) */
+/* product list - card */
 .product-list { display:block; }
 .product-card {
   display:flex;
   gap:16px;
   align-items:center;
   padding:14px;
-  background:#fff; border-radius:12px; box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+  background:#fff;
+  border-radius:12px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
   margin-bottom:14px;
   overflow:hidden;
 }
 
-/* Ensure thumbnails are small and consistent */
+/* thumbnail */
 .product-media {
-  flex: 0 0 120px;
+  flex:0 0 120px;
   width:120px;
   height:120px;
   border-radius:10px;
   overflow:hidden;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background: #f7faf6;
+  background:#f7faf6;
+  display:flex; align-items:center; justify-content:center;
   box-shadow: 0 6px 12px rgba(0,0,0,0.04) inset;
 }
-.product-media img {
-  width:100%;
-  height:100%;
-  object-fit:cover;
-  display:block;
-}
+.product-media img { width:100%; height:100%; object-fit:cover; display:block; }
 
-/* body of card */
+/* product body */
 .product-body { flex:1; min-width:0; }
-.product-body h3 { margin:0 0 6px; font-size:18px; color:#14502b; }
-.unit { color:#7c8c82; margin-bottom:8px; font-size:13px; }
+.product-body h3 { margin:0 0 6px; color:#14502b; font-size:18px; }
+.unit { color:#7c8c82; font-size:13px; margin-bottom:8px; }
+.short { color:#556e64; margin-bottom:8px; }
 
-/* price / action row aligned right */
+/* price/action row */
 .price-row { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:6px; }
 .price { color:#14502b; font-weight:700; font-size:18px; }
 .actions { display:flex; gap:10px; align-items:center; }
 
-/* add button style */
+/* buttons */
 .add-btn {
-  background:#15542e; color:#fff; border: none; padding:10px 12px; border-radius:12px; cursor:pointer;
+  background:#15542e; color:#fff; border:none; padding:10px 12px; border-radius:12px; cursor:pointer;
   box-shadow: 0 6px 12px rgba(21,84,46,0.1);
   transition: transform 120ms ease;
 }
-.add-btn:active{ transform: translateY(2px); }
+.add-btn:active { transform: translateY(2px); }
+.detail-btn { background:transparent; border:1px solid rgba(0,0,0,0.06); padding:8px 10px; border-radius:10px; }
 
-/* detail button */
-.detail-btn {
-  background: transparent; border:1px solid rgba(0,0,0,0.06); padding:8px 10px; border-radius:10px; cursor:pointer;
-}
-
-/* Small screens: keep the card compact but stacked */
+/* small screens */
 @media (max-width:600px) {
-  .product-card { flex-direction:row; align-items:center; }
+  .product-card { flex-direction:row; }
   .product-media { width:96px; height:96px; flex:0 0 96px; }
   .title { font-size:16px; }
 }
 
-/* Prevent extremely large product images (these caused your big-page issue) */
-/* If any page element inadvertently uses the full product image, constrain them */
-img {
-  max-width:100%;
-  height:auto;
-  display:block;
-}
+/* images - protect from huge images */
+img { max-width:100%; height:auto; display:block; }
+.content img { max-width:420px; width:100%; height:auto; }
 
-/* specifically guard against huge images inside main layout areas */
-.content img { max-width: 420px; width: 100%; height: auto; }
-
-/* cart box styling (inline on page) */
+/* cart box */
 .cart-box {
   margin-top: 12px;
   padding: 16px;
@@ -136,22 +114,18 @@ img {
   border-radius:12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.04);
 }
-.cart-box h3 { margin:0 0 8px; color:#123; }
-.cart-empty { color:#6f8b80; }
 
-/* footer - keep your chosen footer image and make text stand out */
+/* footer with background image in public/footer-mushrooms-v2.jpg */
 .site-footer {
   color: #fff;
   background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('/footer-mushrooms-v2.jpg') center / cover no-repeat;
   padding: 26px 14px;
 }
 .footer-inner {
-  max-width:920px; margin:0 auto; display:flex; gap:18px; align-items:flex-start; justify-content:space-between;
-  flex-wrap:wrap;
+  max-width:920px; margin:0 auto; display:flex; gap:18px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap;
 }
 .footer-left { flex:1 1 320px; }
 .footer-right { flex:0 0 170px; text-align:center; }
-
 .footer-logo { width:56px; height:56px; border-radius:8px; margin-bottom:10px; }
 .footer-left h4 { margin:0 0 8px; color:#fff; font-size:18px; }
 .contact-line { color: rgba(255,255,255,0.95); margin-bottom:6px; font-size:14px; }
@@ -160,10 +134,7 @@ img {
 
 /* social buttons look */
 .socials { display:flex; gap:10px; justify-content:center; margin-bottom:8px; }
-.social-btn {
-  width:40px; height:40px; border-radius:50%; background: rgba(255,255,255,0.12); color:#fff;
-  display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-weight:700;
-}
+.social-btn { width:40px; height:40px; border-radius:50%; background: rgba(255,255,255,0.12); color:#fff; display:inline-flex; align-items:center; justify-content:center; text-decoration:none; font-weight:700; }
 
 /* mini-cart sticky bottom */
 .mini-cart {
@@ -180,17 +151,15 @@ img {
 .mini-sub { color:#6e8d80; font-size:13px; }
 .view-cart { background: #154b2b; color:#fff; padding:10px 12px; border-radius:10px; border:none; cursor:pointer; }
 
-/* product sheet overlay (keeps current behavior) */
+/* sheet overlay and sheet */
 .sheet-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.35); display:flex; align-items:flex-end; justify-content:center; z-index:1300; }
-.sheet {
-  width:100%; max-width:720px; background:#fff; border-radius:16px 16px 0 0; padding:12px; max-height:92vh; overflow:auto;
-}
+.sheet { width:100%; max-width:720px; background:#fff; border-radius:16px 16px 0 0; padding:12px; max-height:92vh; overflow:auto; }
 .sheet-image img { width:100%; height:260px; object-fit:cover; border-radius:8px; }
 
-/* drawer */
+/* drawer (unused in this build but kept for style) */
 .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.18); z-index:1250; display:flex; justify-content:flex-end; }
 .drawer { width:100%; max-width:420px; height:100%; background:#fff; padding:20px; overflow:auto; box-shadow:-6px 0 24px rgba(0,0,0,0.18); }
 
-/* small finishing touches */
+/* a few small helpers */
 a { color: #104b2b; }
 button { font-family: inherit; }
