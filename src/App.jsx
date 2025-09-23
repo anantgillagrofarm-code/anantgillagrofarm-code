@@ -337,11 +337,15 @@ export default function App() {
                 <a className="social-btn" href={FB} target="_blank" rel="noreferrer" aria-label="Facebook">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a4 4 0 0 0-4 4v3H8v4h3v8h4v-8h3l1-4h-4V6a1 1 0 0 1 1-1h3z"/></svg>
                 </a>
-                <a className="social-btn" href={IG} target="_blank" rel="noreferrer" aria-label="Instagram">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><path d="M17.5 6.5h.01"/></svg>
-                </a>
-              </div>
-
+                <a 
+href="https://www.instagram.com/anant.gill.agro.farm?igsh=MWVuNzUwbDc2bjl0aA=="
+  target="_blank"
+  rel="noreferrer"
+  aria-label="instagram"
+  className="icon-btn"
+>
+  {/* IG svg here */}
+</a>
               <div className="copyright">© 2025 Anant Gill Agro Farm</div>
             </div>
           </div>
