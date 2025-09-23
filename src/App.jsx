@@ -1,356 +1,330 @@
 // src/App.jsx
-import React, { useEffect, useState } from "react";
-import "./index.css";
-
-/* IMPORTANT:
-   This version imports product images from src/assets.
-   Place your product images in src/assets/ with the filenames below.
-*/
+import React, { useState, useEffect } from "react";
 import freshImg from "./assets/fresh_mushrooms.jpg";
 import pickleImg from "./assets/mushroom_pickle.jpg";
 import dryImg from "./assets/dry_mushrooms.jpg";
 import powderImg from "./assets/mushroom_powder.jpg";
 import wariyanImg from "./assets/mushroom_wariyan.jpg";
+import "./index.css";
 
+/* ---------- data ---------- */
 const PRODUCTS = [
   {
-    id: "fresh",
-    title: "Fresh Mushrooms",
-    subtitle: "per 200g box",
-    description: "Hand-picked fresh button mushrooms — ideal for cooking & salads.",
-    image: freshImg,
-    variants: [
-      { id: "fresh-200g", label: "1 box (200 g)", price: 50 }, // updated: 50 / 200gm
-      { id: "fresh-1kg", label: "1 kg", price: 200 }, // 200 / kg
+    id: "p1",
+    name: "Fresh Mushrooms",
+    desc: "Hand-picked fresh button mushrooms — ideal for cooking & salads.",
+    sizes: [
+      { key: "200g", label: "200g box", price: 40 },
+      { key: "kg", label: "per kg", price: 200 },
     ],
+    img: freshImg,
   },
   {
-    id: "pickle",
-    title: "Mushroom Pickle",
-    subtitle: "per jar",
-    description: "Tangy, homemade mushroom pickle — great with rotis & rice.",
-    image: pickleImg,
-    variants: [
-      { id: "pickle-200g", label: "200 g jar", price: 100 },
-      { id: "pickle-400g", label: "400 g jar", price: 200 },
+    id: "p2",
+    name: "Mushroom Pickle",
+    desc: "Tangy & spicy mushroom pickle made with traditional spices.",
+    sizes: [
+      { key: "200g", label: "200g jar", price: 100 },
+      { key: "400g", label: "400g jar", price: 200 },
     ],
+    img: pickleImg,
   },
   {
-    id: "dry",
-    title: "Dry Mushrooms",
-    subtitle: "per 100g",
-    description: "Traditional dried button mushrooms — concentrated flavour.",
-    image: dryImg,
-    variants: [{ id: "dry-100g", label: "100 g", price: 300 }],
+    id: "p3",
+    name: "Dry Mushrooms",
+    desc: "Premium sun-dried mushrooms — great for soups & long storage.",
+    sizes: [{ key: "kg", label: "per kg", price: 800 }],
+    img: dryImg,
   },
   {
-    id: "powder",
-    title: "Mushroom Powder",
-    subtitle: "per 100g",
-    description: "Finely ground mushroom powder — perfect for seasoning.",
-    image: powderImg,
-    variants: [{ id: "powder-100g", label: "100 g", price: 450 }],
+    id: "p4",
+    name: "Mushroom Powder",
+    desc: "Finely ground mushroom powder for seasoning and soups.",
+    sizes: [{ key: "100g", label: "per 100g", price: 450 }],
+    img: powderImg,
   },
   {
-    id: "wariyan",
-    title: "Mushroom Wariyan",
-    subtitle: "per 100g packet",
-    description: "Traditional mushroom wadiyan — tasty & nutritious.",
-    image: wariyanImg,
-    variants: [{ id: "wariyan-100g", label: "100 g packet", price: 120 }],
+    id: "p5",
+    name: "Mushroom Wariyan",
+    desc: "Traditional mushroom wadiyan — tasty & nutritious.",
+    sizes: [{ key: "100g", label: "per 100g packet", price: 120 }],
+    img: wariyanImg,
   },
 ];
 
-function formatRupee(n) {
-  return `₹${n.toFixed(0)}`;
+function formatINR(v) {
+  return v.toLocaleString("en-IN", { style: "currency", currency: "INR" });
 }
 
-export default function App() {
-  const [cart, setCart] = useState([]); // items: {productId, variantId, qty, price, title, variantLabel}
-  const [sheet, setSheet] = useState(null); // product shown in sheet
-  const [selectedVariant, setSelectedVariant] = useState(null);
-  const [cartOpen, setCartOpen] = useState(false);
-  const [btnAnim, setBtnAnim] = useState(null);
+/* ---------- AddToCart modal (bottom sheet) ---------- */
+function AddToCartModal({ product, onClose, onConfirm }) {
+  const [selected, setSelected] = useState(null);
+  const [qty, setQty] = useState(1);
 
   useEffect(() => {
-    document.body.classList.toggle("no-scroll", !!sheet || cartOpen);
-    return () => document.body.classList.remove("no-scroll");
-  }, [sheet, cartOpen]);
-
-  const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
-  const itemsCount = cart.reduce((s, it) => s + it.qty, 0);
-
-  function openSheetFor(product) {
-    setSheet(product);
-    if (product.variants && product.variants.length) setSelectedVariant(product.variants[0].id);
-  }
-  function closeSheet() {
-    setSheet(null);
-    setSelectedVariant(null);
-  }
-
-  function addItem(product, variant) {
-    setCart((prev) => {
-      const idx = prev.findIndex(
-        (it) => it.productId === product.id && it.variantId === variant.id
-      );
-      if (idx >= 0) {
-        const next = prev.slice();
-        next[idx] = { ...next[idx], qty: next[idx].qty + 1 };
-        return next;
-      } else {
-        return [
-          ...prev,
-          {
-            productId: product.id,
-            variantId: variant.id,
-            qty: 1,
-            price: variant.price,
-            title: product.title,
-            variantLabel: variant.label,
-          },
-        ];
-      }
-    });
-
-    // quick button animation feedback
-    const id = `${product.id}-${variant.id}-${Date.now()}`;
-    setBtnAnim(id);
-    setTimeout(() => setBtnAnim(null), 300);
-  }
-
-  function onAddClick(product) {
-    // if multiple variants -> open sheet, else add directly
-    if (!product.variants || product.variants.length <= 1) {
-      const variant = product.variants[0];
-      addItem(product, variant);
-      // open sticky after small delay
-      setTimeout(() => setCartOpen(true), 250);
-    } else {
-      openSheetFor(product);
+    if (product) {
+      setSelected(product.sizes[0]?.key || null);
+      setQty(1);
     }
+  }, [product]);
+
+  if (!product) return null;
+  const sizeObj = product.sizes.find((s) => s.key === selected) || product.sizes[0];
+  const total = (sizeObj?.price || 0) * qty;
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <img src={product.img} alt={product.name} className="sheet-thumb" />
+          <div className="sheet-info">
+            <h3>{product.name}</h3>
+            <p className="muted">{product.desc}</p>
+            <div className="muted small">Choose size & quantity</div>
+          </div>
+          <button className="close-x" onClick={onClose}>×</button>
+        </div>
+
+        <div className="modal-body">
+          <div className="section">
+            <div className="section-title">Sizes</div>
+            {product.sizes.map((s) => (
+              <label key={s.key} className="variant-row">
+                <input
+                  type="radio"
+                  name="size"
+                  checked={selected === s.key}
+                  onChange={() => setSelected(s.key)}
+                />
+                <div style={{ marginLeft: 10 }}>
+                  <div className="variant-label">{s.label}</div>
+                  <div className="muted small">{formatINR(s.price)}</div>
+                </div>
+              </label>
+            ))}
+          </div>
+
+          <div className="section qty-row">
+            <div className="section-title">Quantity</div>
+            <div className="qty-controls">
+              <button onClick={() => setQty(Math.max(1, qty - 1))}>−</button>
+              <div className="qty-value">{qty}</div>
+              <button onClick={() => setQty(qty + 1)}>+</button>
+            </div>
+            <div className="total-text">Total: {formatINR(total)}</div>
+          </div>
+
+          <div className="sheet-actions">
+            <button
+              className="btn btn-primary full"
+              onClick={() => {
+                onConfirm({
+                  productId: product.id,
+                  name: product.name,
+                  sizeKey: sizeObj.key,
+                  sizeLabel: sizeObj.label,
+                  unitPrice: sizeObj.price,
+                  qty,
+                  img: product.img,
+                });
+                onClose();
+              }}
+            >
+              Add • {formatINR(total)}
+            </button>
+            <button className="btn btn-outline" onClick={onClose}>Cancel</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- Cart drawer ---------- */
+function CartDrawer({ open, onClose, items, onUpdateQty, onRemove }) {
+  const subtotal = items.reduce((s, it) => s + it.unitPrice * it.qty, 0);
+
+  return (
+    <div className={`cart-drawer ${open ? "open" : ""}`} onClick={onClose}>
+      <div className="cart-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="cart-header">
+          <h3>Cart</h3>
+          <button className="close-x" onClick={onClose}>×</button>
+        </div>
+
+        <div className="cart-body">
+          {items.length === 0 && <div className="muted">Your cart is empty</div>}
+          {items.map((it, idx) => (
+            <div className="cart-item" key={idx}>
+              <img src={it.img} alt={it.name} />
+              <div className="cart-item-body">
+                <div className="cart-item-title">{it.name}</div>
+                <div className="muted small">{it.sizeLabel}</div>
+                <div className="cart-item-controls">
+                  <div className="qty-controls small">
+                    <button onClick={() => onUpdateQty(idx, Math.max(1, it.qty - 1))}>−</button>
+                    <div className="qty-value">{it.qty}</div>
+                    <button onClick={() => onUpdateQty(idx, it.qty + 1)}>+</button>
+                  </div>
+                  <div className="cart-item-price">{formatINR(it.unitPrice * it.qty)}</div>
+                </div>
+              </div>
+              <button className="remove-link" onClick={() => onRemove(idx)}>Remove</button>
+            </div>
+          ))}
+        </div>
+
+        <div className="cart-footer">
+          <div className="cart-sub">
+            <div>Subtotal</div>
+            <div>{formatINR(subtotal)}</div>
+          </div>
+          <button className="btn btn-primary full">Checkout (placeholder)</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---------- App ---------- */
+export default function App() {
+  const [modalProduct, setModalProduct] = useState(null);
+  const [cartOpen, setCartOpen] = useState(false);
+  const [cart, setCart] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("cart") || "[]");
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cart));
+  }, [cart]);
+
+  const addToCartConfirmed = (item) => {
+    setCart((prev) => {
+      const copy = [...prev];
+      const existing = copy.find((x) => x.productId === item.productId && x.sizeKey === item.sizeKey);
+      if (existing) existing.qty += item.qty;
+      else copy.push(item);
+      return copy;
+    });
+    setCartOpen(true);
+  };
+
+  function updateQty(idx, qty) {
+    setCart((c) => {
+      const copy = [...c];
+      copy[idx].qty = qty;
+      return copy;
+    });
   }
 
-  function confirmSheetAdd() {
-    if (!sheet || !selectedVariant) return;
-    const variant = sheet.variants.find((v) => v.id === selectedVariant);
-    addItem(sheet, variant);
-    closeSheet();
-    setTimeout(() => setCartOpen(true), 200);
+  function removeItem(idx) {
+    setCart((c) => {
+      const copy = [...c];
+      copy.splice(idx, 1);
+      return copy;
+    });
   }
 
-  function changeQty(item, delta) {
-    setCart((prev) =>
-      prev
-        .map((it) =>
-          it.productId === item.productId && it.variantId === item.variantId
-            ? { ...it, qty: Math.max(0, it.qty + delta) }
-            : it
-        )
-        .filter((it) => it.qty > 0)
-    );
-  }
-  function removeFromCart(item) {
-    setCart((prev) =>
-      prev.filter((it) => !(it.productId === item.productId && it.variantId === item.variantId))
-    );
-  }
-
-  // social links
-  const FB = "https://www.facebook.com/share/177NfwxRKr/";
-  const IG = "https://www.instagram.com/anant.gill.agro.farm?igsh=MWVuNzUwbDc2bjl0aA==";
+  const itemCount = cart.reduce((s, it) => s + it.qty, 0);
+  const subtotal = cart.reduce((s, it) => s + it.unitPrice * it.qty, 0);
 
   return (
     <div className="app-root">
       <header className="site-header">
         <div className="header-inner">
-          <img src="/anant_gill_logo.png" alt="logo" className="logo" />
-          <div className="site-title">
-            <h1>Anant Gill Agro Farm</h1>
-            <p className="tagline">Best quality fresh organic mushrooms & delicious pickles</p>
+          <div className="title-wrap">
+            <img src="/anant_gill_logo.png" alt="logo" className="logo" />
+            <div>
+              <h1 className="brand">Anant Gill Agro Farm</h1>
+              <div className="subtitle">Best quality fresh organic mushrooms & delicious pickles</div>
+            </div>
           </div>
-          <button className="cart-button" onClick={() => setCartOpen(true)}>
-            Cart <span className="cart-count">({itemsCount})</span>
-          </button>
+
+          <div className="header-actions">
+            <button className="cart-btn" onClick={() => setCartOpen(true)}>
+              Cart {itemCount > 0 && <span className="badge">{itemCount}</span>}
+            </button>
+          </div>
         </div>
       </header>
 
-      <main className="site-main">
-        <section className="products-section">
-          <h2 className="section-title">Our Products</h2>
-          <div className="products-list">
-            {PRODUCTS.map((p) => {
-              const firstVariant = p.variants[0];
-              const animKey = `${p.id}-${firstVariant.id}`;
-              return (
-                <article className="product-card" key={p.id}>
-                  <div className="product-image-col">
-                    <img src={p.image} alt={p.title} className="product-image" />
-                  </div>
-                  <div className="product-info-col">
-                    <h3 className="product-title">{p.title}</h3>
-                    <div className="product-subtitle">{p.subtitle}</div>
-                    <div className="product-desc">{p.description}</div>
-                    <div className="product-row">
-                      <div className="price">{formatRupee(firstVariant.price)}</div>
-                      <div className="card-actions">
-                        <button
-                          className={`btn-add ${btnAnim === animKey ? "btn-add-anim" : ""}`}
-                          onClick={() => onAddClick(p)}
-                        >
-                          Add to Cart
-                        </button>
-                        {/* we removed the large "Details" behavior — product sheet opens when required */}
-                      </div>
-                    </div>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        </section>
+      <main className="container">
+        <h2 className="section-title">Our Products</h2>
 
-        <section className="cart-section">
-          <div className="cart-card">
-            <h3>Cart</h3>
-            {cart.length === 0 ? (
-              <div className="cart-empty">Your cart is empty</div>
-            ) : (
-              <>
-                {cart.map((it) => (
-                  <div className="cart-item" key={`${it.productId}-${it.variantId}`}>
-                    <div className="cart-item-title">
-                      {it.title} × {it.qty} <span className="cart-variant"> {it.variantLabel}</span>
-                    </div>
-                    <div className="cart-item-controls">
-                      <button onClick={() => changeQty(it, -1)}>-</button>
-                      <span className="cart-price">{formatRupee(it.price)}</span>
-                      <button onClick={() => changeQty(it, +1)}>+</button>
-                      <button className="btn-remove" onClick={() => removeFromCart(it)}>Remove</button>
-                    </div>
+        <div className="grid">
+          {PRODUCTS.map((p) => (
+            <div className="card" key={p.id}>
+              <div className="image-wrap">
+                <img src={p.img} alt={p.name} className="product-img" />
+              </div>
+
+              <div className="card-body">
+                <h3 className="product-title">{p.name}</h3>
+                <p className="muted">{p.desc}</p>
+
+                <div className="price-row">
+                  <div>
+                    <div className="price">{formatINR(p.sizes[0].price)}</div>
+                    <div className="price-meta muted">{p.sizes[0].label} • multiple sizes</div>
                   </div>
-                ))}
-                <div className="cart-subtotal">
-                  <div>Subtotal</div>
-                  <div className="cart-subtotal-amt">{formatRupee(subtotal)}</div>
+                  <div>
+                    <button className="btn btn-primary" onClick={() => setModalProduct(p)}>
+                      Add to Cart
+                    </button>
+                  </div>
                 </div>
-              </>
-            )}
-          </div>
-        </section>
-      </main>
-
-      {cart.length > 0 && (
-        <div className="mini-cart">
-          <div>
-            <div className="mini-count">{itemsCount} item</div>
-            <div className="mini-sub">Subtotal {formatRupee(subtotal)}</div>
-          </div>
-          <div>
-            <button className="btn-view" onClick={() => setCartOpen(true)}>View Cart</button>
-          </div>
-        </div>
-      )}
-
-      {sheet && (
-        <div className="sheet-backdrop" onClick={() => closeSheet()}>
-          <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            <button className="sheet-close" onClick={() => closeSheet()}>✕</button>
-            <img src={sheet.image} alt={sheet.title} className="sheet-image" />
-            <h3>{sheet.title}</h3>
-            <p className="sheet-desc">{sheet.description}</p>
-
-            <div className="variant-list">
-              <div className="variant-title">Choose size / variant</div>
-              {sheet.variants.map((v) => (
-                <label key={v.id} className={`variant-item ${selectedVariant === v.id ? "selected" : ""}`}>
-                  <input
-                    type="radio"
-                    name="variant"
-                    checked={selectedVariant === v.id}
-                    onChange={() => setSelectedVariant(v.id)}
-                  />
-                  <div className="variant-info">
-                    <div className="variant-label">{v.label}</div>
-                    <div className="variant-price">{formatRupee(v.price)}</div>
-                  </div>
-                </label>
-              ))}
-            </div>
-
-            <div className="sheet-actions">
-              <button className="btn-add sheet-add" onClick={() => confirmSheetAdd()}>Add to Cart</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {cartOpen && (
-        <div className="cart-backdrop" onClick={() => setCartOpen(false)}>
-          <div className="cart-drawer" onClick={(e) => e.stopPropagation()}>
-            <button className="sheet-close" onClick={() => setCartOpen(false)}>✕</button>
-            <h3>Cart</h3>
-            {cart.length === 0 ? (
-              <div>Your cart is empty</div>
-            ) : (
-              <>
-                {cart.map((it) => (
-                  <div className="cart-item-drawer" key={`${it.productId}-${it.variantId}`}>
-                    <div>
-                      <strong>{it.title}</strong> × {it.qty}
-                      <div className="cart-variant small">{it.variantLabel}</div>
-                    </div>
-                    <div className="cart-controls-drawer">
-                      <button onClick={() => changeQty(it, -1)}>-</button>
-                      <span>{formatRupee(it.price)}</span>
-                      <button onClick={() => changeQty(it, +1)}>+</button>
-                      <button onClick={() => removeFromCart(it)}>Remove</button>
-                    </div>
-                  </div>
-                ))}
-                <div className="cart-subtotal-drawer">
-                  <div>Subtotal</div>
-                  <div>{formatRupee(subtotal)}</div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      )}
-
-      <footer className="site-footer">
-        <div className="footer-overlay">
-          <div className="footer-inner">
-            <div className="footer-left">
-              <img src="/anant_gill_logo.png" alt="logo" className="footer-logo" />
-              <h4>Anant Gill Agro Farm</h4>
-              <div className="footer-contact">
-                <div>Phone: <a href="tel:+918837554747">+91 88375 54747</a></div>
-                <div>Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a></div>
-                <div className="footer-address">Gali No. 1, Baba Deep Singh Avenue, village Nangli bhatha, Amritsar 143001</div>
               </div>
             </div>
+          ))}
+        </div>
 
-            <div className="footer-right">
-              <div className="follow-title">Follow</div>
-              <div className="social-row">
-                <a className="social-btn" href={FB} target="_blank" rel="noreferrer" aria-label="Facebook">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a4 4 0 0 0-4 4v3H8v4h3v8h4v-8h3l1-4h-4V6a1 1 0 0 1 1-1h3z"/></svg>
-                </a>
-                <a 
-href="https://www.instagram.com/anant.gill.agro.farm?igsh=MWVuNzUwbDc2bjl0aA=="
-  target="_blank"
-  rel="noreferrer"
-  aria-label="instagram"
-  className="icon-btn"
->
-  {/* IG svg here */}
-</a>
-              <div className="copyright">© 2025 Anant Gill Agro Farm</div>
-            </div>
+        <div style={{ height: 18 }} />
+
+        <div className="bottom-area">
+          <div className="cart-summary-card">
+            <h4>Cart</h4>
+            {cart.length === 0 ? (
+              <p className="muted">Your cart is empty</p>
+            ) : (
+              <>
+                <div className="muted small">Items: {itemCount}</div>
+                <div style={{ marginTop: 8 }}>{formatINR(subtotal)}</div>
+              </>
+            )}
           </div>
         </div>
+      </main>
+
+      <footer className="site-footer">
+        <div className="footer-inner">
+          <div className="footer-left">
+            <img src="/anant_gill_logo.png" alt="logo" className="footer-logo" />
+            <div className="footer-brand">Anant Gill Agro Farm</div>
+            <div className="muted small">Best quality fresh organic mushrooms & delicious pickles</div>
+          </div>
+
+          <div className="footer-mid">
+            <div className="footer-title">Contact</div>
+            <div>Phone: +91 88375 54747</div>
+            <div>Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a></div>
+            <div className="muted small">VPO Bhore Saidan, Pehowa Road, Kurukshetra-136118, Haryana, INDIA</div>
+          </div>
+
+          <div className="footer-right">
+            <div className="footer-title">Follow</div>
+            <a href="https://www.instagram.com/anant.gill.agro.farm" target="_blank" rel="noreferrer">Instagram</a>
+          </div>
+        </div>
+
+        <div className="copyright">© 2025 Anant Gill Agro Farm · Contact: +91 88375 54747</div>
       </footer>
+
+      <AddToCartModal product={modalProduct} onClose={() => setModalProduct(null)} onConfirm={addToCartConfirmed} />
+      <CartDrawer open={cartOpen} onClose={() => setCartOpen(false)} items={cart} onUpdateQty={updateQty} onRemove={removeItem} />
     </div>
   );
 }
