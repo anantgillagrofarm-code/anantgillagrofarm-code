@@ -240,4 +240,7 @@ body {
 }
 
 .sheet-thumb {
-  width:
+  width: 64px;
+  height: 64px;
+  border-radius: 0.5rem;
+  object-fit: cover;
