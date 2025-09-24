@@ -6,11 +6,21 @@ html, body, #root { height: 100%; }
 body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  background: #eef6ef;
-  color: #183827;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
+  color: #183827;
 }
+
+/* Apply background image to the main page (excluding footer).
+   The .app element gets the background with a subtle overlay to keep text readable. */
+.app {
+  min-height: 100vh;
+  background:
+    linear-gradient(rgba(240, 250, 246, 0.85), rgba(240, 250, 246, 0.85)),
+    url('/bg-mushrooms.jpg') center / cover fixed no-repeat;
+}
+
+/* Lock body scroll when an overlay is open */
 body.no-scroll { overflow: hidden; }
 
 /* header / topbar */
@@ -115,7 +125,7 @@ img { max-width:100%; height:auto; display:block; }
   box-shadow: 0 4px 12px rgba(0,0,0,0.04);
 }
 
-/* footer with background image in public/footer-mushrooms-v2.jpg */
+/* footer with its own background image in public/footer-mushrooms-v2.jpg */
 .site-footer {
   color: #fff;
   background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('/footer-mushrooms-v2.jpg') center / cover no-repeat;
