@@ -1,6 +1,12 @@
 // src/Health.jsx
 import React, { useState } from "react";
 
+/*
+  Health.jsx
+  - Toggle-style sections for each product
+  - Uses the .toggle-content and .toggle-content.open classes from src/index.css
+*/
+
 function ToggleSection({ title, intro, nutrition, benefits }) {
   const [open, setOpen] = useState(false);
 
@@ -14,34 +20,46 @@ function ToggleSection({ title, intro, nutrition, benefits }) {
         marginBottom: 16,
       }}
     >
-      <h3 style={{ marginTop: 0, color: "#14502b" }}>{title}</h3>
-      <p style={{ color: "#444" }}>{intro}</p>
-
-      <button
-        className="detail-btn"
-        onClick={() => setOpen(!open)}
-        style={{ marginTop: 8 }}
-      >
-        {open ? "Hide Nutrition & Benefits" : "Show Nutrition & Benefits"}
-      </button>
-
-      {open && (
-        <div style={{ marginTop: 12 }}>
-          <h4 style={{ marginBottom: 6 }}>Approximate Nutrition (per 100 g)</h4>
-          <ul style={{ marginTop: 0, color: "#555" }}>
-            {nutrition.map((n, i) => (
-              <li key={i}>{n}</li>
-            ))}
-          </ul>
-
-          <h4 style={{ marginBottom: 6, marginTop: 12 }}>Health Benefits</h4>
-          <ul style={{ marginTop: 0, color: "#555" }}>
-            {benefits.map((b, i) => (
-              <li key={i}>{b}</li>
-            ))}
-          </ul>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+        <div style={{ flex: 1 }}>
+          <h3 style={{ marginTop: 0, color: "#14502b" }}>{title}</h3>
+          <p style={{ color: "#444", marginBottom: 8 }}>{intro}</p>
         </div>
-      )}
+
+        <div style={{ flexShrink: 0 }}>
+          <button
+            className="detail-btn"
+            onClick={() => setOpen(!open)}
+            aria-expanded={open}
+            aria-controls={`toggle-${title.replace(/\s+/g, "-").toLowerCase()}`}
+            style={{ marginTop: 6 }}
+          >
+            {open ? "Hide Nutrition & Benefits" : "Show Nutrition & Benefits"}
+          </button>
+        </div>
+      </div>
+
+      {/* Animated content area */}
+      <div
+        id={`toggle-${title.replace(/\s+/g, "-").toLowerCase()}`}
+        className={`toggle-content ${open ? "open" : ""}`}
+        aria-hidden={!open}
+        style={{ marginTop: 12 }}
+      >
+        <h4 style={{ marginBottom: 6 }}>Approximate Nutrition (per 100 g)</h4>
+        <ul>
+          {nutrition.map((n, i) => (
+            <li key={i}>{n}</li>
+          ))}
+        </ul>
+
+        <h4 style={{ marginBottom: 6, marginTop: 12 }}>Health Benefits</h4>
+        <ul>
+          {benefits.map((b, i) => (
+            <li key={i}>{b}</li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }
@@ -61,11 +79,13 @@ export default function Health() {
       >
         <h2 style={{ marginTop: 0, color: "#14502b" }}>Introduction</h2>
         <p style={{ color: "#444" }}>
-          Mushrooms and mushroom-based products are valued not only for their
-          unique taste but also for their nutritional and health-promoting
-          qualities. At <strong>Anant Gill Agro Farm</strong>, we provide a
-          variety of mushroom products — each with distinct nutritional values
-          and health benefits.
+          Mushrooms are nutrient-dense fungi prized for their savory flavor and versatile culinary uses.
+          Low in calories and rich in B vitamins, vitamin D (when sun-exposed), potassium, selenium, fiber,
+          and unique antioxidants like ergothioneine, mushrooms make a wholesome addition to everyday meals.
+        </p>
+        <p style={{ color: "#444", marginTop: 8 }}>
+          Below you can expand each product to read approximate nutrition and suggested health benefits.
+          Values are representative estimates per 100 g — for exact label values use lab testing or a nutrition calculator based on your recipes.
         </p>
       </section>
 
@@ -76,95 +96,89 @@ export default function Health() {
         nutrition={[
           "Calories: ~22 kcal",
           "Protein: 3.1 g",
-          "Carbohydrates: 3.3 g",
-          "Dietary Fiber: 1 g",
+          "Carbohydrates: 3.3 g (Fiber: 1 g, Sugars: 2 g)",
           "Fat: 0.3 g",
-          "Rich in B vitamins (riboflavin, niacin, pantothenic acid)",
-          "Minerals: selenium, potassium, copper",
+          "Potassium: ~318 mg; Phosphorus: ~86 mg; Selenium: ~9–20 µg",
+          "B vitamins: niacin (B3), riboflavin (B2), pantothenic acid (B5)",
         ]}
         benefits={[
-          "Supports immune system due to natural antioxidants",
-          "Good for weight management (low calorie, nutrient dense)",
-          "Improves heart health by providing potassium",
-          "Boosts energy with natural B vitamins",
+          "Low-calorie, nutrient-dense — great for weight management",
+          "B vitamins support energy metabolism",
+          "Potassium supports healthy blood pressure",
+          "Antioxidants (ergothioneine & selenium) protect cells from oxidative stress",
         ]}
       />
 
       <ToggleSection
         title="Mushroom Pickle"
-        intro="Tangy & spicy mushroom pickle made with traditional spices."
+        intro="Tangy & spicy mushroom pickle made with traditional spices; a flavorful condiment."
         nutrition={[
-          "Calories: ~180 kcal (per 100 g, varies with oil/spice content)",
-          "Protein: 2 g",
-          "Carbohydrates: 8–10 g",
-          "Fat: 15 g",
-          "Sodium depends on salt content",
+          "Calories: ~120–220 kcal (varies by oil content)",
+          "Protein: 2–4 g",
+          "Carbohydrates: 6–12 g",
+          "Fat: 8–18 g",
+          "Sodium: can be high — often 600–1500 mg depending on recipe",
         ]}
         benefits={[
-          "Combines mushroom nutrition with probiotics from pickling",
-          "Spices add antioxidants and digestive support",
-          "Provides energy and healthy fats",
+          "Retains mushroom nutrients while adding spice-derived phytonutrients",
+          "Spices can aid digestion and provide antioxidants",
+          "Enjoy in moderation due to higher sodium & oil content",
         ]}
       />
 
       <ToggleSection
         title="Dry Mushrooms"
-        intro="Dehydrated mushrooms, perfect for long-term storage and soups."
+        intro="Dehydrated mushrooms, perfect for long-term storage and for enriching soups and gravies."
         nutrition={[
-          "Calories: ~280 kcal",
-          "Protein: 9–10 g",
-          "Carbohydrates: 30 g",
-          "Fiber: 10 g",
-          "Low in fat (~1 g)",
-          "Concentrated source of B vitamins & minerals",
+          "Calories: ~200–350 kcal (concentrated)",
+          "Protein: 20–30 g (varies by variety)",
+          "Carbohydrates: 40–60 g",
+          "Fiber: 12–25 g",
+          "Fat: 2–6 g",
         ]}
         benefits={[
-          "Long shelf-life, nutrient dense",
-          "Enhances flavor of soups, gravies, rice dishes",
-          "Rich in antioxidants like ergothioneine",
-          "Supports digestive health due to fiber",
+          "Concentrated nutrients make dried mushrooms a powerful pantry ingredient",
+          "High fiber supports digestion",
+          "Strong umami flavor reduces need for extra salt",
+          "Rich in antioxidants and minerals",
         ]}
       />
 
       <ToggleSection
         title="Mushroom Powder"
-        intro="Finely ground mushroom powder — perfect for seasoning."
+        intro="Finely ground mushroom powder — a convenient seasoning to boost flavor and nutrition."
         nutrition={[
-          "Calories: ~300 kcal",
-          "Protein: 20–25 g",
-          "Carbohydrates: 40 g",
-          "Fiber: 15 g",
-          "Fat: 2–3 g",
-          "Vitamins: B-complex, vitamin D (if sun-dried)",
+          "Calories: ~250–350 kcal",
+          "Protein: 20–30 g",
+          "Carbohydrates: 40–60 g",
+          "Fiber: 15–25 g",
+          "Fat: 2–6 g",
         ]}
         benefits={[
-          "Easy to add nutrition into soups, smoothies, or sauces",
-          "Supports brain health and energy",
-          "Provides natural umami flavor without additives",
-          "Boosts immunity with antioxidants",
+          "Easy way to add mushroom-derived antioxidants to recipes",
+          "Adds natural umami, reducing dependence on processed flavorings",
+          "Highly shelf-stable and versatile for sauces, rubs and soups",
         ]}
       />
 
       <ToggleSection
         title="Mushroom Wariyan"
-        intro="Traditional mushroom wadiyan — tasty & nutritious."
+        intro="Traditional mushroom wariyan (wadiyan) — seasoned, dried morsels used in curries and snacks."
         nutrition={[
-          "Calories: ~350 kcal",
-          "Protein: 18–20 g",
-          "Carbohydrates: 40 g",
-          "Fiber: 10 g",
-          "Fat: 5–6 g",
-          "Rich in iron and plant-based protein",
+          "Calories: ~200–350 kcal (recipe-dependent)",
+          "Protein: 12–25 g",
+          "Carbohydrates: 20–40 g",
+          "Fiber: 4–12 g",
+          "Fat: 6–18 g (if oil or flours used)",
         ]}
         benefits={[
-          "Nutritious plant-based protein source",
-          "Supports muscle growth & repair",
-          "Good for vegetarians as an iron-rich food",
-          "Adds unique flavor & nutrition to curries",
+          "Good plant-based protein and fiber source",
+          "Spices used add antioxidants and flavor",
+          "Convenient and tasty addition to traditional dishes",
         ]}
       />
 
-      {/* Closing summary */}
+      {/* Summary */}
       <section
         style={{
           background: "white",
@@ -176,10 +190,9 @@ export default function Health() {
       >
         <h2 style={{ marginTop: 0, color: "#14502b" }}>Summary</h2>
         <p style={{ color: "#444" }}>
-          Whether fresh, dried, powdered, or pickled, mushrooms are a powerhouse
-          of nutrition. They provide low-calorie protein, fiber, essential
-          vitamins, and minerals. Regular consumption may support immunity,
-          energy, heart health, and overall wellbeing.
+          Fresh, dried, powdered or pickled — mushrooms come in many forms that suit different cooking needs.
+          Fresh mushrooms are low-calorie and versatile; dried and powdered forms concentrate nutrients and flavor;
+          pickles and wariyan offer traditional taste. Together they help you add variety, nutrition and umami to your meals.
         </p>
       </section>
     </div>
