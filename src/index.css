@@ -1,105 +1,43 @@
 /* src/index.css - full replacement */
 
-/* Tailwind directives - MUST BE FIRST so PostCSS can process Tailwind */
+/* Tailwind directives - MUST be first */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* --- start of your custom CSS (existing rules) --- */
+/* small custom base tweaks */
+:root {
+  --brand-green: #1f4d2e;
+  --muted: #6b7280;
+}
 
-/* base reset */
 * { box-sizing: border-box; }
 html, body, #root { height: 100%; }
 body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  background: url('/bg-mushrooms.jpg');
-  color: #183827;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8fafc;
+  color: #0f172a;
 }
-body.no-scroll { overflow: hidden; }
 
-/* header / topbar */
-.topbar {
+/* simple page-level helpers */
+.container {
+  max-width: 1024px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* If you need to restore previous custom styles, paste them below this line */
+/* --- start of custom CSS (restore gradually) --- */
+
+/* Example: center hero */
+.hero {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: rgba(255,255,255,0.92);
-  position: sticky;
-  top: 0;
-  z-index: 900;
-  border-bottom: 1px solid rgba(0,0,0,0.06);
-}
-.brand { display:flex; gap:14px; align-items:center; }
-.logo { width:56px; height:56px; border-radius:8px; overflow:hidden; }
-.title { margin:0; color:#14502b; font-weight:700; }
-.subtitle { color:#7c8c82; font-size:12px; }
-
-/* main layout */
-.container {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 16px;
-}
-
-/* product card */
-.product-grid { display:grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px; }
-.card {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.06);
-  overflow: hidden;
-  display:flex;
-  flex-direction:column;
-}
-.card img { width:100%; height:160px; object-fit:cover; }
-.card-body { padding:12px 14px; flex:1; display:flex; flex-direction:column; }
-.card-title { font-size:16px; font-weight:600; margin:0 0 6px 0; color:#163820; }
-.card-desc { font-size:13px; color:#556b58; margin-bottom:10px; flex:1; }
-.card-foot { display:flex; align-items:center; justify-content:space-between; gap:8px; }
-
-/* modal / order form */
-.modal {
-  position: fixed;
-  left: 0; top: 0; right:0; bottom:0;
-  display:flex; align-items:center; justify-content:center;
-  background: rgba(0,0,0,0.4);
-  z-index: 1000;
-}
-.modal-card {
-  width: 96%;
-  max-width: 620px;
-  background: #fff;
-  border-radius: 14px;
-  padding: 18px;
-}
-.form-group { margin-bottom: 12px; }
-.form-label { display:block; margin-bottom:6px; font-size:13px; color:#38523a; }
-.input, textarea {
-  width:100%;
-  padding:10px 12px;
-  border:1px solid rgba(0,0,0,0.08);
-  border-radius:6px;
-  font-size:14px;
-}
-
-/* smaller utility classes */
-.btn {
-  display:inline-block;
-  padding:10px 16px;
-  border-radius:12px;
-  cursor:pointer;
-  border: none;
-}
-.btn-primary { background:#164e2e; color:white; }
-.btn-outline { background: transparent; border:1px solid #cfd8d0; color:#164e2e; }
-
-/* responsive tweaks */
-@media (max-width: 640px) {
-  .card img { height:140px; }
-  .modal-card { padding:14px; }
+  justify-content: center;
+  min-height: 40vh;
 }
 
 /* --- end of custom CSS --- */
