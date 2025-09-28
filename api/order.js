@@ -1,77 +1,60 @@
 // api/order.js
-import sendgrid from "@sendgrid/mail";
+// CommonJS style for Vercel serverless functions
+const sgMail = require('@sendgrid/mail');
 
-export default async function handler(req, res) {
+module.exports = async function (req, res) {
   // Only allow POST
-  if (req.method !== "POST") {
-    return res.status(405).json({ error: "Only POST allowed" });
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Only POST allowed' });
   }
 
   const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-  const FROM_EMAIL = process.env.FROM_EMAIL;
-  const TO_EMAIL = process.env.TO_EMAIL;
+  const FROM_EMAIL = process.env.FROM_EMAIL; // e.g. "no-reply@yourdomain.com"
+  const TO_EMAIL = process.env.TO_EMAIL;     // e.g. your admin/sales email
 
-  // Basic request body validation
-  const { name, phone, email, address, items, total, payMode } = req.body ?? {};
+  if (!SENDGRID_API_KEY) {
+    console.error('Missing SENDGRID_API_KEY');
+    return res.status(500).json({ error: 'Server misconfiguration: missing SendGrid key' });
+  }
+  if (!FROM_EMAIL || !TO_EMAIL) {
+    console.error('Missing FROM_EMAIL or TO_EMAIL');
+    return res.status(500).json({ error: 'Server misconfiguration: missing email addresses' });
+  }
+
+  const { name, phone, email, address, items, note, paymentMethod } = req.body || {};
 
   if (!name || !phone) {
-    return res.status(400).json({ error: "Missing required fields: name or phone" });
+    return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  // If SendGrid key is missing, return a clear error (and avoid crashing)
-  if (!SENDGRID_API_KEY) {
-    console.error("Missing SENDGRID_API_KEY in process.env");
-    return res.status(500).json({ error: "Server misconfiguration: missing SendGrid key" });
-  }
+  sgMail.setApiKey(SENDGRID_API_KEY);
 
-  // Configure SendGrid
-  sendgrid.setApiKey(SENDGRID_API_KEY);
-
-  // Compose a simple HTML email with order details
-  const itemsHtml = Array.isArray(items)
-    ? items.map(i => `<li>${i.title} x ${i.qty} — ₹${i.price}</li>`).join("")
-    : "";
-
+  // Build email content (simple HTML)
+  const subject = `New order from ${name}`;
   const html = `
-    <h2>New order from website</h2>
-    <p><strong>Name:</strong> ${escapeHtml(name)}</p>
-    <p><strong>Phone:</strong> ${escapeHtml(phone)}</p>
-    <p><strong>Email:</strong> ${escapeHtml(email || "—")}</p>
-    <p><strong>Address:</strong> ${escapeHtml(address || "—")}</p>
-    <p><strong>Payment mode:</strong> ${escapeHtml(payMode || "—")}</p>
-    <p><strong>Items:</strong></p>
-    <ul>${itemsHtml}</ul>
-    <p><strong>Total:</strong> ₹${escapeHtml(String(total || "0"))}</p>
+    <h2>New Order</h2>
+    <p><strong>Name:</strong> ${name}</p>
+    <p><strong>Phone:</strong> ${phone}</p>
+    <p><strong>Email:</strong> ${email || '—'}</p>
+    <p><strong>Address:</strong> ${address || '—'}</p>
+    <p><strong>Payment Method:</strong> ${paymentMethod || '—'}</p>
+    <p><strong>Note:</strong> ${note || '—'}</p>
+    <h3>Items</h3>
+    <pre>${JSON.stringify(items || [], null, 2)}</pre>
   `;
 
+  const msg = {
+    to: TO_EMAIL,
+    from: FROM_EMAIL,
+    subject,
+    html
+  };
+
   try {
-    const msg = {
-      to: TO_EMAIL || FROM_EMAIL, // fallback to FROM if TO not set
-      from: FROM_EMAIL || TO_EMAIL, // fallback
-      subject: `New order from ${name}`,
-      html,
-      text: `New order from ${name} (${phone}) - total ₹${total || "0"}`,
-    };
-
-    await sendgrid.send(msg);
-
-    // Return success
-    return res.status(200).json({ success: true, message: "Order received and email sent." });
+    await sgMail.send(msg);
+    return res.status(200).json({ ok: true, message: 'Order email sent' });
   } catch (err) {
-    console.error("SendGrid error:", err?.response?.body || err.message || err);
-    return res.status(500).json({
-      error: "Failed to send email",
-      details: err?.response?.body || err.message || null,
-    });
+    console.error('SendGrid error:', err && err.response ? err.response.body : err);
+    return res.status(500).json({ error: 'Failed to send email', details: err && err.message });
   }
-}
-
-// Basic helper to avoid injecting unescaped HTML
-function escapeHtml(str = "") {
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
+};
