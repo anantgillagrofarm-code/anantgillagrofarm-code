@@ -1,218 +1,61 @@
-/* src/index.css
-   Compact product cards, sticky header, readable footer, details panel
-*/
+/* Emergency fallback index.css — paste entire file to replace current index.css */
+/* This is defensive: it forces #root visible and makes a simple readable UI. */
 
-/* Reset-ish helpers */
-* { box-sizing: border-box; }
-html, body, #root { height: 100%; }
+* { box-sizing: border-box !important; }
+html, body, #root { height: 100% !important; margin: 0 !important; padding: 0 !important; }
 body {
-  margin: 0;
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  background: #eef7f0;
-  color: #153b2a;
+  display: block !important;
+  min-height: 100vh !important;
+  background: #f3fbf4 !important;
+  color: #153b2a !important;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* --- Header: sticky and non-invasive --- */
-.site-header, header {
-  position: sticky;
-  top: 0;
-  z-index: 9999;
-  background: rgba(255,255,255,0.98);
-  backdrop-filter: blur(4px);
-  padding: 10px 16px;
-  box-shadow: 0 1px 0 rgba(0,0,0,0.06);
+/* Make sure nothing hides the root */
+#root, .site-root { display: block !important; visibility: visible !important; opacity: 1 !important; }
+
+/* Remove any extreme transforms/positions */
+* {
+  transform: none !important;
+  translate: none !important;
+  scale: 1 !important;
 }
 
-/* header layout */
-.header-row { display:flex; align-items:center; justify-content:space-between; gap:12px; }
-.brand { display:flex; align-items:center; gap:12px; }
-.logo { width:56px; height:56px; object-fit:cover; border-radius:10px; }
-.brand-title { color:#124122; font-weight:700; font-size:18px; }
-.brand-sub { color:#6b8a7b; font-size:13px; margin-top:2px; }
+/* Reset header offsets that push content off-screen */
+:root { --site-header-height: 0px !important; }
+body { padding-top: 0 !important; }
 
-/* Reserve space so content doesn't sit under header */
-:root { --site-header-height: 86px; } /* tweak if your header height differs */
-body { padding-top: var(--site-header-height); }
+/* Simple content layout so we can see rendering */
+.site-root { padding: 20px !important; }
+h1, h2, h3 { color: #114b2a !important; margin: 0 0 8px 0 !important; }
+p, li { color: #234f3a !important; }
 
-/* --- Page container & section title --- */
-.container, .site-content {
-  max-width: 980px;
-  margin: 0 auto;
-  padding: 18px 16px;
-}
+/* Make images visible and constrained */
+img { max-width: 100% !important; height: auto !important; display: inline-block !important; }
 
-.section-title {
-  font-size: 28px;
-  color: #13522b; /* dark green */
-  margin: 6px 0 18px;
-  font-weight: 700;
+/* Ensure any overlay/backdrop doesn't cover everything */
+[role="dialog"], .overlay, .modal, .backdrop {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
-/* --- Product grid / cards (mobile-first) --- */
-.product-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 18px;
-}
-
-/* Card style */
-.product-card {
-  display: flex;
-  gap: 14px;
-  align-items: center;
-  background: #ffffff;
-  border-radius: 14px;
-  padding: 14px;
-  box-shadow: 0 6px 18px rgba(11, 46, 20, 0.06);
-  overflow: hidden;
-  border: 1px solid rgba(11,46,20,0.04);
-}
-
-/* thumbnail square */
-.product-card .thumb {
-  flex: 0 0 84px;
-  height: 84px;
-  border-radius: 10px;
-  overflow: hidden;
-  display: block;
-  box-shadow: 0 4px 10px rgba(11,46,20,0.04);
-  background: #f5f7f5;
-}
-.product-card .thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* product text area */
-.product-card .meta {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  color: #2b5b45;
-}
-.product-card h3 {
-  margin: 0;
-  font-size: 20px;
-  color: #11502d;
-  font-weight: 700;
-}
-.product-card .subtitle {
-  margin: 0;
-  font-size: 12px;
-  color: #7b9b8a;
-}
-.product-card p.description {
-  margin: 6px 0 0;
-  font-size: 15px;
-  color: #516c61;
-  line-height: 1.3;
-}
-
-/* price & CTA aligned to the right on the same row (mobile) */
-.product-card .actions {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-top: 8px;
-}
-
-/* price style */
-.price {
-  font-weight: 700;
-  color: #114b2a;
-  font-size: 18px;
-}
-
-/* Buttons */
-.btn {
-  background: #1e5a33;
-  color: #fff;
-  border: none;
-  padding: 10px 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  box-shadow: 0 6px 12px rgba(30,90,51,0.16);
-  font-weight: 600;
-}
-.btn:active { transform: translateY(1px); }
-.btn.btn-outline {
-  background: transparent;
-  color: #1e5a33;
-  border: 1px solid rgba(30,90,51,0.12);
-  box-shadow: none;
-}
-
-/* details panel inside card */
-.details-panel {
-  margin-top: 10px;
-  padding: 12px;
-  border-radius: 10px;
-  background: linear-gradient(180deg, rgba(242,247,242,0.8), rgba(244,248,244,0.95));
-  border: 1px solid rgba(11,46,20,0.03);
-}
-.details-panel h4 {
-  margin: 8px 0 6px;
-  color: #114b2a;
-}
-.details-panel ul { margin: 6px 0 8px 18px; color:#2f5f4a; }
-
-/* nutrition table */
-.nutrition-table { width:100%; border-collapse: collapse; margin-top: 6px; }
-.nutrition-table td { padding: 6px 8px; font-size: 14px; color: #264a3b; }
-.nutrition-table .nutrient-key { width: 55%; opacity: 0.9; }
-.nutrition-table .nutrient-val { text-align: right; font-weight:600; }
-
-/* cart summary card */
-.card-summary {
-  margin-top: 22px;
-  background: #fff;
-  padding: 18px;
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(11, 46, 20, 0.04);
-}
-
-/* --- Responsive: two columns on medium screens --- */
-@media (min-width: 900px) {
-  .product-grid { grid-template-columns: repeat(2, 1fr); }
-  .product-card { align-items: flex-start; }
-  .product-card .actions { margin-top: 10px; }
-}
-
-/* --- Footer: image background with readable overlay text --- */
-.site-footer, footer {
-  position: relative;
-  color: #fff;
-  padding: 40px 18px;
-  background-size: cover;
-  background-position: center;
-  margin-top: 28px;
-}
-.site-footer::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, rgba(8,25,12,0.35), rgba(8,25,12,0.55));
-  z-index: 0;
-}
-.site-footer .footer-inner { position: relative; z-index: 2; max-width: 980px; margin: 0 auto; }
-.site-footer a { color: rgba(255,255,255,0.95); text-decoration: underline; }
+/* footer safe */
+footer, .site-footer { position: static !important; margin-top: 18px !important; background: transparent !important; color: inherit !important; }
 
 /* small helpers */
-.social-btn { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.12); color:#fff; text-decoration:none; }
-.cart-bubble {
-  background: #fff;
-  border-radius: 12px;
-  padding: 8px 12px;
-  color: #133a26;
-  box-shadow: 0 6px 18px rgba(11,46,20,0.06);
-  font-weight: 600;
-}
+button { appearance: none; -webkit-appearance: none; cursor: pointer; }
 
-/* Accessibility and spacing */
-a { color: inherit; }
-h2, h3, h4 { line-height: 1.15; margin-top: 0; }
+/* If the app mounts, these debug helpers will show */
+.debug-mounted {
+  display: block !important;
+  border: 2px dashed #1e5a33 !important;
+  padding: 10px !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+  color: #114b2a !important;
+  text-align: center;
+  margin-bottom: 12px !important;
+}
