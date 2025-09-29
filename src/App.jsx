@@ -3,17 +3,8 @@ import React, { useState } from "react";
 import "./index.css";
 
 /*
-  App.jsx - uses images from src/assets/
-  Ensure these files exist:
-  src/assets/fresh_mushrooms.jpg
-  src/assets/mushroom_pickle.jpg
-  src/assets/dry_mushrooms.jpg
-  src/assets/mushroom_powder.jpg
-  src/assets/mushroom_wariyan.jpg
-
-  Public assets (served from root):
-  public/anant_gill_logo.png
-  public/footer-mushrooms-v2.jpg
+  Defensive App.jsx: same UI as before but handles multiple imported-image shapes
+  (some bundlers return a string, some return { default: string }).
 */
 
 import freshImg from "./assets/fresh_mushrooms.jpg";
@@ -21,6 +12,17 @@ import pickleImg from "./assets/mushroom_pickle.jpg";
 import dryImg from "./assets/dry_mushrooms.jpg";
 import powderImg from "./assets/mushroom_powder.jpg";
 import wariyanImg from "./assets/mushroom_wariyan.jpg";
+
+/* Helper to resolve imported images safely */
+function getSrc(maybeImport, fallback = "") {
+  if (!maybeImport) return fallback;
+  // If default property exists (Bundlers like webpack sometimes export {default: url})
+  if (typeof maybeImport === "object" && maybeImport.default) return maybeImport.default;
+  // If it's already a string url
+  if (typeof maybeImport === "string") return maybeImport;
+  // Otherwise fallback
+  return fallback;
+}
 
 const PRODUCTS = [
   {
@@ -139,21 +141,24 @@ export default function App() {
   const [cartCount, setCartCount] = useState(0);
   const [openId, setOpenId] = useState(null);
 
-  function addToCart(product) {
+  function addToCart() {
     setCartCount((c) => c + 1);
-    // extend to localStorage or backend later if needed
   }
 
   function toggleDetails(id) {
     setOpenId((cur) => (cur === id ? null : id));
   }
 
+  // safe resolved logo & footer background
+  const logoSrc = "/anant_gill_logo.png";
+  const footerBg = "/footer-mushrooms-v2.jpg";
+
   return (
     <div className="site-root">
       <header className="site-header">
         <div className="container header-row">
           <div className="brand">
-            <img src="/anant_gill_logo.png" alt="Anant Gill Agro Farm" className="logo" />
+            <img src={logoSrc} alt="Anant Gill Agro Farm" className="logo" />
             <div>
               <div className="brand-title">Anant Gill Agro Farm</div>
               <div className="brand-sub">Best quality fresh organic mushrooms &amp; delicious pickles</div>
@@ -173,7 +178,7 @@ export default function App() {
           {PRODUCTS.map((p) => (
             <article className="product-card" key={p.id} role="listitem" aria-labelledby={`p-${p.id}-title`}>
               <div className="thumb">
-                <img src={p.img} alt={p.name} />
+                <img src={getSrc(p.img, "")} alt={p.name} />
               </div>
 
               <div className="meta">
@@ -187,7 +192,7 @@ export default function App() {
                   <div style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
                     <button
                       className="btn"
-                      onClick={() => addToCart(p)}
+                      onClick={() => addToCart()}
                       aria-label={`Add ${p.name} to cart`}
                     >
                       Add to Cart
@@ -250,11 +255,11 @@ export default function App() {
         </section>
       </main>
 
-      <footer className="site-footer" style={{ backgroundImage: "url('/footer-mushrooms-v2.jpg')" }}>
+      <footer className="site-footer" style={{ backgroundImage: `url('${footerBg}')` }}>
         <div className="footer-inner">
           <div style={{ maxWidth: 980, margin: "0 auto" }}>
             <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 10 }}>
-              <img src="/anant_gill_logo.png" alt="logo" style={{ width: 56, height: 56, borderRadius: 10 }} />
+              <img src={logoSrc} alt="logo" style={{ width: 56, height: 56, borderRadius: 10 }} />
               <div>
                 <div style={{ fontWeight: 700, fontSize: 18 }}>Anant Gill Agro Farm</div>
                 <div style={{ opacity: 0.95 }}>Phone: <a href="tel:+918837554747">+91 88375 54747</a></div>
