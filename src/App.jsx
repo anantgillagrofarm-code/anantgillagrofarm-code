@@ -1,290 +1,358 @@
 // src/App.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./index.css";
 
 /*
-  Defensive App.jsx: same UI as before but handles multiple imported-image shapes
-  (some bundlers return a string, some return { default: string }).
+  Single-file app component.
+  Images should be in src/assets/ with the names used below.
 */
 
-import freshImg from "./assets/fresh_mushrooms.jpg";
-import pickleImg from "./assets/mushroom_pickle.jpg";
-import dryImg from "./assets/dry_mushrooms.jpg";
-import powderImg from "./assets/mushroom_powder.jpg";
-import wariyanImg from "./assets/mushroom_wariyan.jpg";
-
-/* Helper to resolve imported images safely */
-function getSrc(maybeImport, fallback = "") {
-  if (!maybeImport) return fallback;
-  // If default property exists (Bundlers like webpack sometimes export {default: url})
-  if (typeof maybeImport === "object" && maybeImport.default) return maybeImport.default;
-  // If it's already a string url
-  if (typeof maybeImport === "string") return maybeImport;
-  // Otherwise fallback
-  return fallback;
-}
+import imgFresh from "./assets/fresh_mushrooms.jpg";
+import imgPickle from "./assets/mushroom_pickle.jpg";
+import imgDry from "./assets/dry_mushrooms.jpg";
+import imgPowder from "./assets/mushroom_powder.jpg";
+import imgWariyan from "./assets/mushroom_wariyan.jpg";
 
 const PRODUCTS = [
   {
-    id: "mush-001",
-    name: "Fresh Mushrooms",
-    unit: "per 200g box",
+    id: "fresh",
+    title: "Fresh Mushrooms",
     price: 50,
-    img: freshImg,
+    unit: "per 200g box",
     short: "Hand-picked fresh button mushrooms — ideal for cooking & salads.",
-    intro:
-      "Fresh button mushrooms are harvested at peak freshness and chilled immediately to retain texture and flavour.",
-    benefits: [
-      "Low in calories, high in umami flavour.",
-      "Good source of B-vitamins (riboflavin, niacin).",
-      "Contains antioxidants and helpful bioactive compounds."
+    image: imgFresh,
+    variants: [
+      { id: "box200", label: "1 box (200 g)", price: 50 },
+      { id: "kg", label: "1 kg", price: 200 },
     ],
-    nutrition: {
-      Calories: "22 kcal / 100g",
-      Protein: "3.1 g",
-      Carbs: "3.3 g",
-      Fiber: "1.0 g",
-      Potassium: "318 mg"
-    }
   },
   {
-    id: "mush-002",
-    name: "Mushroom Pickle",
-    unit: "per 200g jar",
+    id: "pickle",
+    title: "Mushroom Pickle",
     price: 100,
-    img: pickleImg,
+    unit: "per 200g jar",
     short: "Tangy & spicy mushroom pickle made with traditional spices.",
-    intro:
-      "Our mushroom pickle is handcrafted using fresh mushrooms and traditional pickling spices for a tangy, long-lasting jar.",
-    benefits: [
-      "Adds concentrated flavour to meals.",
-      "Can act as a probiotic when naturally fermented."
+    image: imgPickle,
+    variants: [
+      { id: "jar200", label: "200 g jar", price: 100 },
+      { id: "jar400", label: "400 g jar", price: 200 },
     ],
-    nutrition: {
-      Calories: "80 kcal / 100g (approx)",
-      Fat: "6 g",
-      Sodium: "High (pickled product)",
-      Carbs: "4 g"
-    }
   },
   {
-    id: "mush-003",
-    name: "Dry Mushrooms",
-    unit: "per 100g",
+    id: "dry",
+    title: "Dry Mushrooms",
     price: 300,
-    img: dryImg,
-    short: "Dehydrated mushrooms, perfect for long-term storage and soups.",
-    intro:
-      "Dry mushrooms are dehydrated to preserve flavour and nutrients. Rehydrate in warm water or add directly to soups and stews.",
-    benefits: [
-      "Long shelf life and concentrated flavour.",
-      "Great for stocks, soups and powders."
-    ],
-    nutrition: {
-      Calories: "260 kcal / 100g (dried)",
-      Protein: "25 g",
-      Fiber: "20 g"
-    }
-  },
-  {
-    id: "mush-004",
-    name: "Mushroom Powder",
     unit: "per 100g",
-    price: 350,
-    img: powderImg,
-    short: "Finely ground mushroom powder — great for soups, rubs & smoothies.",
-    intro:
-      "Powdered mushrooms are made from dried fruiting bodies and are an easy way to add umami and nutrients.",
-    benefits: [
-      "Convenient and concentrated flavour.",
-      "Easy to measure and store."
-    ],
-    nutrition: {
-      Calories: "250 kcal / 100g",
-      Protein: "22 g",
-      Fiber: "18 g"
-    }
+    short: "Dehydrated mushrooms, perfect for long-term storage and soups.",
+    image: imgDry,
+    variants: null,
   },
   {
-    id: "mush-005",
-    name: "Mushroom Wariyan",
-    unit: "per 100g packet",
+    id: "powder",
+    title: "Mushroom Powder",
+    price: 450,
+    unit: "per 100g",
+    short: "Finely ground mushroom powder — perfect for seasoning.",
+    image: imgPowder,
+    variants: null,
+  },
+  {
+    id: "wariyan",
+    title: "Mushroom Wariyan",
     price: 120,
-    img: wariyanImg,
-    short: "Traditional mushroom wariyan — tasty & nutritious.",
-    intro:
-      "A regional favourite, mushroom wariyan is made using local seasoning and frying to create a crunchy snack.",
-    benefits: ["Tasty snack option", "Rich umami flavour"],
-    nutrition: {
-      Calories: "300 kcal / 100g (approx)",
-      Protein: "8 g"
-    }
-  }
+    unit: "per 100g packet",
+    short: "Traditional mushroom wadiyan — tasty & nutritious.",
+    image: imgWariyan,
+    variants: null,
+  },
 ];
 
-function NutritionTable({ data }) {
-  return (
-    <table className="nutrition-table" aria-label="Nutritional values">
-      <tbody>
-        {Object.entries(data).map(([k, v]) => (
-          <tr key={k}>
-            <td className="nutrient-key">{k}</td>
-            <td className="nutrient-val">{v}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
+function formatINR(n) {
+  return `₹${n.toFixed ? n.toFixed(0) : n}`;
 }
 
 export default function App() {
-  const [cartCount, setCartCount] = useState(0);
-  const [openId, setOpenId] = useState(null);
+  const [cart, setCart] = useState([]); // { productId, variantId?, qty }
+  const [sheetProduct, setSheetProduct] = useState(null); // product being chosen (for variants)
+  const [sheetVariant, setSheetVariant] = useState(null); // selected variant id in sheet
+  const [miniVisible, setMiniVisible] = useState(false);
 
-  function addToCart() {
-    setCartCount((c) => c + 1);
+  // when the sheet OR the cart drawer is open, prevent body scrolling
+  useEffect(() => {
+    const shouldLock = !!sheetProduct;
+    if (shouldLock) document.body.classList.add("no-scroll");
+    else document.body.classList.remove("no-scroll");
+
+    return () => document.body.classList.remove("no-scroll");
+  }, [sheetProduct]);
+
+  // Add to cart (public call)
+  function handleAdd(product, variantId = null, qty = 1) {
+    // if product has variants but no variantId supplied -> open sheet
+    if (product.variants && !variantId) {
+      setSheetProduct(product);
+      setSheetVariant(product.variants[0].id);
+      return;
+    }
+
+    // find price & label
+    const variant = product.variants ? product.variants.find((v) => v.id === variantId) : null;
+    const key = `${product.id}:${variant ? variant.id : "default"}`;
+
+    setCart((prev) => {
+      const found = prev.find((it) => it.key === key);
+      if (found) {
+        return prev.map((it) => (it.key === key ? { ...it, qty: it.qty + qty } : it));
+      } else {
+        return [
+          ...prev,
+          {
+            key,
+            productId: product.id,
+            productTitle: product.title,
+            variantId: variant ? variant.id : null,
+            variantLabel: variant ? variant.label : null,
+            price: variant ? variant.price : product.price,
+            qty,
+          },
+        ];
+      }
+    });
+
+    // show mini cart for a short moment
+    setMiniVisible(true);
+    setTimeout(() => setMiniVisible(true), 50);
   }
 
-  function toggleDetails(id) {
-    setOpenId((cur) => (cur === id ? null : id));
+  function openSheetForProduct(product) {
+    if (!product.variants) return;
+    setSheetProduct(product);
+    setSheetVariant(product.variants[0].id);
   }
 
-  // safe resolved logo & footer background
-  const logoSrc = "/anant_gill_logo.png";
-  const footerBg = "/footer-mushrooms-v2.jpg";
+  function closeSheet() {
+    setSheetProduct(null);
+    setSheetVariant(null);
+  }
+
+  function changeQty(key, delta) {
+    setCart((prev) =>
+      prev
+        .map((it) => (it.key === key ? { ...it, qty: Math.max(0, it.qty + delta) } : it))
+        .filter((it) => it.qty > 0)
+    );
+  }
+
+  function removeItem(key) {
+    setCart((prev) => prev.filter((it) => it.key !== key));
+  }
+
+  const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
+  const itemCount = cart.reduce((s, it) => s + it.qty, 0);
+
+  // when user confirms Add to Cart from sheet
+  function confirmAddFromSheet() {
+    if (!sheetProduct) return;
+    handleAdd(sheetProduct, sheetVariant, 1);
+    closeSheet();
+  }
+
+  // social links
+  const fbUrl = "https://www.facebook.com/share/177NfwxRKr/"; // your facebook link
+  const igUrl = "https://www.instagram.com/"; // replace if you have real IG link
 
   return (
-    <div className="site-root">
-      <header className="site-header">
-        <div className="container header-row">
-          <div className="brand">
-            <img src={logoSrc} alt="Anant Gill Agro Farm" className="logo" />
-            <div>
-              <div className="brand-title">Anant Gill Agro Farm</div>
-              <div className="brand-sub">Best quality fresh organic mushrooms &amp; delicious pickles</div>
-            </div>
-          </div>
-
-          <div className="header-actions">
-            <div className="cart-bubble" aria-live="polite">Cart ({cartCount})</div>
+    <div className="app">
+      {/* Topbar */}
+      <header className="topbar">
+        <div className="brand">
+          <img className="logo" src="/anant_gill_logo.png" alt="logo" />
+          <div>
+            <h1 className="title">Anant Gill Agro Farm</h1>
+            <div className="subtitle">Best quality fresh organic mushrooms & delicious pickles</div>
           </div>
         </div>
+        <button className="cart-button" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
+          Cart ({itemCount})
+        </button>
       </header>
 
-      <main className="container site-content">
+      {/* Content */}
+      <main className="content">
         <h2 className="section-title">Our Products</h2>
 
-        <div className="product-grid" role="list">
+        <div className="product-list">
           {PRODUCTS.map((p) => (
-            <article className="product-card" key={p.id} role="listitem" aria-labelledby={`p-${p.id}-title`}>
-              <div className="thumb">
-                <img src={getSrc(p.img, "")} alt={p.name} />
+            <article key={p.id} className="product-card">
+              <div className="product-media">
+                <img src={p.image} alt={p.title} />
               </div>
 
-              <div className="meta">
-                <h3 id={`p-${p.id}-title`}>{p.name}</h3>
-                <div className="subtitle">{p.unit}</div>
-                <p className="description">{p.short}</p>
+              <div className="product-body">
+                <h3>{p.title}</h3>
+                <div className="unit">{p.unit}</div>
+                <div className="short">{p.short}</div>
 
-                <div className="actions">
-                  <div className="price">₹{p.price}</div>
+                <div className="price-row">
+                  <div>
+                    <div className="price">{formatINR(p.price)}</div>
+                  </div>
 
-                  <div style={{ marginLeft: "auto", display: "flex", gap: 12 }}>
+                  <div className="actions">
                     <button
-                      className="btn"
-                      onClick={() => addToCart()}
-                      aria-label={`Add ${p.name} to cart`}
+                      className="add-btn"
+                      onClick={() => {
+                        // if product has variants -> open sheet; else add immediately
+                        if (p.variants) openSheetForProduct(p);
+                        else handleAdd(p, null, 1);
+                      }}
                     >
                       Add to Cart
                     </button>
-
-                    <button
-                      className="btn btn-outline"
-                      onClick={() => toggleDetails(p.id)}
-                      aria-expanded={openId === p.id}
-                    >
-                      {openId === p.id ? "Hide" : "More"}
-                    </button>
+                    {/* We removed the previous Details button — the short description is shown already */}
                   </div>
                 </div>
-
-                {openId === p.id && (
-                  <div className="details-panel" role="region" aria-live="polite">
-                    <h4>Introduction</h4>
-                    <p>{p.intro}</p>
-
-                    <h4>Health Benefits</h4>
-                    <ul>
-                      {p.benefits.map((b, i) => (
-                        <li key={i}>{b}</li>
-                      ))}
-                    </ul>
-
-                    <h4>Nutritional values (per 100g)</h4>
-                    <NutritionTable data={p.nutrition} />
-                  </div>
-                )}
               </div>
             </article>
           ))}
         </div>
 
-        <section className="card-summary" aria-labelledby="cart-title">
-          <h3 id="cart-title">Cart</h3>
-          <p>Your cart has {cartCount} item{cartCount === 1 ? "" : "s"}.</p>
-        </section>
-
-        <section className="health-section">
-          <h2 className="section-title">Health & Nutrition — Mushrooms</h2>
-          <p>
-            Mushrooms are nutrient-rich fungi that provide vitamins (B2, B3, B5), minerals like potassium, and dietary fiber while remaining low in calories.
-            They are a versatile ingredient — use them fresh, dried, pickled or powdered depending on your recipe.
-          </p>
-
-          <h4>Key benefits</h4>
-          <ul>
-            <li>Source of B-vitamins and minerals.</li>
-            <li>Low-calorie, nutrient-dense food useful in weight-management diets.</li>
-            <li>Contain antioxidants and bioactive compounds that support immune function.</li>
-          </ul>
-
-          <h4>Summary</h4>
-          <p>
-            Incorporate mushrooms into soups, stir-fries, salads and pickles to add flavour and nutrition. Dried mushrooms and powders are excellent for stocks and long-term storage.
-          </p>
-        </section>
+        {/* Inline Cart Box (below product list) */}
+        <div className="cart-box">
+          <h3>Cart</h3>
+          {cart.length === 0 ? (
+            <div className="cart-empty">Your cart is empty</div>
+          ) : (
+            <>
+              {cart.map((it) => (
+                <div key={it.key} style={{ marginBottom: 8 }}>
+                  <div style={{ fontWeight: 600 }}>
+                    {it.productTitle}
+                    {it.variantLabel ? ` × ${it.variantLabel}` : it.variantLabel}
+                  </div>
+                  <div style={{ marginTop: 6 }}>
+                    <button onClick={() => changeQty(it.key, -1)}>-</button>
+                    <span style={{ margin: "0 8px" }}>{formatINR(it.price * it.qty)}</span>
+                    <button onClick={() => changeQty(it.key, +1)}>+</button>
+                    <button style={{ marginLeft: 10 }} onClick={() => removeItem(it.key)}>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <div style={{ marginTop: 8 }}>
+                <div>Subtotal</div>
+                <div style={{ fontWeight: 700 }}>{formatINR(subtotal)}</div>
+              </div>
+            </>
+          )}
+        </div>
       </main>
 
-      <footer className="site-footer" style={{ backgroundImage: `url('${footerBg}')` }}>
+      {/* Footer */}
+      <footer className="site-footer" role="contentinfo">
         <div className="footer-inner">
-          <div style={{ maxWidth: 980, margin: "0 auto" }}>
-            <div style={{ display: "flex", gap: 14, alignItems: "center", marginBottom: 10 }}>
-              <img src={logoSrc} alt="logo" style={{ width: 56, height: 56, borderRadius: 10 }} />
-              <div>
-                <div style={{ fontWeight: 700, fontSize: 18 }}>Anant Gill Agro Farm</div>
-                <div style={{ opacity: 0.95 }}>Phone: <a href="tel:+918837554747">+91 88375 54747</a></div>
-                <div>Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a></div>
-              </div>
+          <div className="footer-left">
+            <img className="footer-logo" src="/anant_gill_logo.png" alt="logo" />
+            <h4>Anant Gill Agro Farm</h4>
+            <div className="contact-line">Phone: <a href="tel:+918837554747">+91 88375 54747</a></div>
+            <div className="contact-line">Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a></div>
+            <div className="contact-line address">Gali No. 1, Baba Deep Singh Avenue, village Nangli bhatha, Amritsar 143001</div>
+          </div>
+
+          <div className="footer-right">
+            <div style={{ marginBottom: 8, color: "rgba(255,255,255,0.9)" }}>Follow</div>
+            <div className="socials">
+              <a className="social-btn" href={fbUrl} target="_blank" rel="noreferrer" aria-label="Facebook">
+                {/* FB icon (simple) */}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 3H12C9.79 3 8 4.79 8 7V10H5V13H8V21H11V13H14L15 10H11V7C11 6.45 11.45 6 12 6H15V3Z" fill="white"/>
+                </svg>
+              </a>
+              <a className="social-btn" href={igUrl} target="_blank" rel="noreferrer" aria-label="Instagram">
+                {/* IG icon (simple) */}
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 2H17C20 2 22 4 22 7V17C22 20 20 22 17 22H7C4 22 2 20 2 17V7C2 4 4 2 7 2Z" stroke="white" strokeWidth="1.2" fill="none"/>
+                  <circle cx="12" cy="12" r="3" stroke="white" strokeWidth="1.2" />
+                  <circle cx="17.5" cy="6.5" r="0.6" fill="white" />
+                </svg>
+              </a>
             </div>
 
-            <p style={{ maxWidth: 720 }}>
-              Gali No. 1, Baba Deep Singh Avenue, Village Nangli Bhatha, Amritsar 143001
-            </p>
-
-            <div style={{ marginTop: 18 }}>
-              <div style={{ fontWeight: 600, marginBottom: 6 }}>Follow</div>
-              <div style={{ display: "flex", gap: 12 }}>
-                <a aria-label="facebook" className="social-btn" href="#"><span>f</span></a>
-                <a aria-label="instagram" className="social-btn" href="#"><span>📷</span></a>
-              </div>
-            </div>
-
-            <div style={{ marginTop: 28, opacity: 0.95 }}>
-              © {new Date().getFullYear()} Anant Gill Agro Farm
-            </div>
+            <div style={{ color: "rgba(255,255,255,0.95)", marginTop: 12 }}>© 2025 Anant Gill Agro Farm</div>
           </div>
         </div>
       </footer>
+
+      {/* Mini-cart sticky bottom */}
+      {itemCount > 0 && (
+        <div className="mini-cart" style={{ display: miniVisible ? "flex" : "flex" }}>
+          <div className="mini-left">
+            <div style={{ fontWeight: 700 }}>{itemCount} item{itemCount>1?"s":""}</div>
+            <div className="mini-sub">Subtotal {formatINR(subtotal)}</div>
+          </div>
+          <div>
+            <button className="view-cart" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
+              View Cart
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Sheet overlay for product variants */}
+      {sheetProduct && (
+        <div className="sheet-overlay" onClick={closeSheet}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <button style={{ borderRadius: 8 }} onClick={closeSheet}>✕</button>
+            </div>
+
+            <div style={{ padding: "8px 4px 24px" }}>
+              <div className="sheet-image" style={{ marginBottom: 12 }}>
+                <img src={sheetProduct.image} alt={sheetProduct.title} style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 10 }} />
+              </div>
+
+              <h3 style={{ marginTop: 0 }}>{sheetProduct.title}</h3>
+              <p style={{ color: "#556e64" }}>{sheetProduct.short}</p>
+
+              <div style={{ marginTop: 12, fontWeight: 600 }}>Choose size / variant</div>
+
+              <div style={{ marginTop: 8 }}>
+                {sheetProduct.variants.map((v) => (
+                  <label
+                    key={v.id}
+                    style={{
+                      display: "block",
+                      border: sheetVariant === v.id ? "2px solid #14502b" : "1px solid rgba(0,0,0,0.06)",
+                      borderRadius: 10,
+                      padding: 12,
+                      marginBottom: 8,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="variant"
+                      value={v.id}
+                      checked={sheetVariant === v.id}
+                      onChange={() => setSheetVariant(v.id)}
+                      style={{ marginRight: 10 }}
+                    />
+                    <span style={{ fontWeight: 600 }}>{v.label}</span>
+                    <div style={{ color: "#556e64" }}>{formatINR(v.price)}</div>
+                  </label>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                <button className="add-btn" style={{ padding: "10px 16px" }} onClick={confirmAddFromSheet}>
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
