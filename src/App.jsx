@@ -1,5 +1,5 @@
 // src/App.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./index.css";
 
 /*
@@ -68,7 +68,12 @@ const PRODUCTS = [
 ];
 
 function formatINR(n) {
-  return `₹${n.toFixed ? n.toFixed(0) : n}`;
+  try {
+    const nf = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+    return `₹${nf.format(Number(n) || 0)}`;
+  } catch (e) {
+    return `₹${Math.round(n || 0)}`;
+  }
 }
 
 export default function App() {
@@ -77,7 +82,10 @@ export default function App() {
   const [sheetVariant, setSheetVariant] = useState(null); // selected variant id in sheet
   const [miniVisible, setMiniVisible] = useState(false);
 
-  // when the sheet OR the cart drawer is open, prevent body scrolling
+  const cartBoxRef = useRef(null);
+  const miniTimerRef = useRef(null);
+
+  // when the sheet is open, prevent body scrolling
   useEffect(() => {
     const shouldLock = !!sheetProduct;
     if (shouldLock) document.body.classList.add("no-scroll");
@@ -85,6 +93,13 @@ export default function App() {
 
     return () => document.body.classList.remove("no-scroll");
   }, [sheetProduct]);
+
+  // cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (miniTimerRef.current) clearTimeout(miniTimerRef.current);
+    };
+  }, []);
 
   // Add to cart (public call)
   function handleAdd(product, variantId = null, qty = 1) {
@@ -119,9 +134,13 @@ export default function App() {
       }
     });
 
-    // show mini cart for a short moment
+    // show mini cart briefly
     setMiniVisible(true);
-    setTimeout(() => setMiniVisible(true), 50);
+    if (miniTimerRef.current) clearTimeout(miniTimerRef.current);
+    miniTimerRef.current = setTimeout(() => {
+      setMiniVisible(false);
+      miniTimerRef.current = null;
+    }, 3500);
   }
 
   function openSheetForProduct(product) {
@@ -158,38 +177,52 @@ export default function App() {
   }
 
   // social links
-  const fbUrl = "https://www.facebook.com/share/177NfwxRKr/"; // your facebook link
-  const igUrl = "https://www.instagram.com/"; // replace if you have real IG link
+  const fbUrl = "https://www.facebook.com/share/177NfwxRKr/"; // replace if you have an official FB page
+  // <-- updated Instagram official link as provided by you
+  const igUrl = "https://www.instagram.com/anant.gill.agro.farm?igsh=MWVuNzUwbDc2bjl0aA==";
+
+  function scrollToCart() {
+    if (cartBoxRef.current) {
+      cartBoxRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // fallback to bottom
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    }
+  }
 
   return (
     <div className="app">
       {/* Topbar */}
-      <header className="topbar">
+      <header className="topbar" role="banner">
         <div className="brand">
-          <img className="logo" src="/anant_gill_logo.png" alt="logo" />
+          <img className="logo" src="/anant_gill_logo.png" alt="Anant Gill Agro Farm logo" />
           <div>
             <h1 className="title">Anant Gill Agro Farm</h1>
             <div className="subtitle">Best quality fresh organic mushrooms & delicious pickles</div>
           </div>
         </div>
-        <button className="cart-button" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
+        <button
+          className="cart-button"
+          onClick={scrollToCart}
+          aria-label={`Open cart with ${itemCount} item${itemCount !== 1 ? "s" : ""}`}
+        >
           Cart ({itemCount})
         </button>
       </header>
 
       {/* Content */}
-      <main className="content">
+      <main className="content" role="main">
         <h2 className="section-title">Our Products</h2>
 
         <div className="product-list">
           {PRODUCTS.map((p) => (
-            <article key={p.id} className="product-card">
+            <article key={p.id} className="product-card" aria-labelledby={`product-${p.id}-title`}>
               <div className="product-media">
                 <img src={p.image} alt={p.title} />
               </div>
 
               <div className="product-body">
-                <h3>{p.title}</h3>
+                <h3 id={`product-${p.id}-title`}>{p.title}</h3>
                 <div className="unit">{p.unit}</div>
                 <div className="short">{p.short}</div>
 
@@ -209,7 +242,6 @@ export default function App() {
                     >
                       Add to Cart
                     </button>
-                    {/* We removed the previous Details button — the short description is shown already */}
                   </div>
                 </div>
               </div>
@@ -218,7 +250,7 @@ export default function App() {
         </div>
 
         {/* Inline Cart Box (below product list) */}
-        <div className="cart-box">
+        <div className="cart-box" id="cart-box" ref={cartBoxRef}>
           <h3>Cart</h3>
           {cart.length === 0 ? (
             <div className="cart-empty">Your cart is empty</div>
@@ -228,12 +260,16 @@ export default function App() {
                 <div key={it.key} style={{ marginBottom: 8 }}>
                   <div style={{ fontWeight: 600 }}>
                     {it.productTitle}
-                    {it.variantLabel ? ` × ${it.variantLabel}` : it.variantLabel}
+                    {it.variantLabel ? ` × ${it.variantLabel}` : ""}
                   </div>
                   <div style={{ marginTop: 6 }}>
-                    <button onClick={() => changeQty(it.key, -1)}>-</button>
+                    <button aria-label={`Decrease qty of ${it.productTitle}`} onClick={() => changeQty(it.key, -1)}>
+                      -
+                    </button>
                     <span style={{ margin: "0 8px" }}>{formatINR(it.price * it.qty)}</span>
-                    <button onClick={() => changeQty(it.key, +1)}>+</button>
+                    <button aria-label={`Increase qty of ${it.productTitle}`} onClick={() => changeQty(it.key, +1)}>
+                      +
+                    </button>
                     <button style={{ marginLeft: 10 }} onClick={() => removeItem(it.key)}>
                       Remove
                     </button>
@@ -253,26 +289,43 @@ export default function App() {
       <footer className="site-footer" role="contentinfo">
         <div className="footer-inner">
           <div className="footer-left">
-            <img className="footer-logo" src="/anant_gill_logo.png" alt="logo" />
+            <img className="footer-logo" src="/anant_gill_logo.png" alt="Anant Gill Agro Farm logo" />
             <h4>Anant Gill Agro Farm</h4>
-            <div className="contact-line">Phone: <a href="tel:+918837554747">+91 88375 54747</a></div>
-            <div className="contact-line">Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a></div>
+            <div className="contact-line">
+              Phone: <a href="tel:+918837554747">+91 88375 54747</a>
+            </div>
+            <div className="contact-line">
+              Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a>
+            </div>
             <div className="contact-line address">Gali No. 1, Baba Deep Singh Avenue, village Nangli bhatha, Amritsar 143001</div>
           </div>
 
           <div className="footer-right">
             <div style={{ marginBottom: 8, color: "rgba(255,255,255,0.9)" }}>Follow</div>
             <div className="socials">
-              <a className="social-btn" href={fbUrl} target="_blank" rel="noreferrer" aria-label="Facebook">
-                {/* FB icon (simple) */}
+              <a
+                className="social-btn"
+                href={fbUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Facebook"
+                title="Facebook"
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M15 3H12C9.79 3 8 4.79 8 7V10H5V13H8V21H11V13H14L15 10H11V7C11 6.45 11.45 6 12 6H15V3Z" fill="white"/>
+                  <path d="M15 3H12C9.79 3 8 4.79 8 7V10H5V13H8V21H11V13H14L15 10H11V7C11 6.45 11.45 6 12 6H15V3Z" fill="white" />
                 </svg>
               </a>
-              <a className="social-btn" href={igUrl} target="_blank" rel="noreferrer" aria-label="Instagram">
-                {/* IG icon (simple) */}
+
+              <a
+                className="social-btn"
+                href={igUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Instagram"
+                title="Instagram"
+              >
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 2H17C20 2 22 4 22 7V17C22 20 20 22 17 22H7C4 22 2 20 2 17V7C2 4 4 2 7 2Z" stroke="white" strokeWidth="1.2" fill="none"/>
+                  <path d="M7 2H17C20 2 22 4 22 7V17C22 20 20 22 17 22H7C4 22 2 20 2 17V7C2 4 4 2 7 2Z" stroke="white" strokeWidth="1.2" fill="none" />
                   <circle cx="12" cy="12" r="3" stroke="white" strokeWidth="1.2" />
                   <circle cx="17.5" cy="6.5" r="0.6" fill="white" />
                 </svg>
@@ -286,13 +339,15 @@ export default function App() {
 
       {/* Mini-cart sticky bottom */}
       {itemCount > 0 && (
-        <div className="mini-cart" style={{ display: miniVisible ? "flex" : "flex" }}>
+        <div className="mini-cart" style={{ display: miniVisible ? "flex" : "none" }} aria-live="polite">
           <div className="mini-left">
-            <div style={{ fontWeight: 700 }}>{itemCount} item{itemCount>1?"s":""}</div>
+            <div style={{ fontWeight: 700 }}>
+              {itemCount} item{itemCount > 1 ? "s" : ""}
+            </div>
             <div className="mini-sub">Subtotal {formatINR(subtotal)}</div>
           </div>
           <div>
-            <button className="view-cart" onClick={() => window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" })}>
+            <button className="view-cart" onClick={scrollToCart}>
               View Cart
             </button>
           </div>
@@ -304,7 +359,9 @@ export default function App() {
         <div className="sheet-overlay" onClick={closeSheet}>
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
             <div style={{ display: "flex", justifyContent: "flex-start" }}>
-              <button style={{ borderRadius: 8 }} onClick={closeSheet}>✕</button>
+              <button style={{ borderRadius: 8 }} onClick={closeSheet} aria-label="Close variants sheet">
+                ✕
+              </button>
             </div>
 
             <div style={{ padding: "8px 4px 24px" }}>
