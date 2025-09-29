@@ -2,9 +2,10 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import './index.css'; // REQUIRED - ensures Tailwind & your CSS are included
+import './index.css'; // REQUIRED - ensures styles are loaded
 
-createRoot(document.getElementById('root')).render(
+const root = createRoot(document.getElementById('root'));
+root.render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
