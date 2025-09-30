@@ -1,10 +1,15 @@
-import React from 'react'
+// src/pages/Admin.jsx
+import React from 'react';
 
-export default function Admin(){
+export default function Admin() {
   return (
-    <div style={{padding:20}}>
+    <div style={{ padding: 20 }}>
       <h2>Admin Panel (placeholder)</h2>
-      <p>When Firebase is connected, this area will let you add/edit products, change prices and stock.</p>
+      <p>
+        Firebase is currently disabled. If you want to enable the admin area,
+        set up Firebase and set <code>FIREBASE_ENABLED</code> to <code>true</code>
+        in <code>src/firebaseConfig.js</code>, and add the Firebase config env vars.
+      </p>
     </div>
-  )
+  );
 }
