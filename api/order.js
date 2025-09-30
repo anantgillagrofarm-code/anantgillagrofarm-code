@@ -1,126 +1,152 @@
 // api/order.js
+// Vercel serverless endpoint (ES module). Expects JSON POSTs with order details.
+// Make sure @sendgrid/mail is installed and you have set SENDGRID_API_KEY, TO_EMAIL, FROM_EMAIL in Vercel.
+
 import sendgrid from "@sendgrid/mail";
 
-/**
- * Serverless endpoint to receive order POSTs and email an order summary via SendGrid.
- *
- * Expected JSON POST body:
- * {
- *   name: "Customer Name",
- *   phone: "1234567890",
- *   email: "customer@example.com",
- *   address: "123 Main St...",
- *   items: [ { id, title, qty, price }, ... ],
- *   note: "optional note",
- *   paymentMethod: "COD" | "ONLINE"
- * }
- *
- * Environment variables (set in Vercel dashboard):
- *   SENDGRID_API_KEY - your sendgrid API key (required)
- *   FROM_EMAIL       - sender email (must be verified in SendGrid). default falls back to anantgillagrofarm@gmail.com
- *   TO_EMAIL         - recipient (admin) email to receive order alerts. default falls back to anantgillagrofarm@gmail.com
- */
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const TO_EMAIL = process.env.TO_EMAIL;
+const FROM_EMAIL = process.env.FROM_EMAIL || process.env.TO_EMAIL; // fallback
+
+if (!SENDGRID_API_KEY) {
+  console.error("Missing SENDGRID_API_KEY env var");
+} else {
+  sendgrid.setApiKey(SENDGRID_API_KEY);
+}
+
+function formatCurrency(n) {
+  try {
+    return `₹${Number(n).toLocaleString("en-IN")}`;
+  } catch {
+    return `₹${n}`;
+  }
+}
+
+function safeText(s) {
+  return (s ?? "").toString().replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function buildHtml(order) {
+  const { name, phone, email, address, note, items = [], total } = order;
+
+  const rows = (items || [])
+    .map((it) => {
+      const title = safeText(it.title || it.name || "");
+      const qty = safeText(it.qty ?? it.quantity ?? it.qty ?? 1);
+      const price = safeText(it.price ?? "");
+      const line = it.price ? formatCurrency(it.price) : "";
+      return `<tr>
+        <td style="padding:8px;border:1px solid #e8e8e8;">${title}</td>
+        <td style="padding:8px;border:1px solid #e8e8e8;text-align:center;">${qty}</td>
+        <td style="padding:8px;border:1px solid #e8e8e8;text-align:right;">${line}</td>
+      </tr>`;
+    })
+    .join("");
+
+  return `<!doctype html>
+  <html>
+    <body style="font-family: Arial, Helvetica, sans-serif; color:#213; line-height:1.4;">
+      <h2 style="color:#154b2b;">New order received</h2>
+      <p><strong>Customer:</strong> ${safeText(name)}</p>
+      <p><strong>Phone:</strong> ${safeText(phone)} &nbsp; | &nbsp; <strong>Email:</strong> ${safeText(email)}</p>
+      <p><strong>Address:</strong><br/>${safeText(address)}</p>
+      ${note ? `<p><strong>Note:</strong> ${safeText(note)}</p>` : ""}
+      <h3 style="margin-top:18px;">Items</h3>
+      <table style="border-collapse: collapse; width:100%; max-width:700px;">
+        <thead>
+          <tr>
+            <th style="padding:8px;border:1px solid #e8e8e8;background:#f6fff7;text-align:left;">Item</th>
+            <th style="padding:8px;border:1px solid #e8e8e8;background:#f6fff7;text-align:center;">Qty</th>
+            <th style="padding:8px;border:1px solid #e8e8e8;background:#f6fff7;text-align:right;">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows || `<tr><td colspan="3" style="padding:8px;border:1px solid #e8e8e8;">(no items)</td></tr>`}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2" style="padding:8px;border:1px solid #e8e8e8;text-align:right;font-weight:700;">Subtotal</td>
+            <td style="padding:8px;border:1px solid #e8e8e8;text-align:right;font-weight:700;">${formatCurrency(total ?? 0)}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <hr style="margin:18px 0; border:0; border-top:1px solid #eee;"/>
+      <p style="font-size:13px;color:#666;">This email was sent from your website order form.</p>
+    </body>
+  </html>`;
+}
 
 export default async function handler(req, res) {
-  // only accept POST
+  // Only allow POST
+  if (req.method === "OPTIONS") {
+    // CORS preflight
+    res.setHeader("Access-Control-Allow-Origin", "*");
+    res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
+    res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+    return res.status(204).end();
+  }
+
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Only POST allowed" });
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ error: "Method not allowed, use POST" });
   }
 
-  const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-  const FROM_EMAIL = process.env.FROM_EMAIL || "anantgillagrofarm@gmail.com";
-  const TO_EMAIL = process.env.TO_EMAIL || "anantgillagrofarm@gmail.com";
-
-  if (!SENDGRID_API_KEY) {
-    console.error("Missing SENDGRID_API_KEY");
-    return res
-      .status(500)
-      .json({ error: "Server misconfiguration: missing SendGrid key" });
-  }
-  if (!FROM_EMAIL || !TO_EMAIL) {
-    return res
-      .status(500)
-      .json({ error: "Server misconfiguration: missing email address (FROM_EMAIL or TO_EMAIL)" });
+  // Simple content-type check
+  if (!req.headers["content-type"]?.includes("application/json")) {
+    return res.status(400).json({ error: "Expected application/json body" });
   }
 
-  // parse request body
-  const { name, phone, email, address, items = [], note = "", paymentMethod = "" } = req.body || {};
+  let data;
+  try {
+    data = req.body;
+  } catch (err) {
+    return res.status(400).json({ error: "Invalid JSON body" });
+  }
+
+  // Minimal validation
+  const name = data.name || data.customerName || data.fullName;
+  const phone = data.phone;
+  const address = data.address;
+  const items = Array.isArray(data.items) ? data.items : data.cart ?? [];
 
   if (!name || !phone) {
-    return res.status(400).json({ error: "Missing required fields" });
+    return res.status(400).json({ error: "Missing required fields: name and phone" });
   }
 
-  // configure SendGrid
-  sendgrid.setApiKey(SENDGRID_API_KEY);
+  const total = data.total ?? data.subtotal ?? 0;
+  const note = data.note ?? data.message ?? "";
 
-  // build a simple HTML summary of the order
-  function itemsHtml(itemsArr) {
-    if (!Array.isArray(itemsArr) || itemsArr.length === 0) return "<p>No items</p>";
-    const lines = itemsArr.map(it => {
-      const title = it.title || it.name || "Item";
-      const qty = it.qty ?? it.quantity ?? 1;
-      const price = ("price" in it) ? `₹${it.price}` : "";
-      return `<tr>
-                <td style="padding:6px 8px;border:1px solid #eee">${title}</td>
-                <td style="padding:6px 8px;border:1px solid #eee;text-align:center">${qty}</td>
-                <td style="padding:6px 8px;border:1px solid #eee;text-align:right">${price}</td>
-              </tr>`;
-    });
-    return `<table style="border-collapse:collapse;width:100%;margin-top:8px">
-              <thead>
-                <tr>
-                  <th style="text-align:left;padding:6px 8px;border:1px solid #eee">Product</th>
-                  <th style="text-align:center;padding:6px 8px;border:1px solid #eee">Qty</th>
-                  <th style="text-align:right;padding:6px 8px;border:1px solid #eee">Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${lines.join("\n")}
-              </tbody>
-            </table>`;
+  // Compose email
+  const subject = `New order from ${name} — ${phone} — ${formatCurrency(total)}`;
+  const html = buildHtml({ name, phone, email: data.email || "", address, note, items, total });
+  const text = `New order from ${name}\nPhone: ${phone}\nEmail: ${data.email || ""}\nAddress: ${address}\nTotal: ${formatCurrency(total)}\n\nItems:\n${(items || [])
+    .map((it) => ` - ${it.title || it.name || ""} x${it.qty ?? 1} ${it.price ? formatCurrency(it.price) : ""}`)
+    .join("\n")}`;
+
+  if (!SENDGRID_API_KEY) {
+    console.error("SENDGRID_API_KEY not set");
+    return res.status(500).json({ error: "Server misconfiguration: missing SendGrid key" });
   }
-
-  const html = `
-    <div style="font-family: Arial, Helvetica, sans-serif; color: #111;">
-      <h2>New order from ${escapeHtml(name)}</h2>
-      <p><strong>Phone:</strong> ${escapeHtml(phone)}<br/>
-         <strong>Email:</strong> ${escapeHtml(email || "—")}<br/>
-         <strong>Payment method:</strong> ${escapeHtml(paymentMethod || "—")}
-      </p>
-      <p><strong>Address:</strong><br/>${escapeHtml(address || "—")}</p>
-      <p><strong>Note:</strong> ${escapeHtml(note || "—")}</p>
-      <h3>Items</h3>
-      ${itemsHtml(items)}
-      <hr/>
-      <p style="font-size:13px;color:#666">Order received on ${new Date().toLocaleString()}</p>
-    </div>
-  `;
-
-  const subject = `New Order — ${name} — ${phone}`;
+  if (!TO_EMAIL) {
+    console.error("TO_EMAIL not set");
+    return res.status(500).json({ error: "Server misconfiguration: missing TO_EMAIL" });
+  }
 
   const msg = {
     to: TO_EMAIL,
     from: FROM_EMAIL,
     subject,
+    text,
     html,
   };
 
   try {
     await sendgrid.send(msg);
-    return res.status(200).json({ ok: true });
+    // also return order id or summary to client if you want
+    return res.status(200).json({ ok: true, message: "Order email sent" });
   } catch (err) {
-    console.error("SendGrid send error:", err?.response?.body || err);
-    return res.status(500).json({ error: "Failed to send email" });
+    console.error("SendGrid error:", err?.response?.body || err);
+    return res.status(500).json({ error: "Failed to send email", details: err?.message || err });
   }
-}
-
-// small utility to avoid basic HTML injection
-function escapeHtml(str) {
-  if (!str) return "";
-  return String(str)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
 }
