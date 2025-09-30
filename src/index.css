@@ -6,21 +6,11 @@ html, body, #root { height: 100%; }
 body {
   margin: 0;
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background: url('/bg-mushrooms.jpg') center/cover fixed no-repeat;
+  color: #183827;
   -webkit-font-smoothing:antialiased;
   -moz-osx-font-smoothing:grayscale;
-  color: #183827;
 }
-
-/* Apply background image to the main page (excluding footer).
-   The .app element gets the background with a subtle overlay to keep text readable. */
-.app {
-  min-height: 100vh;
-  background:
-    linear-gradient(rgba(240, 250, 246, 0.85), rgba(240, 250, 246, 0.85)),
-    url('/bg-mushrooms.jpg') center / cover fixed no-repeat;
-}
-
-/* Lock body scroll when an overlay is open */
 body.no-scroll { overflow: hidden; }
 
 /* header / topbar */
@@ -40,12 +30,14 @@ body.no-scroll { overflow: hidden; }
 .title { margin:0; color:#14502b; font-weight:700; font-size:18px; }
 .subtitle { color:#7c8c82; font-size:12px; }
 
-/* cart small button */
+/* cart + health buttons */
 .cart-button {
   border-radius:14px;
   border:1px solid rgba(0,0,0,0.06);
   padding:8px 12px;
   background:white;
+  cursor:pointer;
+  font-size:14px;
 }
 
 /* main content area */
@@ -53,6 +45,9 @@ body.no-scroll { overflow: hidden; }
   max-width:920px;
   margin: 14px auto;
   padding: 0 16px 120px;
+  background: rgba(255,255,255,0.88);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
 
 /* section title */
@@ -103,7 +98,7 @@ body.no-scroll { overflow: hidden; }
   transition: transform 120ms ease;
 }
 .add-btn:active { transform: translateY(2px); }
-.detail-btn { background:transparent; border:1px solid rgba(0,0,0,0.06); padding:8px 10px; border-radius:10px; }
+.detail-btn { background:transparent; border:1px solid rgba(0,0,0,0.06); padding:8px 10px; border-radius:10px; cursor:pointer; }
 
 /* small screens */
 @media (max-width:600px) {
@@ -125,7 +120,7 @@ img { max-width:100%; height:auto; display:block; }
   box-shadow: 0 4px 12px rgba(0,0,0,0.04);
 }
 
-/* footer with its own background image in public/footer-mushrooms-v2.jpg */
+/* footer with background image */
 .site-footer {
   color: #fff;
   background: linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)), url('/footer-mushrooms-v2.jpg') center / cover no-repeat;
@@ -166,10 +161,26 @@ img { max-width:100%; height:auto; display:block; }
 .sheet { width:100%; max-width:720px; background:#fff; border-radius:16px 16px 0 0; padding:12px; max-height:92vh; overflow:auto; }
 .sheet-image img { width:100%; height:260px; object-fit:cover; border-radius:8px; }
 
-/* drawer (unused in this build but kept for style) */
+/* drawer (unused but style kept) */
 .drawer-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.18); z-index:1250; display:flex; justify-content:flex-end; }
 .drawer { width:100%; max-width:420px; height:100%; background:#fff; padding:20px; overflow:auto; box-shadow:-6px 0 24px rgba(0,0,0,0.18); }
 
 /* a few small helpers */
 a { color: #104b2b; }
 button { font-family: inherit; }
+
+/* ---------- Toggle/accordion animation for Health page ---------- */
+.toggle-content {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 360ms cubic-bezier(.2,.8,.2,1), opacity 240ms ease, transform 240ms ease;
+  opacity: 0;
+  transform: translateY(-6px);
+}
+.toggle-content.open {
+  max-height: 1200px;
+  opacity: 1;
+  transform: translateY(0);
+}
+.toggle-content ul { margin: 8px 0 0 18px; color: #444; }
+.toggle-content h4 { margin-top: 8px; margin-bottom: 6px; color: #14502b; }
