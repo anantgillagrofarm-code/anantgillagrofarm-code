@@ -1,5 +1,6 @@
 // src/firebaseClient.js
-// Lazy initialization of Firebase (modular SDK v9+). Safe to include even if Firebase is disabled.
+// Lazy/dynamic initialization of Firebase (modular SDK v9+).
+// This file will only import heavy firebase modules when FIREBASE_ENABLED is true.
 
 import { firebaseConfig, FIREBASE_ENABLED } from './firebaseConfig';
 
@@ -7,41 +8,72 @@ let app = null;
 let firestoreInstance = null;
 let authInstance = null;
 let storageInstance = null;
+let initializing = false;
 
 /**
- * Ensure firebase is initialized (dynamically imports modules).
- * Returns the initialized app or null if disabled.
+ * Dynamically import and initialize Firebase only when needed.
+ * Returns the initialized app, or null if Firebase is disabled.
  */
 export async function ensureFirebaseInitialized() {
   if (!FIREBASE_ENABLED) return null;
   if (app) return app;
 
-  // dynamic imports (modular SDK)
-  const firebaseAppModule = await import('firebase/app');
-  const { initializeApp } = firebaseAppModule;
-  app = initializeApp(firebaseConfig);
-
-  // import services
-  try {
-    const firestoreModule = await import('firebase/firestore');
-    const authModule = await import('firebase/auth');
-    const storageModule = await import('firebase/storage');
-
-    firestoreInstance = firestoreModule.getFirestore(app);
-    authInstance = authModule.getAuth(app);
-    storageInstance = storageModule.getStorage(app);
-  } catch (err) {
-    // If some services are not used that's fine — keep the app initialized
-    console.warn('Some Firebase services failed to import:', err);
+  // Prevent parallel initializations
+  if (initializing) {
+    // wait until initialization completes
+    return new Promise((resolve, reject) => {
+      const check = () => {
+        if (app) return resolve(app);
+        if (!initializing) return resolve(app);
+        setTimeout(check, 50);
+      };
+      check();
+    });
   }
 
-  return app;
+  initializing = true;
+  try {
+    // dynamic import of modular SDK
+    const firebaseAppModule = await import('firebase/app');
+    const { initializeApp } = firebaseAppModule;
+
+    app = initializeApp(firebaseConfig);
+
+    // dynamically import services; some may fail if not installed, so wrap in try/catch
+    try {
+      const firestoreModule = await import('firebase/firestore');
+      firestoreInstance = firestoreModule.getFirestore(app);
+    } catch (e) {
+      // Not fatal — only use Firestore if available
+      console.warn('Firestore not initialized:', e.message || e);
+    }
+
+    try {
+      const authModule = await import('firebase/auth');
+      authInstance = authModule.getAuth(app);
+    } catch (e) {
+      console.warn('Auth not initialized:', e.message || e);
+    }
+
+    try {
+      const storageModule = await import('firebase/storage');
+      storageInstance = storageModule.getStorage(app);
+    } catch (e) {
+      console.warn('Storage not initialized:', e.message || e);
+    }
+
+    return app;
+  } finally {
+    initializing = false;
+  }
 }
 
+/** Convenient initializer you can call on app startup (optional). */
 export async function initFirebaseIfNeeded() {
   return ensureFirebaseInitialized();
 }
 
+/** Getter helpers that ensure initialization and return the service or null. */
 export async function getFirestore() {
   await ensureFirebaseInitialized();
   return firestoreInstance;
