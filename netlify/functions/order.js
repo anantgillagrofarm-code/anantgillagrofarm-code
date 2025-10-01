@@ -1,46 +1,66 @@
-// netlify/functions/order.js
-import sendgrid from "@sendgrid/mail";
+const sgMail = require("@sendgrid/mail");
 
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
-const TO_EMAIL = process.env.TO_EMAIL;
-const FROM_EMAIL = process.env.FROM_EMAIL || TO_EMAIL;
+exports.handler = async (event) => {
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ error: "Method not allowed" }),
+    };
+  }
 
-if (SENDGRID_API_KEY) {
-  sendgrid.setApiKey(SENDGRID_API_KEY);
-}
-
-export async function handler(event, context) {
   try {
-    if (event.httpMethod !== "POST") {
-      return { statusCode: 405, body: JSON.stringify({ error: "Method not allowed" }) };
+    // Parse body safely
+    let data;
+    try {
+      data = JSON.parse(event.body);
+    } catch (err) {
+      return {
+        statusCode: 400,
+        body: JSON.stringify({ error: "Invalid JSON input" }),
+      };
     }
 
-    const data = JSON.parse(event.body || "{}");
+    const { name, phone, email, address, note, cart } = data;
 
-    if (!SENDGRID_API_KEY) {
-      console.error("Missing SENDGRID_API_KEY");
-      return { statusCode: 500, body: JSON.stringify({ error: "Email service not configured" }) };
-    }
+    // Setup SendGrid
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
     const msg = {
-      to: TO_EMAIL,
-      from: FROM_EMAIL,
-      subject: `New Order from ${data.name || "Guest"}`,
+      to: process.env.TO_MAIL, // Your email
+      from: process.env.FROM_MAIL, // Verified sender in SendGrid
+      subject: `New Order from ${name}`,
       html: `
-        <h3>New Order Received</h3>
-        <p><b>Name:</b> ${data.name || ""}</p>
-        <p><b>Phone:</b> ${data.phone || ""}</p>
-        <p><b>Email:</b> ${data.email || ""}</p>
-        <p><b>Address:</b> ${data.address || ""}</p>
-        <p><b>Note:</b> ${data.note || ""}</p>
+        <h2>New Order Received</h2>
+        <p><strong>Name:</strong> ${name}</p>
+        <p><strong>Phone:</strong> ${phone}</p>
+        <p><strong>Email:</strong> ${email}</p>
+        <p><strong>Address:</strong> ${address}</p>
+        <p><strong>Note:</strong> ${note || "None"}</p>
+        <h3>Cart Items</h3>
+        <ul>
+          ${
+            cart && cart.length
+              ? cart.map(
+                  (item) =>
+                    `<li>${item.name} - ${item.qty} x ₹${item.price}</li>`
+                ).join("")
+              : "<li>No items</li>"
+          }
+        </ul>
       `,
     };
 
-    await sendgrid.send(msg);
+    await sgMail.send(msg);
 
-    return { statusCode: 200, body: JSON.stringify({ success: true }) };
-  } catch (err) {
-    console.error("Order function error:", err);
-    return { statusCode: 500, body: JSON.stringify({ error: "Failed to process order" }) };
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ success: true, message: "Order processed successfully" }),
+    };
+  } catch (error) {
+    console.error("Order function error:", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: "Failed to process order" }),
+    };
   }
-}
+};
