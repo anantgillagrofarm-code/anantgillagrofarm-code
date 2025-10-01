@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Netlify Function Test</title>
+</head>
+<body>
+  <h2>Test Netlify Function</h2>
+  <button onclick="sendTest()">Send Test Request</button>
+  <pre id="output"></pre>
+
+  <script>
+    async function sendTest() {
+      try {
+        const res = await fetch('/.netlify/functions/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: "Test User",
+            phone: "1234567890",
+            email: "test@example.com",
+            address: "Test Address",
+            note: "Testing order",
+            cart: []
+          })
+        });
+        const text = await res.text();
+        document.getElementById('output').textContent = text;
+      } catch (err) {
+        document.getElementById('output').textContent = err.toString();
+      }
+    }
+  </script>
+</body>
+</html>
