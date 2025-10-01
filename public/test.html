@@ -1,34 +1,37 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Netlify Function Test</title>
-</head>
-<body>
-  <h2>Test Netlify Function</h2>
-  <button onclick="sendTest()">Send Test Request</button>
-  <pre id="output"></pre>
+<script>
+  async function sendTest() {
+    try {
+      const res = await fetch('/.netlify/functions/order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: "Test User",
+          phone: "9999999999",
+          email: "test@example.com",
+          address: "Test address",
+          note: "Testing order function"
+        })
+      });
 
-  <script>
-    async function sendTest() {
+      // Read as text first (avoids "Unexpected end of JSON input")
+      const text = await res.text();
+
+      let data;
       try {
-        const res = await fetch('/.netlify/functions/order', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: "Test User",
-            phone: "1234567890",
-            email: "test@example.com",
-            address: "Test Address",
-            note: "Testing order",
-            cart: []
-          })
-        });
-        const text = await res.text();
-        document.getElementById('output').textContent = text;
+        data = text ? JSON.parse(text) : null;
       } catch (err) {
-        document.getElementById('output').textContent = err.toString();
+        throw new Error(`Invalid JSON response: ${text || "<empty>"}`);
       }
+
+      if (!res.ok) {
+        const message = (data && data.error) || data?.message || `HTTP ${res.status}`;
+        throw new Error(message);
+      }
+
+      alert("Order function success: " + JSON.stringify(data));
+    } catch (err) {
+      alert("Order function failed: " + err.message);
+      console.error("Order test error:", err);
     }
-  </script>
-</body>
-</html>
+  }
+</script>
