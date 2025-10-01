@@ -1,14 +1,14 @@
 // src/main.jsx
 import React from "react";
 import { createRoot } from "react-dom/client";
-import App from "./pages/App";    // <-- important: points to src/pages/App.jsx
+import App from "./pages/App.jsx"; // <- explicit extension, avoids resolve issues
 import "./index.css";
 
-const mount = document.getElementById("root");
+const rootElId = "root";
+let mount = document.getElementById(rootElId);
 if (!mount) {
-  // fallback: create a root element if missing (helps static test pages)
-  const el = document.createElement("div");
-  el.id = "root";
-  document.body.appendChild(el);
+  mount = document.createElement("div");
+  mount.id = rootElId;
+  document.body.appendChild(mount);
 }
-createRoot(document.getElementById("root")).render(<App />);
+createRoot(document.getElementById(rootElId)).render(<App />);
