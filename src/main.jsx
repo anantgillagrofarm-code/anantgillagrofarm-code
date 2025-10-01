@@ -1,11 +1,15 @@
 // src/main.jsx
 import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App.jsx";   // Corrected path
+import { createRoot } from "react-dom/client";
+import App from "./App";
 import "./index.css";
 
-// Create root and render App
-ReactDOM.createRoot(document.getElementById("root")).render(
+const rootEl = document.getElementById("root");
+if (!rootEl) {
+  throw new Error('No root element found. Make sure "index.html" has <div id="root"></div>');
+}
+
+createRoot(rootEl).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>
