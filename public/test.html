@@ -1,37 +1,49 @@
-<script>
-  async function sendTest() {
-    try {
-      const res = await fetch('/.netlify/functions/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: "Test User",
-          phone: "9999999999",
-          email: "test@example.com",
-          address: "Test address",
-          note: "Testing order function"
-        })
-      });
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Netlify Function</title>
+</head>
+<body>
+  <h1>Test Netlify Function</h1>
+  <button onclick="sendTest()">Send Test Request</button>
+  <pre id="result"></pre>
 
-      // Read as text first (avoids "Unexpected end of JSON input")
-      const text = await res.text();
-
-      let data;
+  <script>
+    async function sendTest() {
       try {
-        data = text ? JSON.parse(text) : null;
+        const res = await fetch('/.netlify/functions/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: "Test User",
+            phone: "9999999999",
+            email: "test@example.com",
+            address: "Test address",
+            note: "Testing order function"
+          })
+        });
+
+        const text = await res.text(); // read as text to avoid JSON crash
+        let data;
+        try {
+          data = text ? JSON.parse(text) : null;
+        } catch (err) {
+          throw new Error(`Invalid JSON response: ${text}`);
+        }
+
+        if (!res.ok) {
+          const message = (data && data.error) || data || res.statusText;
+          throw new Error(message);
+        }
+
+        document.getElementById("result").innerText =
+          "Order function success: " + JSON.stringify(data);
       } catch (err) {
-        throw new Error(`Invalid JSON response: ${text || "<empty>"}`);
+        document.getElementById("result").innerText =
+          "Order function failed: " + err.message;
+        console.error("Order test error:", err);
       }
-
-      if (!res.ok) {
-        const message = (data && data.error) || data?.message || `HTTP ${res.status}`;
-        throw new Error(message);
-      }
-
-      alert("Order function success: " + JSON.stringify(data));
-    } catch (err) {
-      alert("Order function failed: " + err.message);
-      console.error("Order test error:", err);
     }
-  }
-</script>
+  </script>
+</body>
+</html>
