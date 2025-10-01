@@ -1,13 +1,19 @@
-// src/pages/App.jsx
-import React, { useState, useEffect } from "react";
+// src/App.jsx
+import React, { useState } from "react";
 import "./index.css";
 
+import imgFresh from "./assets/fresh_mushrooms.jpg";
+import imgPickle from "./assets/mushroom_pickle.jpg";
+import imgDry from "./assets/dry_mushrooms.jpg";
+import imgPowder from "./assets/mushroom_powder.jpg";
+import imgWariyan from "./assets/mushroom_wariyan.jpg";
+
 const PRODUCTS = [
-  { id: "fresh", title: "Fresh Mushrooms", price: 50, unit: "per 200g box", short: "Hand-picked fresh button mushrooms — ideal for cooking & salads.", image: "/fresh_mushrooms.jpg", variants: [{ id: "box200", label: "1 box (200 g)", price: 50 }, { id: "kg", label: "1 kg", price: 200 }] },
-  { id: "pickle", title: "Mushroom Pickle", price: 100, unit: "per 200g jar", short: "Tangy & spicy mushroom pickle.", image: "/mushroom_pickle.jpg", variants: [{ id: "jar200", label: "200 g jar", price: 100 }, { id: "jar400", label: "400 g jar", price: 200 }] },
-  { id: "dry", title: "Dry Mushrooms", price: 300, unit: "per 100g", short: "Dehydrated mushrooms.", image: "/dry_mushrooms.jpg", variants: null },
-  { id: "powder", title: "Mushroom Powder", price: 450, unit: "per 100g", short: "Finely ground mushroom powder.", image: "/mushroom_powder.jpg", variants: null },
-  { id: "wariyan", title: "Mushroom Wariyan", price: 120, unit: "per 100g packet", short: "Traditional mushroom wadiyan.", image: "/mushroom_wariyan.jpg", variants: null },
+  { id: "fresh", title: "Fresh Mushrooms", price: 50, unit: "per 200g box", short: "Hand-picked fresh button mushrooms — ideal for cooking & salads.", image: imgFresh, variants: [{ id: "box200", label: "1 box (200 g)", price: 50 }, { id: "kg", label: "1 kg", price: 200 }] },
+  { id: "pickle", title: "Mushroom Pickle", price: 100, unit: "per 200g jar", short: "Tangy & spicy mushroom pickle made with traditional spices.", image: imgPickle, variants: [{ id: "jar200", label: "200 g jar", price: 100 }, { id: "jar400", label: "400 g jar", price: 200 }] },
+  { id: "dry", title: "Dry Mushrooms", price: 300, unit: "per 100g", short: "Dehydrated mushrooms, perfect for long-term storage and soups.", image: imgDry, variants: null },
+  { id: "powder", title: "Mushroom Powder", price: 450, unit: "per 100g", short: "Finely ground mushroom powder — perfect for seasoning.", image: imgPowder, variants: null },
+  { id: "wariyan", title: "Mushroom Wariyan", price: 120, unit: "per 100g packet", short: "Traditional mushroom wadiyan — tasty & nutritious.", image: imgWariyan, variants: null },
 ];
 
 function formatINR(n) {
@@ -23,18 +29,11 @@ export default function App() {
   const [cart, setCart] = useState([]);
   const [sheetProduct, setSheetProduct] = useState(null);
   const [sheetVariant, setSheetVariant] = useState(null);
-  const [miniVisible, setMiniVisible] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [customer, setCustomer] = useState({ name: "", phone: "", email: "", address: "", note: "" });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-
-  useEffect(() => {
-    const shouldLock = !!sheetProduct || checkoutOpen;
-    if (shouldLock) document.body.classList.add("no-scroll"); else document.body.classList.remove("no-scroll");
-    return () => document.body.classList.remove("no-scroll");
-  }, [sheetProduct, checkoutOpen]);
 
   function handleAdd(product, variantId = null, qty = 1) {
     if (product.variants && !variantId) {
@@ -49,18 +48,28 @@ export default function App() {
       if (found) return prev.map(it => it.key === key ? { ...it, qty: it.qty + qty } : it);
       return [...prev, { key, productId: product.id, productTitle: product.title, variantId: variant ? variant.id : null, variantLabel: variant ? variant.label : null, price: variant ? variant.price : product.price, qty }];
     });
-    setMiniVisible(true);
-    setTimeout(() => setMiniVisible(false), 3000);
   }
 
-  function closeSheet() { setSheetProduct(null); setSheetVariant(null); }
-  function changeQty(key, delta) { setCart(prev => prev.map(it => it.key === key ? { ...it, qty: Math.max(0, it.qty + delta) } : it).filter(it => it.qty > 0)); }
+  function changeQty(key, delta) {
+    setCart(prev => prev.map(it => it.key === key ? { ...it, qty: Math.max(0, it.qty + delta) } : it).filter(it => it.qty > 0));
+  }
   function removeItem(key) { setCart(prev => prev.filter(it => it.key !== key)); }
-  function confirmAddFromSheet() { if (!sheetProduct) return; handleAdd(sheetProduct, sheetVariant, 1); closeSheet(); }
-  function openCheckout() { if (cart.length === 0) { alert("Cart is empty"); return; } setSubmitError(null); setSubmitSuccess(false); setCheckoutOpen(true); }
 
   const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
   const itemCount = cart.reduce((s, it) => s + it.qty, 0);
+
+  function confirmAddFromSheet() {
+    if (!sheetProduct) return;
+    handleAdd(sheetProduct, sheetVariant, 1);
+    setSheetProduct(null);
+    setSheetVariant(null);
+  }
+
+  function openCheckout() {
+    if (cart.length === 0) { alert("Cart is empty"); return; }
+    setSubmitError(null); setSubmitSuccess(false);
+    setCheckoutOpen(true);
+  }
 
   function validateCustomer() {
     if (!customer.name.trim()) return "Please enter your name";
@@ -82,22 +91,30 @@ export default function App() {
     };
     setSubmitting(true); setSubmitError(null);
     try {
-      const resp = await fetch("/api/order", {
+      const endpoint = "/api/order";
+      const resp = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
       const body = await resp.json().catch(() => null);
-      if (!resp.ok) throw new Error((body && (body.error || body.details)) || "Order failed");
+      if (!resp.ok) {
+        const msg = (body && (body.error || body.details)) || resp.statusText || "Order failed";
+        throw new Error(msg);
+      }
       setSubmitSuccess(true); setCart([]);
-      setTimeout(() => { setCheckoutOpen(false); setSubmitSuccess(false); setCustomer({ name: "", phone: "", email: "", address: "", note: "" }); }, 2000);
+      setTimeout(() => {
+        setCheckoutOpen(false);
+        setSubmitSuccess(false);
+        setCustomer({ name: "", phone: "", email: "", address: "", note: "" });
+      }, 1500);
     } catch (err) {
       console.error(err);
       setSubmitError(err.message || "Order failed");
     } finally { setSubmitting(false); }
   }
 
-  async function placeOrderWithPayment() {
+  function placeOrderWithPayment() {
     alert("Payment integration not set. Use 'Place Order (COD)' for now.");
   }
 
@@ -111,6 +128,7 @@ export default function App() {
             <div className="subtitle">Best quality fresh organic mushrooms & delicious pickles</div>
           </div>
         </div>
+
         <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
           <button className="cart-button" onClick={openCheckout}>Cart ({itemCount})</button>
         </div>
@@ -139,7 +157,9 @@ export default function App() {
 
         <div className="cart-box">
           <h3>Cart</h3>
-          {cart.length === 0 ? (<div className="cart-empty">Your cart is empty</div>) : (
+          {cart.length === 0 ? (
+            <div className="cart-empty">Your cart is empty</div>
+          ) : (
             <>
               {cart.map(it => (
                 <div key={it.key} style={{ marginBottom: 8 }}>
@@ -164,30 +184,31 @@ export default function App() {
         </div>
       </main>
 
-      <footer className="site-footer">
-        <div style={{ padding: 16 }}>
-          <div>Phone: <a href="tel:+918837554747">+91 88375 54747</a></div>
-          <div>Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a></div>
-        </div>
-      </footer>
-
       {sheetProduct && (
-        <div className="sheet-overlay" onClick={() => setSheetProduct(null)}>
+        <div className="sheet-overlay" onClick={() => { setSheetProduct(null); setSheetVariant(null); }}>
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button onClick={() => setSheetProduct(null)}>✕</button>
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <button style={{ borderRadius: 8 }} onClick={() => { setSheetProduct(null); setSheetVariant(null); }}>✕</button>
             </div>
-            <h3>{sheetProduct.title}</h3>
-            <div>
-              {sheetProduct.variants.map(v => (
-                <label key={v.id} style={{ display: "block", marginBottom: 8 }}>
-                  <input type="radio" name="variant" value={v.id} checked={sheetVariant === v.id} onChange={() => setSheetVariant(v.id)} />
-                  {v.label} — {formatINR(v.price)}
-                </label>
-              ))}
-            </div>
-            <div style={{ textAlign: "right" }}>
-              <button onClick={confirmAddFromSheet}>Add to Cart</button>
+            <div style={{ padding: "8px 4px 24px" }}>
+              <div className="sheet-image" style={{ marginBottom: 12 }}>
+                <img src={sheetProduct.image} alt={sheetProduct.title} style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 10 }} />
+              </div>
+              <h3 style={{ marginTop: 0 }}>{sheetProduct.title}</h3>
+              <p style={{ color: "#556e64" }}>{sheetProduct.short}</p>
+              <div style={{ marginTop: 12, fontWeight: 600 }}>Choose size / variant</div>
+              <div style={{ marginTop: 8 }}>
+                {sheetProduct.variants.map((v) => (
+                  <label key={v.id} style={{ display: "block", border: sheetVariant === v.id ? "2px solid #14502b" : "1px solid rgba(0,0,0,0.06)", borderRadius: 10, padding: 12, marginBottom: 8, cursor: "pointer" }}>
+                    <input type="radio" name="variant" value={v.id} checked={sheetVariant === v.id} onChange={() => setSheetVariant(v.id)} style={{ marginRight: 10 }} />
+                    <span style={{ fontWeight: 600 }}>{v.label}</span>
+                    <div style={{ color: "#556e64" }}>{formatINR(v.price)}</div>
+                  </label>
+                ))}
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                <button className="add-btn" style={{ padding: "10px 16px" }} onClick={confirmAddFromSheet}>Add to Cart</button>
+              </div>
             </div>
           </div>
         </div>
@@ -196,30 +217,55 @@ export default function App() {
       {checkoutOpen && (
         <div className="sheet-overlay" onClick={() => setCheckoutOpen(false)}>
           <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}>
-              <h3>Place Order</h3>
-              <button onClick={() => setCheckoutOpen(false)}>✕</button>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0 }}>Place Order</h3>
+              <button style={{ borderRadius: 8 }} onClick={() => setCheckoutOpen(false)}>✕</button>
             </div>
 
-            <div style={{ paddingTop: 8 }}>
-              <label>Name *<input value={customer.name} onChange={e => setCustomer({...customer, name: e.target.value})} /></label>
-              <label>Phone *<input value={customer.phone} onChange={e => setCustomer({...customer, phone: e.target.value})} /></label>
-              <label>Email<input value={customer.email} onChange={e => setCustomer({...customer, email: e.target.value})} /></label>
-              <label>Address<textarea value={customer.address} onChange={e => setCustomer({...customer, address: e.target.value})} /></label>
-              <label>Note<input value={customer.note} onChange={e => setCustomer({...customer, note: e.target.value})} /></label>
+            <div style={{ padding: "8px 4px 24px" }}>
+              <p style={{ color: "#556e64" }}>Enter details so we can contact you to confirm the order.</p>
 
-              {submitError && <div style={{ color: "crimson" }}>{submitError}</div>}
-              {submitSuccess && <div style={{ color: "green" }}>Order received — we will contact you shortly.</div>}
+              <label style={{ display: "block", marginTop: 8 }}>
+                Name *
+                <input type="text" value={customer.name} onChange={(e) => setCustomer({...customer, name: e.target.value})} style={{ width: "100%", padding: 8, marginTop: 6 }} />
+              </label>
+
+              <label style={{ display: "block", marginTop: 8 }}>
+                Phone *
+                <input type="tel" value={customer.phone} onChange={(e) => setCustomer({...customer, phone: e.target.value})} style={{ width: "100%", padding: 8, marginTop: 6 }} />
+              </label>
+
+              <label style={{ display: "block", marginTop: 8 }}>
+                Email
+                <input type="email" value={customer.email} onChange={(e) => setCustomer({...customer, email: e.target.value})} style={{ width: "100%", padding: 8, marginTop: 6 }} />
+              </label>
+
+              <label style={{ display: "block", marginTop: 8 }}>
+                Address
+                <textarea value={customer.address} onChange={(e) => setCustomer({...customer, address: e.target.value})} style={{ width: "100%", padding: 8, marginTop: 6 }} rows={3} />
+              </label>
+
+              <label style={{ display: "block", marginTop: 8 }}>
+                Note (optional)
+                <input type="text" value={customer.note} onChange={(e) => setCustomer({...customer, note: e.target.value})} style={{ width: "100%", padding: 8, marginTop: 6 }} />
+              </label>
+
+              {submitError && <div style={{ color: "crimson", marginTop: 10 }}>{submitError}</div>}
+              {submitSuccess && <div style={{ color: "green", marginTop: 10 }}>Order received — we will contact you shortly.</div>}
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
-                <button onClick={() => setCheckoutOpen(false)} disabled={submitting}>Cancel</button>
-                <button onClick={placeOrderWithPayment} disabled={submitting}>{submitting ? "Processing..." : "Pay & Place Order"}</button>
-                <button onClick={placeOrderCOD} disabled={submitting}>{submitting ? "Processing..." : "Place Order (COD)"}</button>
+                <button className="detail-btn" onClick={() => setCheckoutOpen(false)} disabled={submitting}>Cancel</button>
+                <button className="add-btn" onClick={placeOrderWithPayment} disabled={submitting}>{submitting ? "Processing..." : "Pay & Place Order"}</button>
+                <button className="add-btn" onClick={placeOrderCOD} disabled={submitting}>{submitting ? "Processing..." : "Place Order (COD)"}</button>
               </div>
             </div>
           </div>
         </div>
       )}
+
+      <footer className="site-footer" role="contentinfo" style={{ marginTop: 40, padding: 20 }}>
+        <div style={{ textAlign: "center" }}>© Anant Gill Agro Farm</div>
+      </footer>
     </div>
   );
-}
+   }
