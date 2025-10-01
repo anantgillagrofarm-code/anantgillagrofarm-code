@@ -1,11 +1,14 @@
 // src/main.jsx
 import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App";    // expects default export from src/App.jsx
+import { createRoot } from "react-dom/client";
+import App from "./pages/App";    // <-- important: points to src/pages/App.jsx
 import "./index.css";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+const mount = document.getElementById("root");
+if (!mount) {
+  // fallback: create a root element if missing (helps static test pages)
+  const el = document.createElement("div");
+  el.id = "root";
+  document.body.appendChild(el);
+}
+createRoot(document.getElementById("root")).render(<App />);
