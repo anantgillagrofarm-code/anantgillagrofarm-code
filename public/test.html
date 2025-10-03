@@ -1,34 +1,12 @@
-<!doctype html>
-<html>
-<head><meta charset="utf-8"><title>Test Order Endpoint</title></head>
-<body>
-  <h1>Test Order Endpoint</h1>
-  <button id="btn">Send Test Order</button>
-  <pre id="out"></pre>
-
-  <script>
-    document.getElementById('btn').addEventListener('click', async () => {
-      const out = document.getElementById('out');
-      out.textContent = 'Sending...';
-      try {
-        const endpoint = '/api/order';
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            name: "Test User",
-            phone: "9999999999",
-            email: "test@example.com",
-            address: "Test address",
-            note: "Testing order function"
-          })
-        });
-        const text = await res.text();
-        out.textContent = 'Status: ' + res.status + '\n\n' + text;
-      } catch (err) {
-        out.textContent = 'Error: ' + err.message;
-      }
-    });
-  </script>
-</body>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anant Gill Agro Farm</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>
