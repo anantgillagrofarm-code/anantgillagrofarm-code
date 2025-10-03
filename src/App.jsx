@@ -1,14 +1,18 @@
-// src/App.jsx - FINAL VERSION WITH IMAGE IMPORTS FIXED
+// src/App.jsx - FINAL FIX: Correctly separating public vs. imported assets
 
 import React, { useEffect, useState } from "react";
-// 🛑 CRITICAL FIX: Importing assets ensures Vite/Vercel handles paths correctly.
+// 🛑 IMPORTANT: Only importing product images that are in src/assets
 import freshMushroomsImg from "./assets/fresh_mushrooms.jpg"; 
 import dryMushroomsImg from "./assets/dry_mushrooms.jpg"; 
 import mushroomPickleImg from "./assets/mushroom_pickle.jpg"; 
 import mushroomPowderImg from "./assets/mushroom_powder.jpg"; 
-import logoImg from "./assets/anant_gill_logo.png"; // From your public/ folder or src/assets
-import footerBg from "./assets/footer-mushrooms-v2.jpg"; // From your public/ folder or src/assets
 import "./index.css"; 
+
+
+// 🛑 Path to the logo, since it's in the /public folder
+const PUBLIC_LOGO_PATH = "/anant_gill_logo.png";
+// 🛑 Path to the footer background, since it's in the /public folder
+const FOOTER_BG_PATH = "/footer-mushrooms-v2.jpg";
 
 
 const sampleProducts = [
@@ -18,7 +22,7 @@ const sampleProducts = [
     desc: "Cleaned and packed fresh mushrooms — perfect for cooking.",
     unit: "500g",
     price: 120,
-    img: freshMushroomsImg, // Now uses imported variable
+    img: freshMushroomsImg, 
   },
   {
     id: "m2",
@@ -26,7 +30,7 @@ const sampleProducts = [
     desc: "Rich flavour dried mushrooms for long shelf life.",
     unit: "100g",
     price: 220,
-    img: dryMushroomsImg, // Now uses imported variable
+    img: dryMushroomsImg, 
   },
   {
     id: "m3",
@@ -34,7 +38,7 @@ const sampleProducts = [
     desc: "Tangy mushroom pickle made in-house.",
     unit: "300g",
     price: 180,
-    img: mushroomPickleImg, // Now uses imported variable
+    img: mushroomPickleImg, 
   },
   {
     id: "m4",
@@ -42,7 +46,7 @@ const sampleProducts = [
     desc: "Powdered mushrooms for soups, sauces and seasoning.",
     unit: "200g",
     price: 350,
-    img: mushroomPowderImg, // Now uses imported variable
+    img: mushroomPowderImg, 
   },
 ];
 
@@ -106,7 +110,7 @@ export default function App() {
       >
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <img
-            src={logoImg} // Now uses imported variable
+            src={PUBLIC_LOGO_PATH} // FIXED: Using public path for logo
             alt="logo"
             style={{ width: 52, height: 52, borderRadius: 10, objectFit: "cover" }}
             onError={(e) => {
@@ -239,7 +243,7 @@ export default function App() {
                     alt={p.title}
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                     onError={(e) => {
-                      e.currentTarget.src = logoImg; // Using imported logo as fallback
+                      e.currentTarget.src = PUBLIC_LOGO_PATH; // Using public path as fallback
                     }}
                   />
                 </div>
@@ -335,7 +339,7 @@ export default function App() {
 
               {cartItems.map((it) => (
                 <div key={it.id} style={{ display: "flex", gap: 12, alignItems: "center", padding: 8, borderRadius: 10, border: "1px solid #f0f0f0" }}>
-                  <img src={it.img} alt={it.title} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8 }} onError={(e) => (e.currentTarget.src = logoImg)} />
+                  <img src={it.img} alt={it.title} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8 }} onError={(e) => (e.currentTarget.src = PUBLIC_LOGO_PATH)} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, color: "#14502b" }}>{it.title}</div>
                     <div style={{ color: "#7c8c82", fontSize: 13 }}>{fmt(it.price)} × {it.qty}</div>
@@ -376,14 +380,14 @@ export default function App() {
         className="site-footer"
         style={{
           color: "#fff",
-          background: `linear-gradient(#00000073,#00000073), url(${footerBg}) center / cover no-repeat`, // Now uses imported variable
+          background: `linear-gradient(#00000073,#00000073), url(${FOOTER_BG_PATH}) center / cover no-repeat`, // FIXED: Using public path
           padding: "26px 14px",
           marginTop: 28,
         }}
       >
         <div style={{ maxWidth: 980, margin: "0 auto", display: "flex", gap: 18, alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 320px" }}>
-            <img src={logoImg} alt="logo" style={{ width: 56, height: 56, borderRadius: 8, marginBottom: 10 }} />
+            <img src={PUBLIC_LOGO_PATH} alt="logo" style={{ width: 56, height: 56, borderRadius: 8, marginBottom: 10 }} />
             <h4 style={{ margin: 0, color: "#fff", fontSize: 18 }}>Anant Gill Agro Farm</h4>
             <div style={{ color: "#fffffff2", marginTop: 8 }}>
               Contact: <a href="tel:+91-9999999999" style={{ color: "#fff" }}>+91 99999 99999</a>
@@ -402,5 +406,5 @@ export default function App() {
       </footer>
     </div>
   );
-    }
-        
+      }
+          
