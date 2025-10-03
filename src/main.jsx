@@ -1,18 +1,20 @@
-// src/main.jsx - FINAL, FINAL TEST
-
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-// import "./index.css"; // KEEP COMMENTED OUT
-// (The rest of your file is below)
+import './index.css'; // Restores your global stylesheet import
 
 const rootEl = document.getElementById("root");
+
+// Safety check for root element
 if (!rootEl) {
-  throw new Error('No root element found. Make sure index.html has a root element.');
+  // This error should not happen since we fixed index.html, but keep the check.
+  throw new Error('The root element with id="root" was not found in index.html.');
 }
 
 createRoot(rootEl).render(
-  // <React.StrictMode> <--- COMMENT THIS OUT
+  // Restores React StrictMode
+  <React.StrictMode>
     <App />
-  // </React.StrictMode> <--- COMMENT THIS OUT
+  </React.StrictMode>
 );
+  
