@@ -1,408 +1,424 @@
-// src/App.jsx - FINAL WORKING CODE
+// src/App.jsx - FINAL WORKING CODE (Original logic + Image Path Fix)
 
-import React, { useEffect, useState } from "react";
-// 🛑 IMPORTANT: Importing product images from src/assets (must match file names in your repo!)
-import freshMushroomsImg from "./assets/fresh_mushrooms.jpg"; 
-import dryMushroomsImg from "./assets/dry_mushrooms.jpg"; 
-import mushroomPickleImg from "./assets/mushroom_pickle.jpg"; 
-import mushroomPowderImg from "./assets/mushroom_powder.jpg"; 
-import "./index.css"; 
+import React, { useState, useEffect, useRef } from "react";
+import "./index.css";
 
+/*
+  ASSET FIX:
+  - Files in src/assets/ (product images) are imported.
+  - Files in /public/ (logo, footer background) must be referenced via their absolute path string.
+*/
 
-// 🛑 Paths to assets in the /public folder (like anant_gill_logo.png and footer-mushrooms-v2.jpg)
-const PUBLIC_LOGO_PATH = "/anant_gill_logo.png"; 
+// 1. Importing product images (correct for src/assets)
+import imgFresh from "./assets/fresh_mushrooms.jpg";
+import imgPickle from "./assets/mushroom_pickle.jpg";
+import imgDry from "./assets/dry_mushrooms.jpg";
+import imgPowder from "./assets/mushroom_powder.jpg";
+import imgWariyan from "./assets/mushroom_wariyan.jpg";
+
+// 2. Defining paths for public assets (correct for /public)
+const PUBLIC_LOGO_PATH = "/anant_gill_logo.png";
 const FOOTER_BG_PATH = "/footer-mushrooms-v2.jpg";
 
 
-const sampleProducts = [
+const PRODUCTS = [
   {
-    id: "m1",
-    title: "Fresh Mushrooms (500g)",
-    desc: "Cleaned and packed fresh mushrooms — perfect for cooking.",
-    unit: "500g",
+    id: "fresh",
+    title: "Fresh Mushrooms",
+    price: 50,
+    unit: "per 200g box",
+    short: "Hand-picked fresh button mushrooms — ideal for cooking & salads.",
+    image: imgFresh,
+    variants: [
+      { id: "box200", label: "1 box (200 g)", price: 50 },
+      { id: "kg", label: "1 kg", price: 200 },
+    ],
+  },
+  {
+    id: "pickle",
+    title: "Mushroom Pickle",
+    price: 100,
+    unit: "per 200g jar",
+    short: "Tangy & spicy mushroom pickle made with traditional spices.",
+    image: imgPickle,
+    variants: [
+      { id: "jar200", label: "200 g jar", price: 100 },
+      { id: "jar400", label: "400 g jar", price: 200 },
+    ],
+  },
+  {
+    id: "dry",
+    title: "Dry Mushrooms",
+    price: 300,
+    unit: "per 100g",
+    short: "Dehydrated mushrooms, perfect for long-term storage and soups.",
+    image: imgDry,
+    variants: null,
+  },
+  {
+    id: "powder",
+    title: "Mushroom Powder",
+    price: 450,
+    unit: "per 100g",
+    short: "Finely ground mushroom powder — perfect for seasoning.",
+    image: imgPowder,
+    variants: null,
+  },
+  {
+    id: "wariyan",
+    title: "Mushroom Wariyan",
     price: 120,
-    img: freshMushroomsImg, 
-  },
-  {
-    id: "m2",
-    title: "Dried Mushrooms (100g)",
-    desc: "Rich flavour dried mushrooms for long shelf life.",
-    unit: "100g",
-    price: 220,
-    img: dryMushroomsImg, 
-  },
-  {
-    id: "m3",
-    title: "Mushroom Pickle (Jar)",
-    desc: "Tangy mushroom pickle made in-house.",
-    unit: "300g",
-    price: 180,
-    img: mushroomPickleImg, 
-  },
-  {
-    id: "m4",
-    title: "Mushroom Powder (200g)",
-    desc: "Powdered mushrooms for soups, sauces and seasoning.",
-    unit: "200g",
-    price: 350,
-    img: mushroomPowderImg, 
+    unit: "per 100g packet",
+    short: "Traditional mushroom wadiyan — tasty & nutritious.",
+    image: imgWariyan,
+    variants: null,
   },
 ];
 
-/* Small helper to format currency */
-const fmt = (n) => `₹${n.toFixed(0)}`;
+function formatINR(n) {
+  try {
+    const nf = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
+    return `₹${nf.format(Number(n) || 0)}`;
+  } catch (e) {
+    return `₹${Math.round(n || 0)}`;
+  }
+}
 
 export default function App() {
-  const [products, setProducts] = useState(sampleProducts);
-  const [cart, setCart] = useState({});
-  const [showCart, setShowCart] = useState(false);
+  const [cart, setCart] = useState([]); // { productId, variantId?, qty }
+  const [sheetProduct, setSheetProduct] = useState(null); // product being chosen (for variants)
+  const [sheetVariant, setSheetVariant] = useState(null); // selected variant id in sheet
+  const [miniVisible, setMiniVisible] = useState(false);
 
+  const cartBoxRef = useRef(null);
+  const miniTimerRef = useRef(null);
+
+  // when the sheet is open, prevent body scrolling
   useEffect(() => {
-    // If you later want to fetch products from Firebase or an API, do it here.
+    const shouldLock = !!sheetProduct;
+    if (shouldLock) document.body.classList.add("no-scroll");
+    else document.body.classList.remove("no-scroll");
+
+    return () => document.body.classList.remove("no-scroll");
+  }, [sheetProduct]);
+
+  // cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (miniTimerRef.current) clearTimeout(miniTimerRef.current);
+    };
   }, []);
 
-  function addToCart(productId) {
+  // Add to cart (public call)
+  function handleAdd(product, variantId = null, qty = 1) {
+    // if product has variants but no variantId supplied -> open sheet
+    if (product.variants && !variantId) {
+      setSheetProduct(product);
+      setSheetVariant(product.variants[0].id);
+      return;
+    }
+
+    // find price & label
+    const variant = product.variants ? product.variants.find((v) => v.id === variantId) : null;
+    const key = `${product.id}:${variant ? variant.id : "default"}`;
+
     setCart((prev) => {
-      const prevQty = prev[productId]?.qty || 0;
-      return {
-        ...prev,
-        [productId]: { ...(products.find((p) => p.id === productId) || {}), qty: prevQty + 1 },
-      };
+      const found = prev.find((it) => it.key === key);
+      if (found) {
+        return prev.map((it) => (it.key === key ? { ...it, qty: it.qty + qty } : it));
+      } else {
+        return [
+          ...prev,
+          {
+            key,
+            productId: product.id,
+            productTitle: product.title,
+            variantId: variant ? variant.id : null,
+            variantLabel: variant ? variant.label : null,
+            price: variant ? variant.price : product.price,
+            qty,
+          },
+        ];
+      }
     });
-    setShowCart(true);
+
+    // show mini cart briefly
+    setMiniVisible(true);
+    if (miniTimerRef.current) clearTimeout(miniTimerRef.current);
+    miniTimerRef.current = setTimeout(() => {
+      setMiniVisible(false);
+      miniTimerRef.current = null;
+    }, 3500);
   }
 
-  function removeFromCart(productId) {
-    setCart((prev) => {
-      const next = { ...prev };
-      if (!next[productId]) return next;
-      next[productId].qty -= 1;
-      if (next[productId].qty <= 0) delete next[productId];
-      return next;
-    });
+  function openSheetForProduct(product) {
+    if (!product.variants) return;
+    setSheetProduct(product);
+    setSheetVariant(product.variants[0].id);
   }
 
-  function clearCart() {
-    setCart({});
+  function closeSheet() {
+    setSheetProduct(null);
+    setSheetVariant(null);
   }
 
-  const cartItems = Object.values(cart);
-  const cartCount = cartItems.reduce((s, it) => s + (it.qty || 0), 0);
-  const cartTotal = cartItems.reduce((s, it) => s + (it.qty || 0) * (it.price || 0), 0);
+  function changeQty(key, delta) {
+    setCart((prev) =>
+      prev
+        .map((it) => (it.key === key ? { ...it, qty: Math.max(0, it.qty + delta) } : it))
+        .filter((it) => it.qty > 0)
+    );
+  }
+
+  function removeItem(key) {
+    setCart((prev) => prev.filter((it) => it.key !== key));
+  }
+
+  const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
+  const itemCount = cart.reduce((s, it) => s + it.qty, 0);
+
+  // when user confirms Add to Cart from sheet
+  function confirmAddFromSheet() {
+    if (!sheetProduct) return;
+    handleAdd(sheetProduct, sheetVariant, 1);
+    closeSheet();
+  }
+
+  // social links
+  const fbUrl = "https://www.facebook.com/share/177NfwxRKr/"; // replace if you have an official FB page
+  // updated Instagram official link as provided by you
+  const igUrl = "https://www.instagram.com/anant.gill.agro.farm?igsh=MWVuNzUwbDc2bjl0aA==";
+
+  function scrollToCart() {
+    if (cartBoxRef.current) {
+      cartBoxRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      // fallback to bottom
+      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+    }
+  }
 
   return (
-    <div className="app-root" style={{ minHeight: "100vh", background: "var(--bg, #f2fbf7)" }}>
+    <div className="app">
       {/* Topbar */}
-      <header
-        className="topbar"
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          padding: "12px 16px",
-          background: "#ffffffeb",
-          position: "sticky",
-          top: 0,
-          zIndex: 90,
-          borderBottom: "1px solid rgba(0,0,0,0.04)",
-        }}
-      >
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          <img
-            src={PUBLIC_LOGO_PATH} 
-            alt="logo"
-            style={{ width: 52, height: 52, borderRadius: 10, objectFit: "cover" }}
-            onError={(e) => {
-              // fallback small inline svg if logo missing
-              e.currentTarget.src =
-                "data:image/svg+xml;utf8," +
-                encodeURIComponent(
-                  `<svg xmlns='http://www.w3.org/2000/svg' width='56' height='56'><rect width='100%' height='100%' rx='10' fill='#e6f6ee'/><text x='50%' y='54%' font-size='18' text-anchor='middle' fill='#15542e' font-family='Arial' font-weight='700'>AG</text></svg>`
-                );
-            }}
-          />
+      <header className="topbar" role="banner">
+        <div className="brand">
+          <img className="logo" src={PUBLIC_LOGO_PATH} alt="Anant Gill Agro Farm logo" /> {/* FIXED */}
           <div>
-            <h1 style={{ margin: 0, color: "#14502b", fontSize: 18 }}>Anant Gill Agro Farm</h1>
-            <div style={{ color: "#7c8c82", fontSize: 12 }}>Quality mushrooms & preserves</div>
+            <h1 className="title">Anant Gill Agro Farm</h1>
+            <div className="subtitle">Best quality fresh organic mushrooms & delicious pickles</div>
           </div>
         </div>
-
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button
-            onClick={() => setShowCart((s) => !s)}
-            style={{
-              background: "#fff",
-              borderRadius: 14,
-              border: "1px solid rgba(0,0,0,0.06)",
-              padding: "8px 12px",
-              cursor: "pointer",
-              fontSize: 14,
-              display: "flex",
-              gap: 8,
-              alignItems: "center",
-            }}
-            aria-label="Toggle cart"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
-              <path d="M3 3h2l.4 2M7 13h10l4-8H5.4" stroke="#15542e" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-              <circle cx="10" cy="20" r="1.6" fill="#15542e" />
-              <circle cx="18" cy="20" r="1.6" fill="#15542e" />
-            </svg>
-            <span style={{ fontWeight: 600, color: "#154b2b" }}>Cart</span>
-            <span style={{ background: "#15542e", color: "#fff", borderRadius: 999, padding: "2px 8px", fontSize: 13 }}>{cartCount}</span>
-          </button>
-        </div>
+        <button
+          className="cart-button"
+          onClick={scrollToCart}
+          aria-label={`Open cart with ${itemCount} item${itemCount !== 1 ? "s" : ""}`}
+        >
+          Cart ({itemCount})
+        </button>
       </header>
 
-      {/* Hero */}
-      <main style={{ maxWidth: 980, margin: "18px auto", padding: "0 16px 80px" }}>
-        <section
-          style={{
-            padding: 18,
-            borderRadius: 12,
-            background: "#ffffffe0",
-            boxShadow: "0 6px 16px rgba(0,0,0,0.06)",
-            marginBottom: 18,
-            display: "flex",
-            gap: 16,
-            alignItems: "center",
-            flexDirection: "column",
-            textAlign: "center",
-          }}
-        >
-          <div style={{ width: "100%", maxWidth: 920 }}>
-            <h2 style={{ margin: "6px 0 8px", color: "#15502b", fontSize: 26 }}>Fresh Mushrooms, Farm to Table</h2>
-            <p style={{ color: "#556e64", margin: "6px 0 12px" }}>
-              We grow, process and pack premium mushrooms in small batches — straight from our farm to your kitchen.
-            </p>
-          </div>
+      {/* Content */}
+      <main className="content" role="main">
+        <h2 className="section-title">Our Products</h2>
 
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", justifyContent: "center" }}>
-            <a
-              href="#products"
-              style={{
-                background: "#15542e",
-                color: "#fff",
-                padding: "10px 14px",
-                borderRadius: 12,
-                textDecoration: "none",
-                fontWeight: 700,
-              }}
-            >
-              Shop Fresh
-            </a>
-            <a
-              href="#about"
-              style={{
-                background: "transparent",
-                border: "1px solid rgba(0,0,0,0.06)",
-                padding: "10px 14px",
-                borderRadius: 12,
-                textDecoration: "none",
-                color: "#15542e",
-                fontWeight: 600,
-              }}
-            >
-              About us
-            </a>
-          </div>
-        </section>
+        <div className="product-list">
+          {PRODUCTS.map((p) => (
+            <article key={p.id} className="product-card" aria-labelledby={`product-${p.id}-title`}>
+              <div className="product-media">
+                <img src={p.image} alt={p.title} />
+              </div>
 
-        {/* Product list */}
-        <section id="products" style={{ marginBottom: 18 }}>
-          <h3 style={{ margin: "6px 6px 12px", color: "#15502b", fontSize: 22 }}>Our Products</h3>
+              <div className="product-body">
+                <h3 id={`product-${p.id}-title`}>{p.title}</h3>
+                <div className="unit">{p.unit}</div>
+                <div className="short">{p.short}</div>
 
-          <div
-            className="product-grid"
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-              gap: 14,
-            }}
-          >
-            {products.map((p) => (
-              <article
-                key={p.id}
-                className="product-card"
-                style={{
-                  background: "#fff",
-                  padding: 12,
-                  borderRadius: 12,
-                  boxShadow: "0 6px 18px rgba(0,0,0,0.06)",
-                  display: "flex",
-                  gap: 12,
-                  alignItems: "center",
-                  flexDirection: "column",
-                  textAlign: "center",
-                }}
-              >
-                <div style={{ width: 140, height: 120, borderRadius: 10, overflow: "hidden", background: "#f7faf6", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <img
-                    src={p.img}
-                    alt={p.title}
-                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                    onError={(e) => {
-                      e.currentTarget.src = PUBLIC_LOGO_PATH; // Using public path as fallback
-                    }}
-                  />
-                </div>
-
-                <div style={{ paddingTop: 6, width: "100%" }}>
-                  <h4 style={{ margin: "6px 0", color: "#14502b", fontSize: 16 }}>{p.title}</h4>
-                  <div style={{ color: "#7c8c82", fontSize: 13 }}>{p.unit}</div>
-                  <div style={{ color: "#556e64", margin: "8px 0", fontSize: 13 }}>{p.desc}</div>
-
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                    <div style={{ color: "#14502b", fontWeight: 700, fontSize: 16 }}>{fmt(p.price)}</div>
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <button
-                        className="detail-btn"
-                        style={{ background: "transparent", border: "1px solid rgba(0,0,0,0.06)", padding: "8px 10px", borderRadius: 10, cursor: "pointer" }}
-                        onClick={() => alert("Product details coming soon")}
-                      >
-                        Details
-                      </button>
-
-                      <button
-                        className="add-btn"
-                        style={{
-                          background: "#15542e",
-                          color: "#fff",
-                          border: "none",
-                          padding: "10px 12px",
-                          borderRadius: 12,
-                          cursor: "pointer",
-                        }}
-                        onClick={() => addToCart(p.id)}
-                      >
-                        Add
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        {/* About */}
-        <section id="about" style={{ marginTop: 18, padding: 14, background: "#ffffffe0", borderRadius: 12 }}>
-          <h3 style={{ margin: "6px 0 8px", color: "#15502b" }}>About Anant Gill Agro Farm</h3>
-          <p style={{ color: "#556e64" }}>
-            We cultivate mushrooms using sustainable practices. Our team focuses on hygiene, quality and consistency so you receive the best product every time.
-          </p>
-        </section>
-      </main>
-
-      {/* Mini cart / sheet */}
-      {showCart && (
-        <div
-          className="sheet-overlay"
-          style={{
-            position: "fixed",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            top: 0,
-            display: "flex",
-            alignItems: "flex-end",
-            justifyContent: "center",
-            background: "rgba(0,0,0,0.35)",
-            zIndex: 1200,
-          }}
-          onClick={() => setShowCart(false)}
-        >
-          <div
-            className="sheet"
-            style={{
-              width: "100%",
-              maxWidth: 720,
-              background: "#fff",
-              borderRadius: "16px 16px 0 0",
-              padding: 12,
-              maxHeight: "92vh",
-              overflow: "auto",
-            }}
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-              <h4 style={{ margin: 0 }}>Your Cart ({cartCount})</h4>
-              <button onClick={() => setShowCart(false)} style={{ background: "transparent", border: "none", fontSize: 20, cursor: "pointer" }}>
-                ✕
-              </button>
-            </div>
-
-            <div style={{ display: "grid", gap: 8 }}>
-              {cartItems.length === 0 && <div style={{ color: "#666" }}>Cart is empty — add items to continue.</div>}
-
-              {cartItems.map((it) => (
-                <div key={it.id} style={{ display: "flex", gap: 12, alignItems: "center", padding: 8, borderRadius: 10, border: "1px solid #f0f0f0" }}>
-                  <img src={it.img} alt={it.title} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8 }} onError={(e) => (e.currentTarget.src = PUBLIC_LOGO_PATH)} />
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 700, color: "#14502b" }}>{it.title}</div>
-                    <div style={{ color: "#7c8c82", fontSize: 13 }}>{fmt(it.price)} × {it.qty}</div>
+                <div className="price-row">
+                  <div>
+                    <div className="price">{formatINR(p.price)}</div>
                   </div>
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    <button onClick={() => addToCart(it.id)} style={{ padding: "6px 8px", borderRadius: 8, background: "#15542e", color: "#fff", border: "none" }}>
+                  <div className="actions">
+                    <button
+                      className="add-btn"
+                      onClick={() => {
+                        // if product has variants -> open sheet; else add immediately
+                        if (p.variants) openSheetForProduct(p);
+                        else handleAdd(p, null, 1);
+                      }}
+                    >
+                      Add to Cart
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+
+        {/* Inline Cart Box (below product list) */}
+        <div className="cart-box" id="cart-box" ref={cartBoxRef}>
+          <h3>Cart</h3>
+          {cart.length === 0 ? (
+            <div className="cart-empty">Your cart is empty</div>
+          ) : (
+            <>
+              {cart.map((it) => (
+                <div key={it.key} style={{ marginBottom: 8 }}>
+                  <div style={{ fontWeight: 600 }}>
+                    {it.productTitle}
+                    {it.variantLabel ? ` × ${it.variantLabel}` : ""}
+                  </div>
+                  <div style={{ marginTop: 6 }}>
+                    <button aria-label={`Decrease qty of ${it.productTitle}`} onClick={() => changeQty(it.key, -1)}>
+                      -
+                    </button>
+                    <span style={{ margin: "0 8px" }}>{formatINR(it.price * it.qty)}</span>
+                    <button aria-label={`Increase qty of ${it.productTitle}`} onClick={() => changeQty(it.key, +1)}>
                       +
                     </button>
-                    <button onClick={() => removeFromCart(it.id)} style={{ padding: "6px 8px", borderRadius: 8, background: "#eee", border: "none" }}>
-                      −
+                    <button style={{ marginLeft: 10 }} onClick={() => removeItem(it.key)}>
+                      Remove
                     </button>
                   </div>
                 </div>
               ))}
+              <div style={{ marginTop: 8 }}>
+                <div>Subtotal</div>
+                <div style={{ fontWeight: 700 }}>{formatINR(subtotal)}</div>
+              </div>
+            </>
+          )}
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="site-footer" role="contentinfo" style={{ backgroundImage: `url(${FOOTER_BG_PATH})` }}> {/* FIXED */}
+        <div className="footer-inner">
+          <div className="footer-left">
+            <img className="footer-logo" src={PUBLIC_LOGO_PATH} alt="Anant Gill Agro Farm logo" /> {/* FIXED */}
+            <h4>Anant Gill Agro Farm</h4>
+            <div className="contact-line">
+              Phone: <a href="tel:+918837554747">+91 88375 54747</a>
+            </div>
+            <div className="contact-line">
+              Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a>
+            </div>
+            <div className="contact-line address">Gali No. 1, Baba Deep Singh Avenue, village Nangli bhatha, Amritsar 143001</div>
+          </div>
+
+          <div className="footer-right">
+            <div style={{ marginBottom: 8, color: "rgba(255,255,255,0.9)" }}>Follow</div>
+            <div className="socials">
+              <a
+                className="social-btn"
+                href={fbUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Facebook"
+                title="Facebook"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 3H12C9.79 3 8 4.79 8 7V10H5V13H8V21H11V13H14L15 10H11V7C11 6.45 11.45 6 12 6H15V3Z" fill="white" />
+                </svg>
+              </a>
+
+              <a
+                className="social-btn"
+                href={igUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Instagram"
+                title="Instagram"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 2H17C20 2 22 4 22 7V17C22 20 20 22 17 22H7C4 22 2 20 2 17V7C2 4 4 2 7 2Z" stroke="white" strokeWidth="1.2" fill="none" />
+                  <circle cx="12" cy="12" r="3" stroke="white" strokeWidth="1.2" />
+                  <circle cx="17.5" cy="6.5" r="0.6" fill="white" />
+                </svg>
+              </a>
             </div>
 
-            <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ fontWeight: 700, color: "#14502b" }}>Total: {fmt(cartTotal)}</div>
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={clearCart} style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.06)", padding: "10px 12px", borderRadius: 10 }}>
-                  Clear
-                </button>
-                <button
-                  onClick={() => alert("Checkout flow will be added later")} // Order logic is safely disabled
-                  style={{ background: "#15542e", color: "#fff", padding: "10px 14px", borderRadius: 10, border: "none" }}
-                >
-                  Checkout
+            <div style={{ color: "rgba(255,255,255,0.95)", marginTop: 12 }}>© 2025 Anant Gill Agro Farm</div>
+          </div>
+        </div>
+      </footer>
+
+      {/* Mini-cart sticky bottom */}
+      {itemCount > 0 && (
+        <div className="mini-cart" style={{ display: miniVisible ? "flex" : "none" }} aria-live="polite">
+          <div className="mini-left">
+            <div style={{ fontWeight: 700 }}>
+              {itemCount} item{itemCount > 1 ? "s" : ""}
+            </div>
+            <div className="mini-sub">Subtotal {formatINR(subtotal)}</div>
+          </div>
+          <div>
+            <button className="view-cart" onClick={scrollToCart}>
+              View Cart
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Sheet overlay for product variants */}
+      {sheetProduct && (
+        <div className="sheet-overlay" onClick={closeSheet}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <button style={{ borderRadius: 8 }} onClick={closeSheet} aria-label="Close variants sheet">
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: "8px 4px 24px" }}>
+              <div className="sheet-image" style={{ marginBottom: 12 }}>
+                <img src={sheetProduct.image} alt={sheetProduct.title} style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 10 }} />
+              </div>
+
+              <h3 style={{ marginTop: 0 }}>{sheetProduct.title}</h3>
+              <p style={{ color: "#556e64" }}>{sheetProduct.short}</p>
+
+              <div style={{ marginTop: 12, fontWeight: 600 }}>Choose size / variant</div>
+
+              <div style={{ marginTop: 8 }}>
+                {sheetProduct.variants.map((v) => (
+                  <label
+                    key={v.id}
+                    style={{
+                      display: "block",
+                      border: sheetVariant === v.id ? "2px solid #14502b" : "1px solid rgba(0,0,0,0.06)",
+                      borderRadius: 10,
+                      padding: 12,
+                      marginBottom: 8,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="variant"
+                      value={v.id}
+                      checked={sheetVariant === v.id}
+                      onChange={() => setSheetVariant(v.id)}
+                      style={{ marginRight: 10 }}
+                    />
+                    <span style={{ fontWeight: 600 }}>{v.label}</span>
+                    <div style={{ color: "#556e64" }}>{formatINR(v.price)}</div>
+                  </label>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                <button className="add-btn" style={{ padding: "10px 16px" }} onClick={confirmAddFromSheet}>
+                  Add to Cart
                 </button>
               </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* Footer */}
-      <footer
-        className="site-footer"
-        style={{
-          color: "#fff",
-          background: `linear-gradient(#00000073,#00000073), url(${FOOTER_BG_PATH}) center / cover no-repeat`, 
-          padding: "26px 14px",
-          marginTop: 28,
-        }}
-      >
-        <div style={{ maxWidth: 980, margin: "0 auto", display: "flex", gap: 18, alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap" }}>
-          <div style={{ flex: "1 1 320px" }}>
-            <img src={PUBLIC_LOGO_PATH} alt="logo" style={{ width: 56, height: 56, borderRadius: 8, marginBottom: 10 }} />
-            <h4 style={{ margin: 0, color: "#fff", fontSize: 18 }}>Anant Gill Agro Farm</h4>
-            <div style={{ color: "#fffffff2", marginTop: 8 }}>
-              Contact: <a href="tel:+91-9999999999" style={{ color: "#fff" }}>+91 99999 99999</a>
-            </div>
-            <div style={{ color: "#ffffffe6", marginTop: 8 }}>Address: Near XYZ, Your City, India</div>
-          </div>
-
-          <div style={{ flex: "0 0 170px", textAlign: "center", color: "#fff" }}>
-            <div style={{ marginBottom: 8 }}>Follow us</div>
-            <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
-              <a className="social-btn" href="#" style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.12)", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>f</a>
-              <a className="social-btn" href="#" style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,255,255,0.12)", color: "#fff", display: "inline-flex", alignItems: "center", justifyContent: "center", textDecoration: "none" }}>I</a>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
-}
+       }
+    
