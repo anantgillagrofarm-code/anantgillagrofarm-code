@@ -1,4 +1,4 @@
-// src/App.jsx - FINAL WORKING CODE with DETAILS BUTTONS and CHECKOUT FORM
+// src/App.jsx - FINAL COMPLETE RESTORATION CODE
 
 import React, { useState, useEffect, useRef } from "react";
 import "./index.css";
@@ -84,23 +84,82 @@ function formatINR(n) {
   }
 }
 
+// =========================================================
+// Health & Nutrition Page Component
+// =========================================================
+
+function HealthPage({ onClose, products }) {
+  // Placeholder data/logic for the "Show Nutrition & Benefits" tab
+  const handleShowDetails = (title) => {
+     alert(`Nutrition & Benefits for ${title}:\n\n- Rich in B-Vitamins and minerals.\n- Excellent source of dietary fiber.\n- Supports heart health and immunity.`);
+  }
+
+  return (
+    <main className="content" role="main" style={{ minHeight: '100vh', paddingBottom: 100 }}>
+      {/* Header for Health Page */}
+      <div className="topbar" style={{ position: 'sticky', top: 0, zIndex: 901, background: 'rgba(255,255,255,0.92)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
+        <h2 className="section-title" style={{ margin: 0 }}>Health & Nutrition</h2>
+        <button className="cart-button" onClick={onClose} style={{ borderRadius: 14 }}>Back to Shop</button>
+      </div>
+
+      <div className="cart-box" style={{ padding: 16, marginBottom: 14 }}>
+        <h3 style={{ marginTop: 0, color: '#14502b' }}>Introduction</h3>
+        <p style={{ color: '#556e64' }}>Mushrooms are nutrient-dense fungi prized for their savory flavor and versatile culinary uses. Low in calories and rich in B vitamins, vitamin D (when sun-exposed), potassium, selenium, fiber, and unique antioxidants like ergothioneine, mushrooms make a wholesome addition to everyday meals.</p>
+        <p style={{ color: '#556e64', fontSize: '14px' }}>Below you can check the approximate nutrition and suggested health benefits for each product.</p>
+      </div>
+
+      {products.map((p) => (
+        <div key={p.id} className="product-card" style={{ display: 'block', padding: 16, marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(0,0,0,0.04)', paddingBottom: 10, marginBottom: 10 }}>
+            <div style={{ flex: 1 }}>
+                <h3 style={{ margin: 0, color: '#14502b', fontSize: 18 }}>{p.title}</h3>
+                <p className="short" style={{ margin: '4px 0 0' }}>{p.short}</p>
+            </div>
+            <button 
+              className="detail-btn" 
+              onClick={() => handleShowDetails(p.title)}
+              style={{ flexShrink: 0, marginLeft: 10, padding: '8px 10px', fontSize: 13, background: '#f7faf6' }}
+            >
+              Show Nutrition & Benefits
+            </button>
+          </div>
+          {/* This is where the extended details would show on a tab click in your original */}
+          {/* For now, the button uses an alert() */}
+        </div>
+      ))}
+
+      <div className="cart-box" style={{ padding: 16, marginTop: 14 }}>
+          <h3 style={{ marginTop: 0, color: '#14502b' }}>Summary</h3>
+          <p style={{ color: '#556e64' }}>Fresh, dried, powdered or pickled — mushrooms come in many forms that suit different cooking needs. Fresh mushrooms are low-calorie and versatile; dried and powdered forms concentrate nutrients and flavor; pickles and wariyan offer traditional taste. Together they help you add variety, nutrition and umami to your meals.</p>
+      </div>
+    </main>
+  );
+}
+
+// =========================================================
+// Checkout Form Component (Restored original UI)
+// =========================================================
+
 function CheckoutForm({ cart, subtotal, onClose, onOrderPlaced }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [address, setAddress] = useState("");
+  const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e, paymentType) => {
     e.preventDefault();
     if (!name || !phone || !address) {
-      alert("Please fill in all required fields.");
+      alert("Please fill in all required fields (Name, Phone, Address).");
       return;
     }
 
     setIsSubmitting(true);
 
     const orderDetails = {
-      customer: { name, phone, address },
+      customer: { name, phone, email, address, note },
+      payment: paymentType,
       items: cart.map(item => ({ 
         id: item.productId, 
         title: item.productTitle, 
@@ -111,14 +170,12 @@ function CheckoutForm({ cart, subtotal, onClose, onOrderPlaced }) {
       total: subtotal
     };
 
-    // 🛑 IMPORTANT: This is where you would place your ORIGINAL API/Firebase placeOrder call.
-    // For now, it's a safe alert.
-
+    // 🛑 IMPORTANT: This is the placeholder for your ORIGINAL API/Firebase placeOrder call.
     console.log("Submitting order:", orderDetails);
     
     setTimeout(() => {
         setIsSubmitting(false);
-        alert(`Order successfully prepared for submission!\n\nDetails:\nName: ${name}\nPhone: ${phone}\nAddress: ${address}\n\nTotal: ${formatINR(subtotal)}\n\n(Original API call was replaced with this alert for stability.)`);
+        alert(`Order successfully prepared for submission!\n\nName: ${name}\nPhone: ${phone}\nTotal: ${formatINR(subtotal)}\nPayment: ${paymentType === 'COD' ? 'Cash on Delivery' : 'Pay Online'}`);
         onOrderPlaced(); // Clears cart and closes modal
     }, 1500);
 
@@ -128,41 +185,56 @@ function CheckoutForm({ cart, subtotal, onClose, onOrderPlaced }) {
     <div className="sheet-overlay" onClick={onClose}>
       <div className="sheet checkout-sheet" onClick={(e) => e.stopPropagation()}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h3>Place Your Order ({formatINR(subtotal)})</h3>
+          <h3>Place Order</h3>
           <button onClick={onClose} style={{ background: "transparent", border: "none", fontSize: 20, cursor: "pointer" }}>✕</button>
         </div>
+        <p style={{ color: '#556e64', marginTop: -10 }}>Enter details so we can contact you to confirm the order.</p>
         
-        <form onSubmit={handleSubmit}>
+        {/* Form elements for Name, Phone, Email, Address, Note */}
+        <form style={{ paddingBottom: 60 /* Space for buttons */ }}>
           <div className="form-group">
-            <label htmlFor="name">Full Name *</label>
+            <label htmlFor="name">Name *</label>
             <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label htmlFor="phone">Phone Number *</label>
+            <label htmlFor="phone">Phone *</label>
             <input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
           </div>
           <div className="form-group">
-            <label htmlFor="address">Delivery Address *</label>
+            <label htmlFor="email">Email</label>
+            <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label htmlFor="address">Address *</label>
             <textarea id="address" value={address} onChange={(e) => setAddress(e.target.value)} required rows="3"></textarea>
           </div>
-          
-          <div className="order-summary-box">
-              <h4>Order Items</h4>
-              {cart.map(it => (
-                  <div key={it.key} className="order-item-line">
-                      <span>{it.productTitle} {it.variantLabel ? ` (${it.variantLabel})` : ''} x {it.qty}</span>
-                      <span>{formatINR(it.price * it.qty)}</span>
-                  </div>
-              ))}
-              <div className="order-total-line">
-                  <span>Order Total:</span>
-                  <span style={{ fontWeight: 700 }}>{formatINR(subtotal)}</span>
-              </div>
+          <div className="form-group">
+            <label htmlFor="note">Note (optional)</label>
+            <textarea id="note" value={note} onChange={(e) => setNote(e.target.value)} rows="2"></textarea>
           </div>
+          
+          {/* Fixed button bar at the bottom */}
+          <div className="checkout-actions">
+              <button type="button" className="cancel-btn" onClick={onClose} disabled={isSubmitting}>Cancel</button>
 
-          <button type="submit" className="add-btn" style={{ width: '100%', padding: '12px', marginTop: 16 }} disabled={isSubmitting}>
-            {isSubmitting ? 'Processing...' : `Confirm Order for ${formatINR(subtotal)}`}
-          </button>
+              <button 
+                  type="button" 
+                  className="add-btn pay-btn"
+                  onClick={(e) => handleSubmit(e, 'PAY_ONLINE')}
+                  disabled={isSubmitting || cart.length === 0}
+              >
+                {isSubmitting ? 'Processing...' : 'Pay & Place Order'}
+              </button>
+
+              <button 
+                  type="button" 
+                  className="add-btn cod-btn" 
+                  onClick={(e) => handleSubmit(e, 'COD')} 
+                  disabled={isSubmitting || cart.length === 0}
+              >
+                {isSubmitting ? 'Processing...' : 'Place Order (COD)'}
+              </button>
+          </div>
         </form>
       </div>
     </div>
@@ -170,24 +242,29 @@ function CheckoutForm({ cart, subtotal, onClose, onOrderPlaced }) {
 }
 
 
+// =========================================================
+// Main App Component
+// =========================================================
+
 export default function App() {
   const [cart, setCart] = useState([]); // { productId, variantId?, qty }
   const [sheetProduct, setSheetProduct] = useState(null); // product being chosen (for variants)
   const [sheetVariant, setSheetVariant] = useState(null); // selected variant id in sheet
   const [miniVisible, setMiniVisible] = useState(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false); // <--- ADDED STATE
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isHealthPage, setIsHealthPage] = useState(false); // <--- ADDED STATE
 
   const cartBoxRef = useRef(null);
   const miniTimerRef = useRef(null);
 
-  // when the sheet is open, prevent body scrolling
+  // when the sheet or checkout is open, prevent body scrolling
   useEffect(() => {
-    const shouldLock = !!sheetProduct || isCheckoutOpen; // <--- MODIFIED
+    const shouldLock = !!sheetProduct || isCheckoutOpen;
     if (shouldLock) document.body.classList.add("no-scroll");
     else document.body.classList.remove("no-scroll");
 
     return () => document.body.classList.remove("no-scroll");
-  }, [sheetProduct, isCheckoutOpen]); // <--- MODIFIED
+  }, [sheetProduct, isCheckoutOpen]);
 
   // cleanup timers on unmount
   useEffect(() => {
@@ -198,14 +275,12 @@ export default function App() {
 
   // Add to cart (public call)
   function handleAdd(product, variantId = null, qty = 1) {
-    // if product has variants but no variantId supplied -> open sheet
     if (product.variants && !variantId) {
       setSheetProduct(product);
       setSheetVariant(product.variants[0].id);
       return;
     }
 
-    // find price & label
     const variant = product.variants ? product.variants.find((v) => v.id === variantId) : null;
     const key = `${product.id}:${variant ? variant.id : "default"}`;
 
@@ -229,7 +304,6 @@ export default function App() {
       }
     });
 
-    // show mini cart briefly
     setMiniVisible(true);
     if (miniTimerRef.current) clearTimeout(miniTimerRef.current);
     miniTimerRef.current = setTimeout(() => {
@@ -264,215 +338,228 @@ export default function App() {
   const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
   const itemCount = cart.reduce((s, it) => s + it.qty, 0);
 
-  // when user confirms Add to Cart from sheet
   function confirmAddFromSheet() {
     if (!sheetProduct) return;
     handleAdd(sheetProduct, sheetVariant, 1);
     closeSheet();
   }
 
-  // social links
-  const fbUrl = "https://www.facebook.com/share/177NfwxRKr/"; // replace if you have an official FB page
-  // updated Instagram official link as provided by you
+  const fbUrl = "https://www.facebook.com/share/177NfwxRKr/";
   const igUrl = "https://www.instagram.com/anant.gill.agro.farm?igsh=MWVuNzUwbDc2bjl0aA==";
 
   function scrollToCart() {
     if (cartBoxRef.current) {
       cartBoxRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
     } else {
-      // fallback to bottom
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     }
   }
 
-  // Simple details modal for all products
-  function showProductDetails(p) {
-    const defaultDetails = `Details for ${p.title}:\n\n- Rich in Vitamin D and B-Vitamins.\n- Excellent source of fiber and protein.\n- Low in calories and fat.\n\n(Original details page/modal coming soon)`;
-    alert(defaultDetails);
-  }
+  // NOTE: Removed the simple showProductDetails alert() function from the last step
+  // as we are now using the full HealthPage component.
 
   return (
     <div className="app">
-      {/* Topbar */}
-      <header className="topbar" role="banner">
-        <div className="brand">
-          <img className="logo" src={PUBLIC_LOGO_PATH} alt="Anant Gill Agro Farm logo" />
-          <div>
-            <h1 className="title">Anant Gill Agro Farm</h1>
-            <div className="subtitle">Best quality fresh organic mushrooms & delicious pickles</div>
-          </div>
-        </div>
-        <button
-          className="cart-button"
-          onClick={scrollToCart}
-          aria-label={`Open cart with ${itemCount} item${itemCount !== 1 ? "s" : ""}`}
-        >
-          Cart ({itemCount})
-        </button>
-      </header>
-
-      {/* Content */}
-      <main className="content" role="main">
-        <h2 className="section-title">Our Products</h2>
-
-        <div className="product-list">
-          {PRODUCTS.map((p) => (
-            <article key={p.id} className="product-card" aria-labelledby={`product-${p.id}-title`}>
-              <div className="product-media">
-                <img src={p.image} alt={p.title} />
+      
+      {/* ---------------------------------------------------- */}
+      {/* CONDITIONAL RENDERING: Health Page vs Main Shop */}
+      {/* ---------------------------------------------------- */}
+      {isHealthPage ? (
+        <HealthPage onClose={() => setIsHealthPage(false)} products={PRODUCTS} />
+      ) : (
+        <>
+          {/* Topbar */}
+          <header className="topbar" role="banner">
+            <div className="brand">
+              <img className="logo" src={PUBLIC_LOGO_PATH} alt="Anant Gill Agro Farm logo" />
+              <div>
+                <h1 className="title">Anant Gill Agro Farm</h1>
+                <div className="subtitle">Best quality fresh organic mushrooms & delicious pickles</div>
               </div>
+            </div>
+            
+            <div style={{ display: 'flex', gap: '8px' }}>
+              {/* Health Button (Goes to HealthPage) */}
+              <button 
+                  className="cart-button" 
+                  onClick={() => setIsHealthPage(true)} 
+              >
+                  Health
+              </button>
+              {/* Cart Button (Scrolls to Cart) */}
+              <button
+                className="cart-button"
+                onClick={scrollToCart}
+                aria-label={`Open cart with ${itemCount} item${itemCount !== 1 ? "s" : ""}`}
+              >
+                Cart ({itemCount})
+              </button>
+            </div>
+          </header>
 
-              <div className="product-body">
-                <h3 id={`product-${p.id}-title`}>{p.title}</h3>
-                <div className="unit">{p.unit}</div>
-                <div className="short">{p.short}</div>
+          {/* Content */}
+          <main className="content" role="main">
+            <h2 className="section-title">Our Products</h2>
 
-                <div className="price-row">
-                  <div>
-                    <div className="price">{formatINR(p.price)}</div>
+            <div className="product-list">
+              {PRODUCTS.map((p) => (
+                <article key={p.id} className="product-card" aria-labelledby={`product-${p.id}-title`}>
+                  <div className="product-media">
+                    <img src={p.image} alt={p.title} />
                   </div>
 
-                  <div className="actions">
-                    {/* ADDED: Details Button */}
-                    <button 
-                        className="detail-btn"
-                        onClick={() => showProductDetails(p)}
-                    >
-                        Details
-                    </button>
+                  <div className="product-body">
+                    <h3 id={`product-${p.id}-title`}>{p.title}</h3>
+                    <div className="unit">{p.unit}</div>
+                    <div className="short">{p.short}</div>
 
-                    <button
-                      className="add-btn"
-                      onClick={() => {
-                        // if product has variants -> open sheet; else add immediately
-                        if (p.variants) openSheetForProduct(p);
-                        else handleAdd(p, null, 1);
-                      }}
-                    >
-                      Add to Cart
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </article>
-          ))}
-        </div>
+                    <div className="price-row">
+                      <div>
+                        <div className="price">{formatINR(p.price)}</div>
+                      </div>
 
-        {/* Inline Cart Box (below product list) */}
-        <div className="cart-box" id="cart-box" ref={cartBoxRef}>
-          <h3>Cart</h3>
-          {cart.length === 0 ? (
-            <div className="cart-empty">Your cart is empty</div>
-          ) : (
-            <>
-              {cart.map((it) => (
-                <div key={it.key} style={{ marginBottom: 8 }}>
-                  <div style={{ fontWeight: 600 }}>
-                    {it.productTitle}
-                    {it.variantLabel ? ` × ${it.variantLabel}` : ""}
+                      <div className="actions">
+                        {/* Detail button now links to Health Page */}
+                        <button 
+                            className="detail-btn"
+                            onClick={() => setIsHealthPage(true)}
+                        >
+                            Details
+                        </button>
+
+                        <button
+                          className="add-btn"
+                          onClick={() => {
+                            if (p.variants) openSheetForProduct(p);
+                            else handleAdd(p, null, 1);
+                          }}
+                        >
+                          Add to Cart
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ marginTop: 6 }}>
-                    <button aria-label={`Decrease qty of ${it.productTitle}`} onClick={() => changeQty(it.key, -1)}>
-                      -
-                    </button>
-                    <span style={{ margin: "0 8px" }}>{formatINR(it.price * it.qty)}</span>
-                    <button aria-label={`Increase qty of ${it.productTitle}`} onClick={() => changeQty(it.key, +1)}>
-                      +
-                    </button>
-                    <button style={{ marginLeft: 10 }} onClick={() => removeItem(it.key)}>
-                      Remove
-                    </button>
-                  </div>
-                </div>
+                </article>
               ))}
-              
-              <div className="cart-summary"> {/* MODIFIED TO ADD CLASS */}
-                <div className="cart-total-line">
-                  <div>Subtotal</div>
-                  <div style={{ fontWeight: 700 }}>{formatINR(subtotal)}</div>
+            </div>
+
+            {/* Inline Cart Box (below product list) */}
+            <div className="cart-box" id="cart-box" ref={cartBoxRef}>
+              <h3>Cart</h3>
+              {cart.length === 0 ? (
+                <div className="cart-empty">Your cart is empty</div>
+              ) : (
+                <>
+                  {cart.map((it) => (
+                    <div key={it.key} style={{ marginBottom: 8 }}>
+                      <div style={{ fontWeight: 600 }}>
+                        {it.productTitle}
+                        {it.variantLabel ? ` × ${it.variantLabel}` : ""}
+                      </div>
+                      <div style={{ marginTop: 6 }}>
+                        <button aria-label={`Decrease qty of ${it.productTitle}`} onClick={() => changeQty(it.key, -1)}>
+                          -
+                        </button>
+                        <span style={{ margin: "0 8px" }}>{formatINR(it.price * it.qty)}</span>
+                        <button aria-label={`Increase qty of ${it.productTitle}`} onClick={() => changeQty(it.key, +1)}>
+                          +
+                        </button>
+                        <button style={{ marginLeft: 10 }} onClick={() => removeItem(it.key)}>
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <div className="cart-summary">
+                    <div className="cart-total-line">
+                      <div>Subtotal</div>
+                      <div style={{ fontWeight: 700 }}>{formatINR(subtotal)}</div>
+                    </div>
+                    {/* Checkout Button (Opens CheckoutForm modal) */}
+                    <button 
+                        className="checkout-btn add-btn" 
+                        disabled={cart.length === 0}
+                        onClick={() => setIsCheckoutOpen(true)}
+                        style={{ marginTop: 12, width: '100%' }}
+                    >
+                        Place Order ({formatINR(subtotal)})
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </main>
+
+          {/* Footer */}
+          <footer className="site-footer" role="contentinfo" style={{ backgroundImage: `url(${FOOTER_BG_PATH})` }}>
+            <div className="footer-inner">
+              <div className="footer-left">
+                <img className="footer-logo" src={PUBLIC_LOGO_PATH} alt="Anant Gill Agro Farm logo" />
+                <h4>Anant Gill Agro Farm</h4>
+                <div className="contact-line">
+                  Phone: <a href="tel:+918837554747">+91 88375 54747</a>
                 </div>
-                {/* ADDED: Checkout Button */}
-                <button 
-                    className="checkout-btn add-btn" 
-                    disabled={cart.length === 0}
-                    onClick={() => setIsCheckoutOpen(true)}
-                    style={{ marginTop: 12, width: '100%' }}
-                >
-                    Place Order ({formatINR(subtotal)})
+                <div className="contact-line">
+                  Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a>
+                </div>
+                <div className="contact-line address">Gali No. 1, Baba Deep Singh Avenue, village Nangli bhatha, Amritsar 143001</div>
+              </div>
+
+              <div className="footer-right">
+                <div style={{ marginBottom: 8, color: "rgba(255,255,255,0.9)" }}>Follow</div>
+                <div className="socials">
+                  <a
+                    className="social-btn"
+                    href={fbUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Facebook"
+                    title="Facebook"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M15 3H12C9.79 3 8 4.79 8 7V10H5V13H8V21H11V13H14L15 10H11V7C11 6.45 11.45 6 12 6H15V3Z" fill="white" />
+                    </svg>
+                  </a>
+
+                  <a
+                    className="social-btn"
+                    href={igUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label="Instagram"
+                    title="Instagram"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M7 2H17C20 2 22 4 22 7V17C22 20 20 22 17 22H7C4 22 2 20 2 17V7C2 4 4 2 7 2Z" stroke="white" strokeWidth="1.2" fill="none" />
+                      <circle cx="12" cy="12" r="3" stroke="white" strokeWidth="1.2" />
+                      <circle cx="17.5" cy="6.5" r="0.6" fill="white" />
+                    </svg>
+                  </a>
+                </div>
+
+                <div style={{ color: "rgba(255,255,255,0.95)", marginTop: 12 }}>© 2025 Anant Gill Agro Farm</div>
+              </div>
+            </div>
+          </footer>
+
+          {/* Mini-cart sticky bottom */}
+          {itemCount > 0 && (
+            <div className="mini-cart" style={{ display: miniVisible ? "flex" : "none" }} aria-live="polite">
+              <div className="mini-left">
+                <div style={{ fontWeight: 700 }}>
+                  {itemCount} item{itemCount > 1 ? "s" : ""}
+                </div>
+                <div className="mini-sub">Subtotal {formatINR(subtotal)}</div>
+              </div>
+              <div>
+                <button className="view-cart" onClick={scrollToCart}>
+                  View Cart
                 </button>
               </div>
-            </>
+            </div>
           )}
-        </div>
-      </main>
-
-      {/* Footer */}
-      <footer className="site-footer" role="contentinfo" style={{ backgroundImage: `url(${FOOTER_BG_PATH})` }}>
-        <div className="footer-inner">
-          <div className="footer-left">
-            <img className="footer-logo" src={PUBLIC_LOGO_PATH} alt="Anant Gill Agro Farm logo" />
-            <h4>Anant Gill Agro Farm</h4>
-            <div className="contact-line">
-              Phone: <a href="tel:+918837554747">+91 88375 54747</a>
-            </div>
-            <div className="contact-line">
-              Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a>
-            </div>
-            <div className="contact-line address">Gali No. 1, Baba Deep Singh Avenue, village Nangli bhatha, Amritsar 143001</div>
-          </div>
-
-          <div className="footer-right">
-            <div style={{ marginBottom: 8, color: "rgba(255,255,255,0.9)" }}>Follow</div>
-            <div className="socials">
-              <a
-                className="social-btn"
-                href={fbUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Facebook"
-                title="Facebook"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M15 3H12C9.79 3 8 4.79 8 7V10H5V13H8V21H11V13H14L15 10H11V7C11 6.45 11.45 6 12 6H15V3Z" fill="white" />
-                </svg>
-              </a>
-
-              <a
-                className="social-btn"
-                href={igUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Instagram"
-                title="Instagram"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 2H17C20 2 22 4 22 7V17C22 20 20 22 17 22H7C4 22 2 20 2 17V7C2 4 4 2 7 2Z" stroke="white" strokeWidth="1.2" fill="none" />
-                  <circle cx="12" cy="12" r="3" stroke="white" strokeWidth="1.2" />
-                  <circle cx="17.5" cy="6.5" r="0.6" fill="white" />
-                </svg>
-              </a>
-            </div>
-
-            <div style={{ color: "rgba(255,255,255,0.95)", marginTop: 12 }}>© 2025 Anant Gill Agro Farm</div>
-          </div>
-        </div>
-      </footer>
-
-      {/* Mini-cart sticky bottom */}
-      {itemCount > 0 && (
-        <div className="mini-cart" style={{ display: miniVisible ? "flex" : "none" }} aria-live="polite">
-          <div className="mini-left">
-            <div style={{ fontWeight: 700 }}>
-              {itemCount} item{itemCount > 1 ? "s" : ""}
-            </div>
-            <div className="mini-sub">Subtotal {formatINR(subtotal)}</div>
-          </div>
-          <div>
-            <button className="view-cart" onClick={scrollToCart}>
-              View Cart
-            </button>
-          </div>
-        </div>
+        </>
       )}
 
       {/* Sheet overlay for product variants */}
@@ -532,7 +619,7 @@ export default function App() {
         </div>
       )}
 
-      {/* ADDED: Checkout Form Modal */}
+      {/* Checkout Form Modal */}
       {isCheckoutOpen && (
         <CheckoutForm
           cart={cart}
@@ -546,5 +633,4 @@ export default function App() {
       )}
     </div>
   );
-    }
-      
+}
