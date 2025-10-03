@@ -1,13 +1,13 @@
 // src/App.jsx - FINAL VERSION WITH IMAGE IMPORTS FIXED
 
 import React, { useEffect, useState } from "react";
-// Import all assets from src/assets to ensure Vite handles them correctly
-import freshMushroomsImg from "./assets/fresh_mushrooms.jpg"; // Check name
-import dryMushroomsImg from "./assets/dry_mushrooms.jpg"; // Check name
-import mushroomPickleImg from "./assets/mushroom_pickle.jpg"; // Check name
-import mushroomPowderImg from "./assets/mushroom_powder.jpg"; // Check name
-import logoImg from "./assets/anant_gill_logo.png"; // Check name
-import footerBg from "./assets/footer-mushrooms-v2.jpg"; // Check name
+// 🛑 CRITICAL FIX: Importing assets ensures Vite/Vercel handles paths correctly.
+import freshMushroomsImg from "./assets/fresh_mushrooms.jpg"; 
+import dryMushroomsImg from "./assets/dry_mushrooms.jpg"; 
+import mushroomPickleImg from "./assets/mushroom_pickle.jpg"; 
+import mushroomPowderImg from "./assets/mushroom_powder.jpg"; 
+import logoImg from "./assets/anant_gill_logo.png"; // From your public/ folder or src/assets
+import footerBg from "./assets/footer-mushrooms-v2.jpg"; // From your public/ folder or src/assets
 import "./index.css"; 
 
 
@@ -18,7 +18,7 @@ const sampleProducts = [
     desc: "Cleaned and packed fresh mushrooms — perfect for cooking.",
     unit: "500g",
     price: 120,
-    img: freshMushroomsImg, // FIXED: Using the imported variable
+    img: freshMushroomsImg, // Now uses imported variable
   },
   {
     id: "m2",
@@ -26,7 +26,7 @@ const sampleProducts = [
     desc: "Rich flavour dried mushrooms for long shelf life.",
     unit: "100g",
     price: 220,
-    img: dryMushroomsImg, // FIXED: Using the imported variable
+    img: dryMushroomsImg, // Now uses imported variable
   },
   {
     id: "m3",
@@ -34,7 +34,7 @@ const sampleProducts = [
     desc: "Tangy mushroom pickle made in-house.",
     unit: "300g",
     price: 180,
-    img: mushroomPickleImg, // FIXED: Using the imported variable
+    img: mushroomPickleImg, // Now uses imported variable
   },
   {
     id: "m4",
@@ -42,7 +42,7 @@ const sampleProducts = [
     desc: "Powdered mushrooms for soups, sauces and seasoning.",
     unit: "200g",
     price: 350,
-    img: mushroomPowderImg, // FIXED: Using the imported variable
+    img: mushroomPowderImg, // Now uses imported variable
   },
 ];
 
@@ -106,7 +106,7 @@ export default function App() {
       >
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <img
-            src={logoImg} // FIXED: Using the imported variable
+            src={logoImg} // Now uses imported variable
             alt="logo"
             style={{ width: 52, height: 52, borderRadius: 10, objectFit: "cover" }}
             onError={(e) => {
@@ -239,7 +239,7 @@ export default function App() {
                     alt={p.title}
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                     onError={(e) => {
-                      e.currentTarget.src = logoImg; // FIXED: Using the imported variable as fallback
+                      e.currentTarget.src = logoImg; // Using imported logo as fallback
                     }}
                   />
                 </div>
@@ -376,7 +376,7 @@ export default function App() {
         className="site-footer"
         style={{
           color: "#fff",
-          background: `linear-gradient(#00000073,#00000073), url(${footerBg}) center / cover no-repeat`, // FIXED: Using imported variable
+          background: `linear-gradient(#00000073,#00000073), url(${footerBg}) center / cover no-repeat`, // Now uses imported variable
           padding: "26px 14px",
           marginTop: 28,
         }}
