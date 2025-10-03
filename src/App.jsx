@@ -1,19 +1,14 @@
-// src/App.jsx - FINAL FIX: Correctly separating public vs. imported assets
-
+// src/App.jsx
 import React, { useEffect, useState } from "react";
-// 🛑 IMPORTANT: Only importing product images that are in src/assets
-import freshMushroomsImg from "./assets/fresh_mushrooms.jpg"; 
-import dryMushroomsImg from "./assets/dry_mushrooms.jpg"; 
-import mushroomPickleImg from "./assets/mushroom_pickle.jpg"; 
-import mushroomPowderImg from "./assets/mushroom_powder.jpg"; 
-import "./index.css"; 
 
-
-// 🛑 Path to the logo, since it's in the /public folder
-const PUBLIC_LOGO_PATH = "/anant_gill_logo.png";
-// 🛑 Path to the footer background, since it's in the /public folder
-const FOOTER_BG_PATH = "/footer-mushrooms-v2.jpg";
-
+/**
+ * Improved single-file App.jsx for Vite + React 18
+ * - export default App
+ * - small in-memory cart (no backend)
+ * - responsive layout
+ *
+ * If any image path doesn't exist in your repo, replace with the correct filename inside /src/assets/
+ */
 
 const sampleProducts = [
   {
@@ -22,7 +17,7 @@ const sampleProducts = [
     desc: "Cleaned and packed fresh mushrooms — perfect for cooking.",
     unit: "500g",
     price: 120,
-    img: freshMushroomsImg, 
+    img: "/assets/fresh_mushrooms-BDb ... .jpg".replace(/\s/g, "_"),
   },
   {
     id: "m2",
@@ -30,7 +25,7 @@ const sampleProducts = [
     desc: "Rich flavour dried mushrooms for long shelf life.",
     unit: "100g",
     price: 220,
-    img: dryMushroomsImg, 
+    img: "/assets/dry_mushrooms-IGqoN67F.jpg",
   },
   {
     id: "m3",
@@ -38,7 +33,7 @@ const sampleProducts = [
     desc: "Tangy mushroom pickle made in-house.",
     unit: "300g",
     price: 180,
-    img: mushroomPickleImg, 
+    img: "/assets/mushroom_pickIe-CFnbjj7b.jpg".replace(/I/g, "i"),
   },
   {
     id: "m4",
@@ -46,7 +41,7 @@ const sampleProducts = [
     desc: "Powdered mushrooms for soups, sauces and seasoning.",
     unit: "200g",
     price: 350,
-    img: mushroomPowderImg, 
+    img: "/assets/mushroom_powder-BBinSX78.jpg",
   },
 ];
 
@@ -60,6 +55,7 @@ export default function App() {
 
   useEffect(() => {
     // If you later want to fetch products from Firebase or an API, do it here.
+    // Right now we use in-file sampleProducts.
   }, []);
 
   function addToCart(productId) {
@@ -110,7 +106,7 @@ export default function App() {
       >
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <img
-            src={PUBLIC_LOGO_PATH} // FIXED: Using public path for logo
+            src="/assets/anant_gill_logo.png"
             alt="logo"
             style={{ width: 52, height: 52, borderRadius: 10, objectFit: "cover" }}
             onError={(e) => {
@@ -243,7 +239,8 @@ export default function App() {
                     alt={p.title}
                     style={{ width: "100%", height: "100%", objectFit: "cover" }}
                     onError={(e) => {
-                      e.currentTarget.src = PUBLIC_LOGO_PATH; // Using public path as fallback
+                      e.currentTarget.src =
+                        "/assets/anant_gill_logo.png"; // fallback
                     }}
                   />
                 </div>
@@ -339,7 +336,7 @@ export default function App() {
 
               {cartItems.map((it) => (
                 <div key={it.id} style={{ display: "flex", gap: 12, alignItems: "center", padding: 8, borderRadius: 10, border: "1px solid #f0f0f0" }}>
-                  <img src={it.img} alt={it.title} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8 }} onError={(e) => (e.currentTarget.src = PUBLIC_LOGO_PATH)} />
+                  <img src={it.img} alt={it.title} style={{ width: 64, height: 64, objectFit: "cover", borderRadius: 8 }} onError={(e) => (e.currentTarget.src = "/assets/anant_gill_logo.png")} />
                   <div style={{ flex: 1 }}>
                     <div style={{ fontWeight: 700, color: "#14502b" }}>{it.title}</div>
                     <div style={{ color: "#7c8c82", fontSize: 13 }}>{fmt(it.price)} × {it.qty}</div>
@@ -380,14 +377,14 @@ export default function App() {
         className="site-footer"
         style={{
           color: "#fff",
-          background: `linear-gradient(#00000073,#00000073), url(${FOOTER_BG_PATH}) center / cover no-repeat`, // FIXED: Using public path
+          background: "linear-gradient(#00000073,#00000073), url('/assets/footer-mushrooms-v2.jpg') center / cover no-repeat",
           padding: "26px 14px",
           marginTop: 28,
         }}
       >
         <div style={{ maxWidth: 980, margin: "0 auto", display: "flex", gap: 18, alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap" }}>
           <div style={{ flex: "1 1 320px" }}>
-            <img src={PUBLIC_LOGO_PATH} alt="logo" style={{ width: 56, height: 56, borderRadius: 8, marginBottom: 10 }} />
+            <img src="/assets/anant_gill_logo.png" alt="logo" style={{ width: 56, height: 56, borderRadius: 8, marginBottom: 10 }} />
             <h4 style={{ margin: 0, color: "#fff", fontSize: 18 }}>Anant Gill Agro Farm</h4>
             <div style={{ color: "#fffffff2", marginTop: 8 }}>
               Contact: <a href="tel:+91-9999999999" style={{ color: "#fff" }}>+91 99999 99999</a>
@@ -406,5 +403,4 @@ export default function App() {
       </footer>
     </div>
   );
-      }
-          
+    }
