@@ -408,5 +408,143 @@ export default function App() {
 
       {/* Footer */}
       <footer className="site-footer" role="contentinfo" style={{ backgroundImage: `url(${FOOTER_BG_PATH})` }}>
+        <div className="footer-inner">
+          <div className="footer-left">
+            <img className="footer-logo" src={PUBLIC_LOGO_PATH} alt="Anant Gill Agro Farm logo" />
+            <h4>Anant Gill Agro Farm</h4>
+            <div className="contact-line">
+              Phone: <a href="tel:+918837554747">+91 88375 54747</a>
+            </div>
+            <div className="contact-line">
+              Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a>
+            </div>
+            <div className="contact-line address">Gali No. 1, Baba Deep Singh Avenue, village Nangli bhatha, Amritsar 143001</div>
+          </div>
 
-    
+          <div className="footer-right">
+            <div style={{ marginBottom: 8, color: "rgba(255,255,255,0.9)" }}>Follow</div>
+            <div className="socials">
+              <a
+                className="social-btn"
+                href={fbUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Facebook"
+                title="Facebook"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 3H12C9.79 3 8 4.79 8 7V10H5V13H8V21H11V13H14L15 10H11V7C11 6.45 11.45 6 12 6H15V3Z" fill="white" />
+                </svg>
+              </a>
+
+              <a
+                className="social-btn"
+                href={igUrl}
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Instagram"
+                title="Instagram"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M7 2H17C20 2 22 4 22 7V17C22 20 20 22 17 22H7C4 22 2 20 2 17V7C2 4 4 2 7 2Z" stroke="white" strokeWidth="1.2" fill="none" />
+                  <circle cx="12" cy="12" r="3" stroke="white" strokeWidth="1.2" />
+                  <circle cx="17.5" cy="6.5" r="0.6" fill="white" />
+                </svg>
+              </a>
+            </div>
+
+            <div style={{ color: "rgba(255,255,255,0.95)", marginTop: 12 }}>© 2025 Anant Gill Agro Farm</div>
+          </div>
+        </div>
+      </footer>
+
+      {/* Mini-cart sticky bottom */}
+      {itemCount > 0 && (
+        <div className="mini-cart" style={{ display: miniVisible ? "flex" : "none" }} aria-live="polite">
+          <div className="mini-left">
+            <div style={{ fontWeight: 700 }}>
+              {itemCount} item{itemCount > 1 ? "s" : ""}
+            </div>
+            <div className="mini-sub">Subtotal {formatINR(subtotal)}</div>
+          </div>
+          <div>
+            <button className="view-cart" onClick={scrollToCart}>
+              View Cart
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Sheet overlay for product variants */}
+      {sheetProduct && (
+        <div className="sheet-overlay" onClick={closeSheet}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: "flex", justifyContent: "flex-start" }}>
+              <button style={{ borderRadius: 8 }} onClick={closeSheet} aria-label="Close variants sheet">
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: "8px 4px 24px" }}>
+              <div className="sheet-image" style={{ marginBottom: 12 }}>
+                <img src={sheetProduct.image} alt={sheetProduct.title} style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 10 }} />
+              </div>
+
+              <h3 style={{ marginTop: 0 }}>{sheetProduct.title}</h3>
+              <p style={{ color: "#556e64" }}>{sheetProduct.short}</p>
+
+              <div style={{ marginTop: 12, fontWeight: 600 }}>Choose size / variant</div>
+
+              <div style={{ marginTop: 8 }}>
+                {sheetProduct.variants.map((v) => (
+                  <label
+                    key={v.id}
+                    style={{
+                      display: "block",
+                      border: sheetVariant === v.id ? "2px solid #14502b" : "1px solid rgba(0,0,0,0.06)",
+                      borderRadius: 10,
+                      padding: 12,
+                      marginBottom: 8,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name="variant"
+                      value={v.id}
+                      checked={sheetVariant === v.id}
+                      onChange={() => setSheetVariant(v.id)}
+                      style={{ marginRight: 10 }}
+                    />
+                    <span style={{ fontWeight: 600 }}>{v.label}</span>
+                    <div style={{ color: "#556e64" }}>{formatINR(v.price)}</div>
+                  </label>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
+                <button className="add-btn" style={{ padding: "10px 16px" }} onClick={confirmAddFromSheet}>
+                  Add to Cart
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ADDED: Checkout Form Modal */}
+      {isCheckoutOpen && (
+        <CheckoutForm
+          cart={cart}
+          subtotal={subtotal}
+          onClose={() => setIsCheckoutOpen(false)}
+          onOrderPlaced={() => {
+            setCart([]);
+            setIsCheckoutOpen(false);
+          }}
+        />
+      )}
+    </div>
+  );
+    }
+      
