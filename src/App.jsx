@@ -1,7 +1,7 @@
-// src/App.jsx
 import React, { useState } from "react";
-import "./index.css";
+import "./index.css"; // Ensure this file exists and is correct
 
+// Assuming these files are in 'src/assets/' and their names are correct:
 import imgFresh from "./assets/fresh_mushrooms.jpg";
 import imgPickle from "./assets/mushroom_pickle.jpg";
 import imgDry from "./assets/dry_mushrooms.jpg";
@@ -31,9 +31,7 @@ export default function App() {
   const [sheetVariant, setSheetVariant] = useState(null);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [customer, setCustomer] = useState({ name: "", phone: "", email: "", address: "", note: "" });
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState(null);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
+  // Removed submitting, submitError, submitSuccess state for this test
 
   function handleAdd(product, variantId = null, qty = 1) {
     if (product.variants && !variantId) {
@@ -67,61 +65,27 @@ export default function App() {
 
   function openCheckout() {
     if (cart.length === 0) { alert("Cart is empty"); return; }
-    setSubmitError(null); setSubmitSuccess(false);
+    // Removed submit error/success reset for this test
     setCheckoutOpen(true);
   }
 
-  function validateCustomer() {
-    if (!customer.name.trim()) return "Please enter your name";
-    if (!customer.phone.trim()) return "Please enter your phone number";
-    return null;
-  }
-
-  async function placeOrderCOD() {
-    const val = validateCustomer();
-    if (val) { setSubmitError(val); return; }
-    const payload = {
-      name: customer.name,
-      phone: customer.phone,
-      email: customer.email,
-      address: customer.address,
-      note: customer.note,
-      items: cart.map(it => ({ title: it.productTitle, variant: it.variantLabel, qty: it.qty, price: it.price })),
-      total: subtotal,
-    };
-    setSubmitting(true); setSubmitError(null);
-    try {
-      const endpoint = "/api/order";
-      const resp = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const body = await resp.json().catch(() => null);
-      if (!resp.ok) {
-        const msg = (body && (body.error || body.details)) || resp.statusText || "Order failed";
-        throw new Error(msg);
-      }
-      setSubmitSuccess(true); setCart([]);
-      setTimeout(() => {
-        setCheckoutOpen(false);
-        setSubmitSuccess(false);
-        setCustomer({ name: "", phone: "", email: "", address: "", note: "" });
-      }, 1500);
-    } catch (err) {
-      console.error(err);
-      setSubmitError(err.message || "Order failed");
-    } finally { setSubmitting(false); }
+  // --- TEMPORARILY REMOVE API LOGIC FUNCTIONS ---
+  function placeOrderCOD() {
+    alert("ORDERING FUNCTIONALITY TEST: Order (COD) would be placed now. The app is likely running.");
+    setCheckoutOpen(false); // Close the sheet to simulate success
+    setCart([]); // Clear cart
   }
 
   function placeOrderWithPayment() {
-    alert("Payment integration not set. Use 'Place Order (COD)' for now.");
+    alert("ORDERING FUNCTIONALITY TEST: Payment button clicked. App is likely running.");
   }
+  // --- END REMOVED API LOGIC ---
 
   return (
     <div className="app">
       <header className="topbar">
         <div className="brand">
+          {/* NOTE: '/anant_gill_logo.png' assumes the file is in the 'public' folder */}
           <img className="logo" src="/anant_gill_logo.png" alt="logo" />
           <div>
             <h1 className="title">Anant Gill Agro Farm</h1>
@@ -250,13 +214,12 @@ export default function App() {
                 <input type="text" value={customer.note} onChange={(e) => setCustomer({...customer, note: e.target.value})} style={{ width: "100%", padding: 8, marginTop: 6 }} />
               </label>
 
-              {submitError && <div style={{ color: "crimson", marginTop: 10 }}>{submitError}</div>}
-              {submitSuccess && <div style={{ color: "green", marginTop: 10 }}>Order received — we will contact you shortly.</div>}
+              {/* Removed submitError and submitSuccess display here */}
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
-                <button className="detail-btn" onClick={() => setCheckoutOpen(false)} disabled={submitting}>Cancel</button>
-                <button className="add-btn" onClick={placeOrderWithPayment} disabled={submitting}>{submitting ? "Processing..." : "Pay & Place Order"}</button>
-                <button className="add-btn" onClick={placeOrderCOD} disabled={submitting}>{submitting ? "Processing..." : "Place Order (COD)"}</button>
+                <button className="detail-btn" onClick={() => setCheckoutOpen(false)}>Cancel</button>
+                <button className="add-btn" onClick={placeOrderWithPayment}>Pay & Place Order</button>
+                <button className="add-btn" onClick={placeOrderCOD}>Place Order (COD)</button>
               </div>
             </div>
           </div>
@@ -268,4 +231,5 @@ export default function App() {
       </footer>
     </div>
   );
-   }
+  }
+                      
