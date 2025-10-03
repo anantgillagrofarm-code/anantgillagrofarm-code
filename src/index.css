@@ -112,30 +112,6 @@ h1, h2, h3 {
   padding: 16px;
 }
 
-/* --- Hero Banner (If implemented) --- */
-.hero-banner {
-    background: #e6f0e8;
-    padding: 30px 16px;
-    margin-bottom: 20px;
-    border-radius: 12px;
-    text-align: center;
-}
-
-.hero-banner h1 {
-    font-size: 24px;
-    margin-top: 0;
-}
-
-.hero-banner p {
-    color: var(--color-primary-light);
-    margin-bottom: 20px;
-}
-
-.hero-actions .add-btn {
-    margin: 0 8px;
-    padding: 10px 20px;
-}
-
 /* --- Product List --- */
 
 .section-title {
@@ -310,6 +286,7 @@ h1, h2, h3 {
 
 .footer-logo {
   height: 40px;
+  /* CRITICAL: This filter turns the dark logo white */
   filter: brightness(0) invert(1);
   margin-bottom: 8px;
 }
