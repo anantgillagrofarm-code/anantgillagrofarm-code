@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import './index.css';
+import './index.css'; // <-- CRITICAL: This imports your main styling!
 
 const rootEl = document.getElementById("root");
 
@@ -14,3 +14,4 @@ createRoot(rootEl).render(
     <App />
   </React.StrictMode>
 );
+    
