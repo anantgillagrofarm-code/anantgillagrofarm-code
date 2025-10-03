@@ -1,4 +1,4 @@
-// src/App.jsx - FINAL COMPLETE RESTORATION CODE
+// src/App.jsx - FINAL COMPLETE CODE
 
 import React, { useState, useEffect, useRef } from "react";
 import "./index.css";
@@ -89,7 +89,7 @@ function formatINR(n) {
 // =========================================================
 
 function HealthPage({ onClose, products }) {
-  // Placeholder data/logic for the "Show Nutrition & Benefits" tab
+  // Placeholder logic for the "Show Nutrition & Benefits" button
   const handleShowDetails = (title) => {
      alert(`Nutrition & Benefits for ${title}:\n\n- Rich in B-Vitamins and minerals.\n- Excellent source of dietary fiber.\n- Supports heart health and immunity.`);
   }
@@ -123,8 +123,6 @@ function HealthPage({ onClose, products }) {
               Show Nutrition & Benefits
             </button>
           </div>
-          {/* This is where the extended details would show on a tab click in your original */}
-          {/* For now, the button uses an alert() */}
         </div>
       ))}
 
@@ -148,38 +146,44 @@ function CheckoutForm({ cart, subtotal, onClose, onOrderPlaced }) {
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // === START: WhatsApp Order Logic ===
   const handleSubmit = (e, paymentType) => {
     e.preventDefault();
     if (!name || !phone || !address) {
       alert("Please fill in all required fields (Name, Phone, Address).");
       return;
     }
+    
+    // --- WhatsApp Logic ---
+    const orderItems = cart.map(item => 
+        `- ${item.productTitle}${item.variantLabel ? ` (${item.variantLabel})` : ''} x${item.qty}`
+    ).join('\n');
+
+    const paymentLabel = paymentType === 'COD' ? 'Cash on Delivery (COD)' : 'Online Payment (Confirmation needed)';
+    
+    // Creates the message with customer and order details, encoded for the URL
+    const message = encodeURIComponent(`*New Order Alert!*%0A%0A*Customer Info:*%0AName: ${name}%0APhone: ${phone}%0AEmail: ${email}%0AAddress: ${address}%0ANote: ${note}%0A%0A*Order Details:*%0A${orderItems}%0A%0A*Total:* ${formatINR(subtotal)}%0A*Payment:* ${paymentLabel}`);
+    
+    // Replaced with your confirmed number
+    const whatsappNumber = "918837554747"; 
+    
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
 
     setIsSubmitting(true);
 
-    const orderDetails = {
-      customer: { name, phone, email, address, note },
-      payment: paymentType,
-      items: cart.map(item => ({ 
-        id: item.productId, 
-        title: item.productTitle, 
-        variant: item.variantLabel, 
-        qty: item.qty, 
-        price: item.price 
-      })),
-      total: subtotal
-    };
-
-    // 🛑 IMPORTANT: This is the placeholder for your ORIGINAL API/Firebase placeOrder call.
-    console.log("Submitting order:", orderDetails);
+    // Open WhatsApp link in a new tab
+    window.open(whatsappUrl, '_blank');
     
+    // Clear cart and close modal after a short delay
     setTimeout(() => {
         setIsSubmitting(false);
-        alert(`Order successfully prepared for submission!\n\nName: ${name}\nPhone: ${phone}\nTotal: ${formatINR(subtotal)}\nPayment: ${paymentType === 'COD' ? 'Cash on Delivery' : 'Pay Online'}`);
-        onOrderPlaced(); // Clears cart and closes modal
-    }, 1500);
-
+        alert(`Thank you! Your order summary is ready. Please click 'Send' in the new WhatsApp window to confirm and finalize your order with Anant Gill Agro Farm.`);
+        onOrderPlaced(); 
+    }, 500); 
+    // --- END: WhatsApp Logic ---
   };
+  // === END: WhatsApp Order Logic ===
+
 
   return (
     <div className="sheet-overlay" onClick={onClose}>
@@ -252,7 +256,7 @@ export default function App() {
   const [sheetVariant, setSheetVariant] = useState(null); // selected variant id in sheet
   const [miniVisible, setMiniVisible] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [isHealthPage, setIsHealthPage] = useState(false); // <--- ADDED STATE
+  const [isHealthPage, setIsHealthPage] = useState(false); 
 
   const cartBoxRef = useRef(null);
   const miniTimerRef = useRef(null);
@@ -354,9 +358,6 @@ export default function App() {
       window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
     }
   }
-
-  // NOTE: Removed the simple showProductDetails alert() function from the last step
-  // as we are now using the full HealthPage component.
 
   return (
     <div className="app">
@@ -495,6 +496,7 @@ export default function App() {
           <footer className="site-footer" role="contentinfo" style={{ backgroundImage: `url(${FOOTER_BG_PATH})` }}>
             <div className="footer-inner">
               <div className="footer-left">
+                {/* Logo path confirmed correct. CSS filter handles color change. */}
                 <img className="footer-logo" src={PUBLIC_LOGO_PATH} alt="Anant Gill Agro Farm logo" />
                 <h4>Anant Gill Agro Farm</h4>
                 <div className="contact-line">
