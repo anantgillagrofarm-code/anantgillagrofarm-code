@@ -1,7 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
-import './index.css'; // <--- RESTORED: This line must be present.
+import './index.css';
 
 const rootEl = document.getElementById("root");
 
@@ -10,8 +10,7 @@ if (!rootEl) {
 }
 
 createRoot(rootEl).render(
-  <React.StrictMode> // <--- RESTORED: This should be present.
+  <React.StrictMode>
     <App />
   </React.StrictMode>
 );
-    
