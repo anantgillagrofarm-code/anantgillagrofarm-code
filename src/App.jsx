@@ -1,759 +1,325 @@
-// src/App.jsx - FINAL COMPLETE CODE WITH HOMEPAGE ROUTING
+import React, { useState } from 'react';
+import './App.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faEnvelope, faPhone, faMapMarkerAlt, faFacebook, faInstagram, faTwitter, faWhatsapp, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { faFacebookF, faInstagram as fabInstagram, faTwitter as fabTwitter, faWhatsapp as fabWhatsapp } from '@fortawesome/free-brands-svg-icons';
 
-import React, { useState, useEffect, useRef } from "react";
-import "./index.css";
+// --- Assets ---
+import logo from './assets/logo.jpg';
+import freshMushrooms from './assets/fresh_mushrooms.jpg';
+import driedMushrooms from './assets/dried_mushrooms.jpg';
+import mushroomPickle from './assets/mushroom_pickle.jpg';
+import mushroomPowder from './assets/mushroom_powder.jpg';
+import mushroomWariyan from './assets/mushroom_wariyan.jpg';
+// --- END Assets ---
 
-/*
-  ASSET FIX:
-  - Files in src/assets/ (product images) are imported.
-  - Files in /public/ (logo, footer background) must be referenced via their absolute path string.
-*/
-
-// 1. Importing product images (correct for src/assets)
-import imgFresh from "./assets/fresh_mushrooms.jpg";
-import imgPickle from "./assets/mushroom_pickle.jpg";
-import imgDry from "./assets/dry_mushrooms.jpg";
-import imgPowder from "./assets/mushroom_powder.jpg";
-import imgWariyan from "./assets/mushroom_wariyan.jpg";
-
-// New images for Home/History page (place these in your src/assets folder if needed)
-import imgHistory from "./assets/history_mushrooms.jpg"; // Placeholder
-import imgVarieties from "./assets/varieties_mushrooms.jpg"; // Placeholder
-
-// 2. Defining paths for public assets (correct for /public)
-const PUBLIC_LOGO_PATH = "/anant_gill_logo.png";
-const FOOTER_BG_PATH = "/footer-mushrooms-v2.jpg";
-
-
-const PRODUCTS = [
+// --- Data for Products (ProductList is now the default page) ---
+const products = [
   {
-    id: "fresh",
-    title: "Fresh Mushrooms",
-    price: 50,
-    unit: "per 200g box",
-    short: "Hand-picked fresh button mushrooms — ideal for cooking & salads.",
-    image: imgFresh,
-    variants: [
-      { id: "box200", label: "1 box (200 g)", price: 50 },
-      { id: "kg", label: "1 kg", price: 200 },
-    ],
+    id: 1,
+    name: 'Fresh Button Mushrooms',
+    description: 'Farm-fresh, hand-picked button mushrooms, perfect for all your culinary needs. High in Vitamin D and B-vitamins.',
+    price: '₹200 / Kg',
+    image: freshMushrooms,
+    healthBenefit: 'High in Vitamin D and B-vitamins, supports immunity and bone health.',
+    nutritionalKey: 'fresh',
   },
   {
-    id: "pickle",
-    title: "Mushroom Pickle",
-    price: 100,
-    unit: "per 200g jar",
-    short: "Tangy & spicy mushroom pickle made with traditional spices.",
-    image: imgPickle,
-    variants: [
-      { id: "jar200", label: "200 g jar", price: 100 },
-      { id: "jar400", label: "400 g jar", price: 200 },
-    ],
+    id: 2,
+    name: 'Dried Mushroom Slices',
+    description: 'Premium dried mushrooms. Rehydrate for a meaty texture or grind for seasoning. Long shelf life.',
+    price: '₹800 / 100g',
+    image: driedMushrooms,
+    healthBenefit: 'Concentrated protein and fiber source. Excellent for adding an umami flavor to dishes.',
+    nutritionalKey: 'dried',
   },
   {
-    id: "dry",
-    title: "Dry Mushrooms",
-    price: 300,
-    unit: "per 100g",
-    short: "Dehydrated mushrooms, perfect for long-term storage and soups.",
-    image: imgDry,
-    variants: null,
+    id: 3,
+    name: 'Mushroom Pickle',
+    description: 'Spicy and tangy mushroom pickle, made with traditional Indian spices and high-quality oil. A delightful condiment.',
+    price: '₹350 / Jar',
+    image: mushroomPickle,
+    healthBenefit: 'Aids digestion with probiotics (due to fermentation) and provides essential minerals.',
+    nutritionalKey: 'pickle',
   },
   {
-    id: "powder",
-    title: "Mushroom Powder",
-    price: 450,
-    unit: "per 100g",
-    short: "Finely ground mushroom powder — perfect for seasoning.",
-    image: imgPowder,
-    variants: null,
+    id: 4,
+    name: 'Mushroom Powder',
+    description: 'Finely ground mushroom powder. Easily mix into smoothies, soups, or coffee for a nutritional boost.',
+    price: '₹550 / Jar',
+    image: mushroomPowder,
+    healthBenefit: 'An excellent supplement for protein, fiber, and powerful antioxidants like L-Ergothioneine.',
+    nutritionalKey: 'powder',
   },
   {
-    id: "wariyan",
-    title: "Mushroom Wariyan",
-    price: 120,
-    unit: "per 100g packet",
-    short: "Traditional mushroom wadiyan — tasty & nutritious.",
-    image: imgWariyan,
-    variants: null,
+    id: 5,
+    name: 'Mushroom Wariyan',
+    description: 'Traditional Punjabi Wariyan made with quality mushrooms and lentils. A unique, savory cooking additive.',
+    price: '₹450 / 250g',
+    image: mushroomWariyan,
+    healthBenefit: 'Combination of mushroom protein and lentil fiber for enhanced satiety and gut health.',
+    nutritionalKey: 'wariyan',
   },
 ];
+// --- END Data ---
 
-function formatINR(n) {
-  try {
-    const nf = new Intl.NumberFormat("en-IN", { maximumFractionDigits: 0 });
-    return `₹${nf.format(Number(n) || 0)}`;
-  } catch (e) {
-    return `₹${Math.round(n || 0)}`;
+// --- Nutritional Data (Per 100g) ---
+// Note: These are general, reliable values for each category.
+const nutritionalData = {
+  fresh: {
+    title: 'Fresh Mushrooms (Button/White - Raw)',
+    calories: '22 Kcal',
+    protein: '3.1 g',
+    fat: '0.3 g',
+    carbohydrates: '3.3 g',
+    fiber: '1.0 g',
+    vitamins: 'Excellent source of Riboflavin (B2), Niacin (B3), Pantothenic Acid (B5)',
+    minerals: 'Good source of Potassium and Phosphorus',
+  },
+  dried: {
+    title: 'Dried Mushrooms (General)',
+    calories: '293 Kcal',
+    protein: '34.0 g',
+    fat: '3.9 g',
+    carbohydrates: '17.4 g',
+    fiber: '14.1 g',
+    vitamins: 'Concentrated source of B-vitamins (Niacin, Riboflavin)',
+    minerals: 'High in Iron, Copper, and Selenium',
+  },
+  pickle: {
+    title: 'Mushroom Pickle (Approximate)',
+    calories: '95 - 180 Kcal',
+    protein: '3.0 - 6.0 g',
+    fat: '6.0 - 8.8 g',
+    carbohydrates: '1.0 - 3.5 g',
+    fiber: '1.0 - 2.0 g',
+    vitamins: 'Vitamins preserved from mushrooms, but may contain high sodium from salt and oil.',
+    minerals: 'Source of Potassium and Iron, generally high in Sodium.',
+  },
+  powder: {
+    title: 'Mushroom Powder (Dry Weight)',
+    calories: '250 - 307 Kcal',
+    protein: '25.0 - 35.0 g',
+    fat: '1.5 - 3.0 g',
+    carbohydrates: '50.0 - 75.0 g',
+    fiber: '6.0 - 25.0 g',
+    vitamins: 'High concentration of Vitamin D (if UV-exposed) and B-Vitamins',
+    minerals: 'Rich in Beta-Glucans and Antioxidants (Ergothioneine)',
+  },
+  wariyan: {
+    title: 'Mushroom Wariyan (Mushroom & Lentil)',
+    calories: '300 - 350 Kcal',
+    protein: '20.0 - 25.0 g',
+    fat: '5.0 - 8.0 g',
+    carbohydrates: '40.0 - 50.0 g',
+    fiber: '10.0 - 15.0 g',
+    vitamins: 'Combines nutrients from mushrooms and lentils.',
+    minerals: 'Excellent source of Plant-Based Protein and Dietary Fiber.',
   }
-}
+};
+// --- END Nutritional Data ---
 
-// =========================================================
-// Home Page Component (New)
-// =========================================================
+// --- Components ---
 
-function HomePage({ onNavigateToShop, onNavigateToHealth }) {
-  // Placeholder images for history and varieties
-  const historyImage = imgHistory || PUBLIC_LOGO_PATH;
-  const varietiesImage = imgVarieties || PUBLIC_LOGO_PATH;
+const Header = ({ onNavigate }) => (
+  <header className="header">
+    <div className="logo-container" onClick={() => onNavigate('shop')}>
+      <img src={logo} alt="Anant Gill Foods Logo" className="logo" />
+      <span className="brand-name">Anant Gill Foods</span>
+    </div>
+    <nav className="nav">
+      <button className="nav-button" onClick={() => onNavigate('shop')}>Shop</button>
+      <button className="nav-button" onClick={() => onNavigate('health')}>Health Benefits</button>
+      <button className="nav-button" onClick={() => onNavigate('contact')}>Contact Us</button>
+    </nav>
+  </header>
+);
 
-  return (
-    <main className="content" role="main" style={{ minHeight: '100vh', paddingBottom: 100 }}>
-        
-        {/* Hero Section */}
-        <div className="hero-section" style={{ 
-            textAlign: 'center', 
-            padding: '30px 10px', 
-            backgroundColor: 'var(--color-secondary)',
-            borderRadius: '12px',
-            marginBottom: '20px'
-        }}>
-            <h2 style={{ fontSize: '24px', margin: '0 0 10px', color: 'var(--color-primary-dark)' }}>
-                Welcome to Anant Gill Agro Farm
-            </h2>
-            <p style={{ color: 'var(--color-primary-light)', fontSize: '15px', maxWidth: 400, margin: '0 auto 20px' }}>
-                Cultivating the finest quality mushrooms, from farm to your table. Explore our range of fresh produce and delicious preserves.
-            </p>
-            <button 
-                className="add-btn" 
-                onClick={onNavigateToShop} 
-                style={{ fontSize: '16px', padding: '10px 20px' }}
-            >
-                Shop Now
-            </button>
-        </div>
+const Footer = ({ onNavigate }) => {
+  const [showScroll, setShowScroll] = useState(false);
 
-        {/* Introduction Section */}
-        <h2 className="section-title">Our Commitment</h2>
-        <div className="cart-box" style={{ padding: 16, marginBottom: 20 }}>
-            <p style={{ color: 'var(--color-primary-light)' }}>
-                We believe in sustainable, hygienic farming practices. Our focus is on quality, consistency, and delivering nutrient-rich mushrooms grown in a controlled environment to ensure the best product every time.
-            </p>
-        </div>
-
-        {/* History Section */}
-        <h2 className="section-title">The History of Mushrooms</h2>
-        <div className="product-card" style={{ display: 'block', padding: 16, marginBottom: 20 }}>
-            <img src={historyImage} alt="Mushroom History" style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 10, marginBottom: 10 }} />
-            <p style={{ color: 'var(--color-primary-light)' }}>
-                Mushrooms have been part of the human diet for millennia, valued not just for their taste but also their medicinal properties. Ancient cultures worldwide used them, and today, modern science confirms their powerful health benefits. We carry on this ancient tradition with modern farming techniques.
-            </p>
-        </div>
-
-        {/* Varieties Section */}
-        <h2 className="section-title">Our Varieties</h2>
-        <div className="product-card" style={{ display: 'block', padding: 16, marginBottom: 20 }}>
-            <img src={varietiesImage} alt="Mushroom Varieties" style={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 10, marginBottom: 10 }} />
-            <p style={{ color: 'var(--color-primary-light)' }}>
-                While our specialty is the premium **Button Mushroom** (Agaricus bisporus) in its fresh, dried, and powdered forms, we also use other potent varieties for our preserves like **Mushroom Pickle** and **Wariyan**. Visit our Health page for more details.
-            </p>
-            <button 
-                className="detail-btn" 
-                onClick={onNavigateToHealth} 
-                style={{ marginTop: 10, width: '100%', fontSize: '15px' }}
-            >
-                Learn About Nutrition & Health
-            </button>
-        </div>
-
-        {/* Call to Action at Bottom */}
-        <div style={{ textAlign: 'center', padding: '15px 10px', borderTop: '1px solid var(--color-border)' }}>
-             <button 
-                className="add-btn" 
-                onClick={onNavigateToShop} 
-                style={{ fontSize: '16px', padding: '10px 20px' }}
-            >
-                Start Shopping Now!
-            </button>
-        </div>
-    </main>
-  );
-}
-
-// =========================================================
-// Health & Nutrition Page Component
-// =========================================================
-
-function HealthPage({ onClose, products, onNavigateToShop }) {
-  // Placeholder logic for the "Show Nutrition & Benefits" button
-  const handleShowDetails = (title) => {
-     alert(`Nutrition & Benefits for ${title}:\n\n- Rich in B-Vitamins and minerals.\n- Excellent source of dietary fiber.\n- Supports heart health and immunity.`);
-  }
-
-  return (
-    <main className="content" role="main" style={{ minHeight: '100vh', paddingBottom: 100 }}>
-      {/* Header for Health Page */}
-      <div className="topbar" style={{ position: 'sticky', top: 0, zIndex: 901, background: 'rgba(255,255,255,0.92)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: '1px solid rgba(0,0,0,0.04)' }}>
-        <h2 className="section-title" style={{ margin: 0 }}>Health & Nutrition</h2>
-        <button className="cart-button" onClick={onNavigateToShop} style={{ borderRadius: 14 }}>Back to Shop</button>
-      </div>
-
-      <div className="cart-box" style={{ padding: 16, marginBottom: 14 }}>
-        <h3 style={{ marginTop: 0, color: '#14502b' }}>Introduction</h3>
-        <p style={{ color: '#556e64' }}>Mushrooms are nutrient-dense fungi prized for their savory flavor and versatile culinary uses. Low in calories and rich in B vitamins, vitamin D (when sun-exposed), potassium, selenium, fiber, and unique antioxidants like ergothioneine, mushrooms make a wholesome addition to everyday meals.</p>
-        <p style={{ color: '#556e64', fontSize: '14px' }}>Below you can check the approximate nutrition and suggested health benefits for each product.</p>
-      </div>
-
-      {products.map((p) => (
-        <div key={p.id} className="product-card" style={{ display: 'block', padding: 16, marginBottom: 14 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid rgba(0,0,0,0.04)', paddingBottom: 10, marginBottom: 10 }}>
-            <div style={{ flex: 1 }}>
-                <h3 style={{ margin: 0, color: '#14502b', fontSize: 18 }}>{p.title}</h3>
-                <p className="short" style={{ margin: '4px 0 0' }}>{p.short}</p>
-            </div>
-            <button 
-              className="detail-btn" 
-              onClick={() => handleShowDetails(p.title)}
-              style={{ flexShrink: 0, marginLeft: 10, padding: '8px 10px', fontSize: 13, background: '#f7faf6' }}
-            >
-              Show Nutrition & Benefits
-            </button>
-          </div>
-        </div>
-      ))}
-
-      <div className="cart-box" style={{ padding: 16, marginTop: 14 }}>
-          <h3 style={{ marginTop: 0, color: '#14502b' }}>Summary</h3>
-          <p style={{ color: '#556e64' }}>Fresh, dried, powdered or pickled — mushrooms come in many forms that suit different cooking needs. Fresh mushrooms are low-calorie and versatile; dried and powdered forms concentrate nutrients and flavor; pickles and wariyan offer traditional taste. Together they help you add variety, nutrition and umami to your meals.</p>
-      </div>
-    </main>
-  );
-}
-
-// =========================================================
-// Checkout Form Component (for order submission)
-// =========================================================
-
-function CheckoutForm({ cart, subtotal, onClose, onOrderPlaced }) {
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
-  const [note, setNote] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // === WhatsApp Order Logic ===
-  const handleSubmit = (e, paymentType) => {
-    e.preventDefault();
-    if (!name || !phone || !address) {
-      alert("Please fill in all required fields (Name, Phone, Address).");
-      return;
+  const checkScrollTop = () => {
+    if (!showScroll && window.pageYOffset > 400) {
+      setShowScroll(true);
+    } else if (showScroll && window.pageYOffset <= 400) {
+      setShowScroll(false);
     }
-    
-    // --- WhatsApp Logic ---
-    const orderItems = cart.map(item => 
-        `- ${item.productTitle}${item.variantLabel ? ` (${item.variantLabel})` : ''} x${item.qty}`
-    ).join('\n');
-
-    const paymentLabel = paymentType === 'COD' ? 'Cash on Delivery (COD)' : 'Online Payment (Confirmation needed)';
-    
-    // Creates the message with customer and order details, encoded for the URL
-    const message = encodeURIComponent(`*New Order Alert!*%0A%0A*Customer Info:*%0AName: ${name}%0APhone: ${phone}%0AEmail: ${email}%0AAddress: ${address}%0ANote: ${note}%0A%0A*Order Details:*%0A${orderItems}%0A%0A*Total:* ${formatINR(subtotal)}%0A*Payment:* ${paymentLabel}`);
-    
-    // Using your confirmed number
-    const whatsappNumber = "918837554747"; 
-    
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
-
-    setIsSubmitting(true);
-
-    // Open WhatsApp link in a new tab
-    window.open(whatsappUrl, '_blank');
-    
-    // Clear cart and close modal after a short delay
-    setTimeout(() => {
-        setIsSubmitting(false);
-        alert(`Thank you! Your order summary is ready. Please click 'Send' in the new WhatsApp window to confirm and finalize your order with Anant Gill Agro Farm.`);
-        onOrderPlaced(); 
-    }, 500); 
-    // --- END: WhatsApp Logic ---
   };
-  // === End WhatsApp Order Logic ===
 
+  const scrollTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
-  return (
-    <div className="sheet-overlay" onClick={onClose}>
-      <div className="sheet checkout-sheet" onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h3>Place Order</h3>
-          <button onClick={onClose} style={{ background: "transparent", border: "none", fontSize: 20, cursor: "pointer" }}>✕</button>
-        </div>
-        <p style={{ color: '#556e64', marginTop: -10 }}>Enter details so we can contact you to confirm the order.</p>
-        
-        {/* Form elements for Name, Phone, Email, Address, Note */}
-        <form style={{ paddingBottom: 60 /* Space for buttons */ }}>
-          <div className="form-group">
-            <label htmlFor="name">Name *</label>
-            <input id="name" type="text" value={name} onChange={(e) => setName(e.target.value)} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="phone">Phone *</label>
-            <input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required />
-          </div>
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="address">Address *</label>
-            <textarea id="address" value={address} onChange={(e) => setAddress(e.target.value)} required rows="3"></textarea>
-          </div>
-          <div className="form-group">
-            <label htmlFor="note">Note (optional)</label>
-            <textarea id="note" value={note} onChange={(e) => setNote(e.target.value)} rows="2"></textarea>
-          </div>
-          
-          {/* Fixed button bar at the bottom */}
-          <div className="checkout-actions">
-              <button type="button" className="cancel-btn" onClick={onClose} disabled={isSubmitting}>Cancel</button>
-
-              <button 
-                  type="button" 
-                  className="add-btn pay-btn"
-                  onClick={(e) => handleSubmit(e, 'PAY_ONLINE')}
-                  disabled={isSubmitting || cart.length === 0}
-              >
-                {isSubmitting ? 'Processing...' : 'Pay & Place Order'}
-              </button>
-
-              <button 
-                  type="button" 
-                  className="add-btn cod-btn" 
-                  onClick={(e) => handleSubmit(e, 'COD')} 
-                  disabled={isSubmitting || cart.length === 0}
-              >
-                {isSubmitting ? 'Processing...' : 'Place Order (COD)'}
-              </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-
-// =========================================================
-// Main App Component
-// =========================================================
-
-export default function App() {
-  const [cart, setCart] = useState([]); // { productId, variantId?, qty }
-  const [sheetProduct, setSheetProduct] = useState(null); // product being chosen (for variants)
-  const [sheetVariant, setSheetVariant] = useState(null); // selected variant id in sheet
-  const [miniVisible, setMiniVisible] = useState(false);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  
-  // ROUTING: Use state to control which main page is visible
-  const [currentPage, setCurrentPage] = useState('home'); // 'home', 'shop', 'health' 
-
-  const cartBoxRef = useRef(null);
-  const miniTimerRef = useRef(null);
-
-  // when the sheet or checkout is open, prevent body scrolling
-  useEffect(() => {
-    const shouldLock = !!sheetProduct || isCheckoutOpen;
-    if (shouldLock) document.body.classList.add("no-scroll");
-    else document.body.classList.remove("no-scroll");
-
-    return () => document.body.classList.remove("no-scroll");
-  }, [sheetProduct, isCheckoutOpen]);
-
-  // cleanup timers on unmount
-  useEffect(() => {
-    return () => {
-      if (miniTimerRef.current) clearTimeout(miniTimerRef.current);
-    };
-  }, []);
-
-  // Navigation functions
-  const navigateToHome = () => setCurrentPage('home');
-  const navigateToShop = () => setCurrentPage('shop');
-  const navigateToHealth = () => setCurrentPage('health');
-
-  // Add to cart (public call)
-  function handleAdd(product, variantId = null, qty = 1) {
-    if (product.variants && !variantId) {
-      setSheetProduct(product);
-      setSheetVariant(product.variants[0].id);
-      return;
-    }
-
-    const variant = product.variants ? product.variants.find((v) => v.id === variantId) : null;
-    const key = `${product.id}:${variant ? variant.id : "default"}`;
-
-    setCart((prev) => {
-      const found = prev.find((it) => it.key === key);
-      if (found) {
-        return prev.map((it) => (it.key === key ? { ...it, qty: it.qty + qty } : it));
-      } else {
-        return [
-          ...prev,
-          {
-            key,
-            productId: product.id,
-            productTitle: product.title,
-            variantId: variant ? variant.id : null,
-            variantLabel: variant ? variant.label : null,
-            price: variant ? variant.price : product.price,
-            qty,
-          },
-        ];
-      }
-    });
-
-    setMiniVisible(true);
-    if (miniTimerRef.current) clearTimeout(miniTimerRef.current);
-    miniTimerRef.current = setTimeout(() => {
-      setMiniVisible(false);
-      miniTimerRef.current = null;
-    }, 3500);
-  }
-
-  function openSheetForProduct(product) {
-    if (!product.variants) return;
-    setSheetProduct(product);
-    setSheetVariant(product.variants[0].id);
-  }
-
-  function closeSheet() {
-    setSheetProduct(null);
-    setSheetVariant(null);
-  }
-
-  function changeQty(key, delta) {
-    setCart((prev) =>
-      prev
-        .map((it) => (it.key === key ? { ...it, qty: Math.max(0, it.qty + delta) } : it))
-        .filter((it) => it.qty > 0)
-    );
-  }
-
-  function removeItem(key) {
-    setCart((prev) => prev.filter((it) => it.key !== key));
-  }
-
-  const subtotal = cart.reduce((s, it) => s + it.price * it.qty, 0);
-  const itemCount = cart.reduce((s, it) => s + it.qty, 0);
-
-  function confirmAddFromSheet() {
-    if (!sheetProduct) return;
-    handleAdd(sheetProduct, sheetVariant, 1);
-    closeSheet();
-  }
-
-  const fbUrl = "https://www.facebook.com/share/177NfwxRKr/";
-  const igUrl = "https://www.instagram.com/anant.gill.agro.farm?igsh=MWVuNzUwbDc2bjl0aA==";
-
-  function scrollToCart() {
-    if (cartBoxRef.current) {
-      cartBoxRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else {
-      window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-    }
-  }
-  
-  // ----------------------------------------------------
-  // SHOP CONTENT: The original product listing page
-  // ----------------------------------------------------
-  const ShopContent = (
-    <main className="content" role="main">
-      <h2 className="section-title">Our Products</h2>
-
-      <div className="product-list">
-        {PRODUCTS.map((p) => (
-          <article key={p.id} className="product-card" aria-labelledby={`product-${p.id}-title`}>
-            <div className="product-media">
-              <img src={p.image} alt={p.title} />
-            </div>
-
-            <div className="product-body">
-              <h3 id={`product-${p.id}-title`}>{p.title}</h3>
-              <div className="unit">{p.unit}</div>
-              <div className="short">{p.short}</div>
-
-              <div className="price-row">
-                <div>
-                  <div className="price">{formatINR(p.price)}</div>
-                </div>
-
-                <div className="actions">
-                  {/* Health Detail button now links to Health Page */}
-                  <button 
-                      className="detail-btn"
-                      onClick={navigateToHealth}
-                  >
-                      Details
-                  </button>
-
-                  <button
-                    className="add-btn"
-                    onClick={() => {
-                      if (p.variants) openSheetForProduct(p);
-                      else handleAdd(p, null, 1);
-                    }}
-                  >
-                    Add to Cart
-                  </button>
-                </div>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
-
-      {/* Inline Cart Box (below product list) */}
-      <div className="cart-box" id="cart-box" ref={cartBoxRef}>
-        <h3>Cart</h3>
-        {cart.length === 0 ? (
-          <div className="cart-empty">Your cart is empty</div>
-        ) : (
-          <>
-            {cart.map((it) => (
-              <div key={it.key} style={{ marginBottom: 8 }}>
-                <div style={{ fontWeight: 600 }}>
-                  {it.productTitle}
-                  {it.variantLabel ? ` × ${it.variantLabel}` : ""}
-                </div>
-                <div style={{ marginTop: 6 }}>
-                  <button aria-label={`Decrease qty of ${it.productTitle}`} onClick={() => changeQty(it.key, -1)}>
-                    -
-                  </button>
-                  <span style={{ margin: "0 8px" }}>{formatINR(it.price * it.qty)}</span>
-                  <button aria-label={`Increase qty of ${it.productTitle}`} onClick={() => changeQty(it.key, +1)}>
-                    +
-                  </button>
-                  <button style={{ marginLeft: 10 }} onClick={() => removeItem(it.key)}>
-                    Remove
-                  </button>
-                </div>
-              </div>
-            ))}
-            
-            <div className="cart-summary">
-              <div className="cart-total-line">
-                <div>Subtotal</div>
-                <div style={{ fontWeight: 700 }}>{formatINR(subtotal)}</div>
-              </div>
-              {/* Checkout Button (Opens CheckoutForm modal) */}
-              <button 
-                  className="checkout-btn add-btn" 
-                  disabled={cart.length === 0}
-                  onClick={() => setIsCheckoutOpen(true)}
-                  style={{ marginTop: 12, width: '100%' }}
-              >
-                  Place Order ({formatINR(subtotal)})
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-    </main>
-  );
+  window.addEventListener('scroll', checkScrollTop);
 
   return (
-    <div className="app">
+    <footer className="footer">
+      <div className="footer-content">
+        <div className="footer-section about">
+          <img src={logo} alt="Anant Gill Foods Logo" className="footer-logo" />
+          <p>
+            Anant Gill Foods is committed to delivering the highest quality mushroom products, from farm to table. Sustainably grown for a healthier you.
+          </p>
+          <div className="social-links">
+            <a href="https://facebook.com" target="_blank" rel="noopener noreferrer"><FontAwesomeIcon icon={faFacebookF} /></a>
+            <a href="https://instagram.com" target="_blank" rel="noopener noreferrer"><FontAwesomeIcon icon={fabInstagram} /></a>
+            <a href="https://twitter.com" target="_blank" rel="noopener noreferrer"><FontAwesomeIcon icon={fabTwitter} /></a>
+            <a href="https://wa.me/YOURPHONENUMBER" target="_blank" rel="noopener noreferrer"><FontAwesomeIcon icon={fabWhatsapp} /></a>
+          </div>
+        </div>
+        <div className="footer-section links">
+          <h2>Quick Links</h2>
+          <ul>
+            <li onClick={() => onNavigate('shop')}>Shop</li>
+            <li onClick={() => onNavigate('health')}>Health Benefits</li>
+            <li onClick={() => onNavigate('contact')}>Contact Us</li>
+            <li>Privacy Policy (Placeholder)</li>
+            <li>Terms of Service (Placeholder)</li>
+          </ul>
+        </div>
+        <div className="footer-section contact-info">
+          <h2>Contact Info</h2>
+          <p><FontAwesomeIcon icon={faMapMarkerAlt} className="icon" /> Ludhiana, Punjab, India</p>
+          <p><FontAwesomeIcon icon={faPhone} className="icon" /> +91 99999 99999 (Placeholder)</p>
+          <p><FontAwesomeIcon icon={faEnvelope} className="icon" /> contact@anantgillfoods.in (Placeholder)</p>
+        </div>
+      </div>
+      <div className="footer-bottom">
+        &copy; {new Date().getFullYear()} Anant Gill Foods. All Rights Reserved.
+      </div>
+      {showScroll && (
+        <button className="scroll-to-top" onClick={scrollTop}>
+          <FontAwesomeIcon icon={faArrowUp} />
+        </button>
+      )}
+    </footer>
+  );
+};
+
+const ProductCard = ({ product }) => (
+  <div className="product-card">
+    <img src={product.image} alt={product.name} className="product-image" />
+    <div className="product-info">
+      <h3>{product.name}</h3>
+      <p className="product-description">{product.description}</p>
+      <p className="product-price">{product.price}</p>
+      <button className="buy-now-button">Buy Now</button>
+      <div className="product-health-tip">
+        <strong>Benefit:</strong> {product.healthBenefit}
+      </div>
+    </div>
+  </div>
+);
+
+const ProductList = () => (
+  <div className="product-list-page">
+    <h2 className="section-title">Our Mushroom Products</h2>
+    <div className="product-grid">
+      {products.map(product => (
+        <ProductCard key={product.id} product={product} />
+      ))}
+    </div>
+  </div>
+);
+
+const NutritionalValueTable = ({ data }) => (
+  <div className="nutritional-table">
+    <h3 className="nutritional-title">{data.title} (Per 100g)</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Nutrient</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Energy</td><td>{data.calories}</td></tr>
+        <tr><td>Protein</td><td>{data.protein}</td></tr>
+        <tr><td>Fat</td><td>{data.fat}</td></tr>
+        <tr><td>Carbohydrates</td><td>{data.carbohydrates}</td></tr>
+        <tr><td>Dietary Fiber</td><td>{data.fiber}</td></tr>
+      </tbody>
+    </table>
+    <div className="nutritional-details">
+      <p><strong>Key Vitamins:</strong> {data.vitamins}</p>
+      <p><strong>Key Minerals & Compounds:</strong> {data.minerals}</p>
+    </div>
+  </div>
+);
+
+const HealthPage = () => (
+  <div className="health-page">
+    <h2 className="section-title">The Power of Mushrooms</h2>
+    <p className="intro-text">Mushrooms are nutritional powerhouses, low in calories and fat, yet packed with essential vitamins, minerals, and potent antioxidants. Our products harness these benefits for your health.</p>
+
+    <div className="nutritional-breakdown-grid">
+      <NutritionalValueTable data={nutritionalData.fresh} />
+      <NutritionalValueTable data={nutritionalData.dried} />
+      <NutritionalValueTable data={nutritionalData.pickle} />
+      <NutritionalValueTable data={nutritionalData.powder} />
+      <NutritionalValueTable data={nutritionalData.wariyan} />
       
-      {/* Topbar (Main Navigation) */}
-      <header className="topbar" role="banner">
-        <div className="brand" onClick={navigateToHome} style={{ cursor: 'pointer' }}>
-          <img className="logo" src={PUBLIC_LOGO_PATH} alt="Anant Gill Agro Farm logo" />
-          <div>
-            <h1 className="title">Anant Gill Agro Farm</h1>
-            <div className="subtitle">Best quality fresh organic mushrooms & delicious pickles</div>
-          </div>
-        </div>
-        
-        <div style={{ display: 'flex', gap: '8px' }}>
-          {currentPage !== 'home' && (
-            <button className="cart-button" onClick={navigateToHome} style={{ background: currentPage === 'home' ? 'var(--color-primary-dark)' : 'var(--color-primary-light)' }}>
-                Home
-            </button>
-          )}
-          
-          {currentPage !== 'shop' && (
-            <button className="cart-button" onClick={navigateToShop} style={{ background: currentPage === 'shop' ? 'var(--color-primary-dark)' : 'var(--color-primary-light)' }}>
-                Shop
-            </button>
-          )}
-          
-          {currentPage !== 'health' && (
-            <button className="cart-button" onClick={navigateToHealth} style={{ background: currentPage === 'health' ? 'var(--color-primary-dark)' : 'var(--color-primary-light)' }}>
-                Health
-            </button>
-          )}
+      {/* Disclaimer Section */}
+      <div className="nutritional-disclaimer">
+        <h3>A Note on Nutritional Information:</h3>
+        <p>The values above are general averages per $100\text{ g}$ based on standard nutritional databases and typical product compositions. Actual values may vary slightly based on specific ingredients, preparation methods, and mushroom species used in each batch. Please refer to the specific product packaging for precise nutrient information.</p>
+      </div>
+    </div>
+  </div>
+);
 
-          {/* Cart Button (Always visible on Shop) */}
-          {currentPage === 'shop' && (
-            <button
-              className="cart-button"
-              onClick={scrollToCart}
-              aria-label={`Open cart with ${itemCount} item${itemCount !== 1 ? "s" : ""}`}
-            >
-              Cart ({itemCount})
-            </button>
-          )}
-        </div>
-      </header>
-      
-      {/* ---------------------------------------------------- */}
-      {/* CONDITIONAL RENDERING: Page Router */}
-      {/* ---------------------------------------------------- */}
-      {currentPage === 'home' && (
-        <HomePage 
-          onNavigateToShop={navigateToShop} 
-          onNavigateToHealth={navigateToHealth}
-        />
-      )}
-      
-      {currentPage === 'shop' && ShopContent}
 
-      {currentPage === 'health' && (
-        <HealthPage 
-            onClose={navigateToShop} // Back button navigates to shop
-            onNavigateToShop={navigateToShop}
-            products={PRODUCTS} 
-        />
-      )}
+const ContactPage = () => (
+  <div className="contact-page">
+    <h2 className="section-title">Contact Us</h2>
+    <p>We'd love to hear from you! Please reach out with any questions, wholesale inquiries, or feedback.</p>
+    
+    <div className="contact-info-block">
+      <h3>Get in Touch</h3>
+      <p><FontAwesomeIcon icon={faMapMarkerAlt} className="icon" /> **Head Office (Placeholder):** Ludhiana, Punjab, India</p>
+      <p><FontAwesomeIcon icon={faPhone} className="icon" /> **Phone (Placeholder):** +91 99999 99999</p>
+      <p><FontAwesomeIcon icon={faEnvelope} className="icon" /> **Email (Placeholder):** contact@anantgillfoods.in</p>
+      <p><FontAwesomeIcon icon={faWhatsapp} className="icon" /> **WhatsApp:** +91 99999 99999</p>
+    </div>
 
-      {/* Footer (Always Visible) */}
-      <footer className="site-footer" role="contentinfo" style={{ backgroundImage: `url(${FOOTER_BG_PATH})` }}>
-        <div className="footer-inner">
-          <div className="footer-left">
-            {/* Logo is here. CSS filter turns it white. */}
-            <img className="footer-logo" src={PUBLIC_LOGO_PATH} alt="Anant Gill Agro Farm logo" />
-            <h4>Anant Gill Agro Farm</h4>
-            <div className="contact-line">
-              Phone: <a href="tel:+918837554747">+91 88375 54747</a>
-            </div>
-            <div className="contact-line">
-              Email: <a href="mailto:anantgillagrofarm@gmail.com">anantgillagrofarm@gmail.com</a>
-            </div>
-            <div className="contact-line address">Gali No. 1, Baba Deep Singh Avenue, village Nangli bhatha, Amritsar 143001</div>
-          </div>
+    <form className="contact-form">
+      <h3>Send us a Message</h3>
+      <input type="text" placeholder="Your Name" required />
+      <input type="email" placeholder="Your Email" required />
+      <input type="text" placeholder="Subject" required />
+      <textarea placeholder="Your Message" rows="5" required></textarea>
+      <button type="submit" className="submit-button">Send Message</button>
+    </form>
+  </div>
+);
 
-          <div className="footer-right">
-            <div style={{ marginBottom: 8, color: "rgba(255,255,255,0.9)" }}>Follow</div>
-            <div className="socials">
-              <a
-                className="social-btn"
-                href={fbUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Facebook"
-                title="Facebook"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M15 3H12C9.79 3 8 4.79 8 7V10H5V13H8V21H11V13H14L15 10H11V7C11 6.45 11.45 6 12 6H15V3Z" fill="white" />
-                </svg>
-              </a>
+// --- Main App Component ---
 
-              <a
-                className="social-btn"
-                href={igUrl}
-                target="_blank"
-                rel="noreferrer"
-                aria-label="Instagram"
-                title="Instagram"
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M7 2H17C20 2 22 4 22 7V17C22 20 20 22 17 22H7C4 22 2 20 2 17V7C2 4 4 2 7 2Z" stroke="white" strokeWidth="1.2" fill="none" />
-                  <circle cx="12" cy="12" r="3" stroke="white" strokeWidth="1.2" />
-                  <circle cx="17.5" cy="6.5" r="0.6" fill="white" />
-                </svg>
-              </a>
-            </div>
+const App = () => {
+  const [currentPage, setCurrentPage] = useState('shop'); // Default to the product list page
 
-            <div style={{ color: "rgba(255,255,255,0.95)", marginTop: 12 }}>© 2025 Anant Gill Agro Farm</div>
-          </div>
-        </div>
-      </footer>
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'shop':
+        return <ProductList />;
+      case 'health':
+        return <HealthPage />;
+      case 'contact':
+        return <ContactPage />;
+      default:
+        return <ProductList />;
+    }
+  };
 
-      {/* Mini-cart sticky bottom */}
-      {itemCount > 0 && currentPage === 'shop' && (
-        <div className="mini-cart" style={{ display: miniVisible ? "flex" : "none" }} aria-live="polite">
-          <div className="mini-left">
-            <div style={{ fontWeight: 700 }}>
-              {itemCount} item{itemCount > 1 ? "s" : ""}
-            </div>
-            <div className="mini-sub">Subtotal {formatINR(subtotal)}</div>
-          </div>
-          <div>
-            <button className="view-cart" onClick={scrollToCart}>
-              View Cart
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Sheet overlay for product variants */}
-      {sheetProduct && (
-        <div className="sheet-overlay" onClick={closeSheet}>
-          <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            <div style={{ display: "flex", justifyContent: "flex-start" }}>
-              <button style={{ borderRadius: 8 }} onClick={closeSheet} aria-label="Close variants sheet">
-                ✕
-              </button>
-            </div>
-
-            <div style={{ padding: "8px 4px 24px" }}>
-              <div className="sheet-image" style={{ marginBottom: 12 }}>
-                <img src={sheetProduct.image} alt={sheetProduct.title} style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 10 }} />
-              </div>
-
-              <h3 style={{ marginTop: 0 }}>{sheetProduct.title}</h3>
-              <p style={{ color: "#556e64" }}>{sheetProduct.short}</p>
-
-              <div style={{ marginTop: 12, fontWeight: 600 }}>Choose size / variant</div>
-
-              <div style={{ marginTop: 8 }}>
-                {sheetProduct.variants.map((v) => (
-                  <label
-                    key={v.id}
-                    style={{
-                      display: "block",
-                      border: sheetVariant === v.id ? "2px solid #14502b" : "1px solid rgba(0,0,0,0.06)",
-                      borderRadius: 10,
-                      padding: 12,
-                      marginBottom: 8,
-                      cursor: "pointer",
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="variant"
-                      value={v.id}
-                      checked={sheetVariant === v.id}
-                      onChange={() => setSheetVariant(v.id)}
-                      style={{ marginRight: 10 }}
-                    />
-                    <span style={{ fontWeight: 600 }}>{v.label}</span>
-                    <div style={{ color: "#556e64" }}>{formatINR(v.price)}</div>
-                  </label>
-                ))}
-              </div>
-
-              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8 }}>
-                <button className="add-btn" style={{ padding: "10px 16px" }} onClick={confirmAddFromSheet}>
-                  Add to Cart
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Checkout Form Modal */}
-      {isCheckoutOpen && (
-        <CheckoutForm
-          cart={cart}
-          subtotal={subtotal}
-          onClose={() => setIsCheckoutOpen(false)}
-          onOrderPlaced={() => {
-            setCart([]);
-            setIsCheckoutOpen(false);
-          }}
-        />
-      )}
+  return (
+    <div className="App">
+      <Header onNavigate={setCurrentPage} />
+      <main>
+        {renderPage()}
+      </main>
+      <Footer onNavigate={setCurrentPage} />
     </div>
   );
-}
+};
+
+export default App;
