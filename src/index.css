@@ -286,15 +286,11 @@ h1, h2, h3 {
 
 .footer-logo {
   height: 40px;
-  /* **CORRECTION APPLIED HERE:** The 'filter' property was making the logo invisible. 
-    It is now commented out to display the logo in its original color.
-  */
+  /* The filter that was hiding the logo is correctly commented out: */
   /* filter: brightness(0) invert(1); */
   margin-bottom: 8px;
-
-  /* TEMP: Use this to see the logo if it's still hard to spot. 
-     You can remove this line after confirming the fix. */
-  outline: 2px solid red; 
+  
+  /* The temporary red outline is now removed. */
 }
 
 .site-footer h4 {
