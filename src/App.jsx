@@ -210,7 +210,7 @@ function CheckoutForm({ cart, subtotal, onClose, onOrderPlaced }) {
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // === START: WhatsApp Order Logic (CLEANED) ===
+  // === START: WhatsApp Order Logic (CLEANED with explicit %0A) ===
   const handleSubmit = (e, paymentType) => {
     e.preventDefault();
     if (!name || !phone || !address) {
@@ -221,24 +221,25 @@ function CheckoutForm({ cart, subtotal, onClose, onOrderPlaced }) {
     // --- WhatsApp Logic ---
     const orderItems = cart.map(item => 
         `- ${item.productTitle}${item.variantLabel ? ` (${item.variantLabel})` : ''} x${item.qty} (${formatINR(item.price * item.qty)})`
-    ).join('%0A'); // Join with only one new line
+    ).join('%0A'); // Join order items with a single new line
 
     const paymentLabel = paymentType === 'COD' ? 'Cash on Delivery (COD)' : 'Online Payment (Confirmation needed)';
     
-    // Creates the message with customer and order details, encoded for the URL
-    // *** MODIFIED FOR CLEANER FORMAT - Removed extra %0A%0A and * for bolding ***
-    const message = encodeURIComponent(`New Order Alert!%0A
-Customer Info:%0A
-Name: ${name}%0A
-Phone: ${phone}%0A
-Email: ${email}%0A
-Address: ${address}%0A
-Note: ${note}%0A%0A
-Order Details:%0A
-${orderItems}%0A
-Total: ${formatINR(subtotal)}%0A
-Payment: ${paymentLabel}%0A%0A
-Please send this message to confirm your order.`);
+    // Creates the message with customer and order details, explicitly encoding all line breaks (%0A)
+    const message = encodeURIComponent(
+        `New Order Alert!%0A%0A` + // Two new lines after title
+        `*Customer Info:*%0A` + // Bolding the section title for clarity
+        `Name: ${name}%0A` +
+        `Phone: ${phone}%0A` +
+        `Email: ${email}%0A` +
+        `Address: ${address}%0A` +
+        `Note: ${note}%0A%0A` + // Two new lines before order details
+        `*Order Details:*%0A` + // Bolding the section title
+        `${orderItems}%0A%0A` + 
+        `Total: ${formatINR(subtotal)}%0A` +
+        `Payment: ${paymentLabel}%0A%0A` +
+        `Please send this message to confirm your order.`
+    );
     
     // Replaced with your confirmed number
     const whatsappNumber = "918837554747"; 
@@ -256,7 +257,7 @@ Please send this message to confirm your order.`);
         alert(`Thank you! Your order summary is ready. Please click 'Send' in the new WhatsApp window to confirm and finalize your order with Anant Gill Agro Farm.`);
         onOrderPlaced(); 
     }, 500); 
-    // --- END: WhatsApp Order Logic ---
+    // --- END: WhatsApp Logic ---
   };
   // === END: WhatsApp Order Logic ===
 
