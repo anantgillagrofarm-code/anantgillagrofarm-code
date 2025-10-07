@@ -210,7 +210,7 @@ function CheckoutForm({ cart, subtotal, onClose, onOrderPlaced }) {
   const [note, setNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // === START: WhatsApp Order Logic ===
+  // === START: WhatsApp Order Logic (CLEANED) ===
   const handleSubmit = (e, paymentType) => {
     e.preventDefault();
     if (!name || !phone || !address) {
@@ -221,12 +221,24 @@ function CheckoutForm({ cart, subtotal, onClose, onOrderPlaced }) {
     // --- WhatsApp Logic ---
     const orderItems = cart.map(item => 
         `- ${item.productTitle}${item.variantLabel ? ` (${item.variantLabel})` : ''} x${item.qty} (${formatINR(item.price * item.qty)})`
-    ).join('\n');
+    ).join('%0A'); // Join with only one new line
 
     const paymentLabel = paymentType === 'COD' ? 'Cash on Delivery (COD)' : 'Online Payment (Confirmation needed)';
     
     // Creates the message with customer and order details, encoded for the URL
-    const message = encodeURIComponent(`*New Order Alert!*%0A%0A*Customer Info:*%0AName: ${name}%0APhone: ${phone}%0AEmail: ${email}%0AAddress: ${address}%0ANote: ${note}%0A%0A*Order Details:*%0A${orderItems}%0A%0A*Subtotal:* ${formatINR(subtotal)}%0A*Payment:* ${paymentLabel}%0A%0A*Please send this message to confirm your order.*`);
+    // *** MODIFIED FOR CLEANER FORMAT - Removed extra %0A%0A and * for bolding ***
+    const message = encodeURIComponent(`New Order Alert!%0A
+Customer Info:%0A
+Name: ${name}%0A
+Phone: ${phone}%0A
+Email: ${email}%0A
+Address: ${address}%0A
+Note: ${note}%0A%0A
+Order Details:%0A
+${orderItems}%0A
+Total: ${formatINR(subtotal)}%0A
+Payment: ${paymentLabel}%0A%0A
+Please send this message to confirm your order.`);
     
     // Replaced with your confirmed number
     const whatsappNumber = "918837554747"; 
@@ -244,7 +256,7 @@ function CheckoutForm({ cart, subtotal, onClose, onOrderPlaced }) {
         alert(`Thank you! Your order summary is ready. Please click 'Send' in the new WhatsApp window to confirm and finalize your order with Anant Gill Agro Farm.`);
         onOrderPlaced(); 
     }, 500); 
-    // --- END: WhatsApp Logic ---
+    // --- END: WhatsApp Order Logic ---
   };
   // === END: WhatsApp Order Logic ===
 
