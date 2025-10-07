@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import './App.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faEnvelope, faPhone, faMapMarkerAlt, faFacebook, faInstagram, faTwitter, faWhatsapp, faArrowUp } from '@fortawesome/free-solid-svg-icons';
-import { faFacebookF, faInstagram as fabInstagram, faTwitter as fabTwitter, faWhatsapp as fabWhatsapp } from '@fortawesome/free-brands-svg-icons';
+import { faEnvelope, faPhone, faMapMarkerAlt, faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { faFacebookF, faInstagram as fabInstagram, faWhatsapp as fabWhatsapp, faTwitter as fabTwitter } from '@fortawesome/free-brands-svg-icons';
 
 // --- Assets ---
-import logo from './assets/logo.jpg';
+// FIX: Correctly referencing the logo from the public folder (anant_gill_logo.png)
+const PUBLIC_LOGO_URL = '/anant_gill_logo.png'; 
 import freshMushrooms from './assets/fresh_mushrooms.jpg';
 import driedMushrooms from './assets/dried_mushrooms.jpg';
 import mushroomPickle from './assets/mushroom_pickle.jpg';
@@ -64,7 +65,6 @@ const products = [
 // --- END Data ---
 
 // --- Nutritional Data (Per 100g) ---
-// Note: These are general, reliable values for each category.
 const nutritionalData = {
   fresh: {
     title: 'Fresh Mushrooms (Button/White - Raw)',
@@ -124,7 +124,8 @@ const nutritionalData = {
 const Header = ({ onNavigate }) => (
   <header className="header">
     <div className="logo-container" onClick={() => onNavigate('shop')}>
-      <img src={logo} alt="Anant Gill Foods Logo" className="logo" />
+      {/* USES PUBLIC_LOGO_URL */}
+      <img src={PUBLIC_LOGO_URL} alt="Anant Gill Foods Logo" className="logo" />
       <span className="brand-name">Anant Gill Foods</span>
     </div>
     <nav className="nav">
@@ -156,7 +157,8 @@ const Footer = ({ onNavigate }) => {
     <footer className="footer">
       <div className="footer-content">
         <div className="footer-section about">
-          <img src={logo} alt="Anant Gill Foods Logo" className="footer-logo" />
+          {/* USES PUBLIC_LOGO_URL */}
+          <img src={PUBLIC_LOGO_URL} alt="Anant Gill Foods Logo" className="footer-logo" />
           <p>
             Anant Gill Foods is committed to delivering the highest quality mushroom products, from farm to table. Sustainably grown for a healthier you.
           </p>
@@ -179,9 +181,10 @@ const Footer = ({ onNavigate }) => {
         </div>
         <div className="footer-section contact-info">
           <h2>Contact Info</h2>
-          <p><FontAwesomeIcon icon={faMapMarkerAlt} className="icon" /> Ludhiana, Punjab, India</p>
-          <p><FontAwesomeIcon icon={faPhone} className="icon" /> +91 99999 99999 (Placeholder)</p>
-          <p><FontAwesomeIcon icon={faEnvelope} className="icon" /> contact@anantgillfoods.in (Placeholder)</p>
+          {/* Using placeholder contact info based on old screenshots to fill the structure */}
+          <p><FontAwesomeIcon icon={faMapMarkerAlt} className="icon" /> Gali No. 1, Baba Deep Singh Avenue, village Nangli bhatha, Amritsar 143001</p>
+          <p><FontAwesomeIcon icon={faPhone} className="icon" /> +91 88375 54747</p>
+          <p><FontAwesomeIcon icon={faEnvelope} className="icon" /> anantgillagrofarm@gmail.com</p>
         </div>
       </div>
       <div className="footer-bottom">
@@ -235,8 +238,8 @@ const NutritionalValueTable = ({ data }) => (
       <tbody>
         <tr><td>Energy</td><td>{data.calories}</td></tr>
         <tr><td>Protein</td><td>{data.protein}</td></tr>
-        <tr><td>Fat</td><td>{data.fat}</td></tr>
-        <tr><td>Carbohydrates</td><td>{data.carbohydrates}</td></tr>
+        <tr><td>Total Fat</td><td>{data.fat}</td></tr>
+        <tr><td>Total Carbohydrates</td><td>{data.carbohydrates}</td></tr>
         <tr><td>Dietary Fiber</td><td>{data.fiber}</td></tr>
       </tbody>
     </table>
@@ -276,10 +279,10 @@ const ContactPage = () => (
     
     <div className="contact-info-block">
       <h3>Get in Touch</h3>
-      <p><FontAwesomeIcon icon={faMapMarkerAlt} className="icon" /> **Head Office (Placeholder):** Ludhiana, Punjab, India</p>
-      <p><FontAwesomeIcon icon={faPhone} className="icon" /> **Phone (Placeholder):** +91 99999 99999</p>
-      <p><FontAwesomeIcon icon={faEnvelope} className="icon" /> **Email (Placeholder):** contact@anantgillfoods.in</p>
-      <p><FontAwesomeIcon icon={faWhatsapp} className="icon" /> **WhatsApp:** +91 99999 99999</p>
+      <p><FontAwesomeIcon icon={faMapMarkerAlt} className="icon" /> **Address:** Gali No. 1, Baba Deep Singh Avenue, village Nangli bhatha, Amritsar 143001</p>
+      <p><FontAwesomeIcon icon={faPhone} className="icon" /> **Phone:** +91 88375 54747</p>
+      <p><FontAwesomeIcon icon={faEnvelope} className="icon" /> **Email:** anantgillagrofarm@gmail.com</p>
+      <p><FontAwesomeIcon icon={faWhatsapp} className="icon" /> **WhatsApp:** +91 88375 54747</p>
     </div>
 
     <form className="contact-form">
